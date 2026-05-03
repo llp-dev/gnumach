@@ -345,29 +345,6 @@ static void get_compat_strings(char *flags_str, char *root_str)
 	*cp = '\0';
 }
 
-#if 0
-/*
- * Copy boot_data (executable) to the user portion of this task.
- */
-static boolean_t	load_protect_text = TRUE;
-
-static vm_offset_t
-boot_map(
-	void *		data,	/* private data */
-	vm_offset_t	offset)	/* offset to map */
-{
-	vm_offset_t	start_offset = (vm_offset_t) data;
-
-	return pmap_extract(kernel_pmap, start_offset + offset);
-}
-
-
-#if BOOTSTRAP_SYMBOLS
-static boolean_t load_bootstrap_symbols = TRUE;
-#else
-static boolean_t load_bootstrap_symbols = FALSE;
-#endif
-#endif
 
 
 
@@ -409,10 +386,6 @@ read_exec(void *handle, vm_offset_t file_ofs, vm_size_t file_size,
 	start_page = trunc_page(mem_addr);
 	end_page = round_page(mem_addr + mem_size);
 
-#if 0
-	printf("reading bootstrap section %08x-%08x-%08x prot %d pages %08x-%08x\n",
-		mem_addr, mem_addr+file_size, mem_addr+mem_size, mem_prot, start_page, end_page);
-#endif
 
 	err = vm_allocate(user_map, &start_page, end_page - start_page, FALSE);
 	assert(err == 0);

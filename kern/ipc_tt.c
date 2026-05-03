@@ -315,61 +315,6 @@ ipc_thread_terminate(thread_t thread)
 	ipc_port_dealloc_kernel(kport);
 }
 
-#if	0
-/*
- *	Routine:	retrieve_task_self
- *	Purpose:
- *		Return a send right (possibly null/dead)
- *		for the task's user-visible self port.
- *	Conditions:
- *		Nothing locked.
- */
-
-ipc_port_t
-retrieve_task_self(task)
-	task_t task;
-{
-	ipc_port_t port;
-
-	assert(task != TASK_NULL);
-
-	itk_lock(task);
-	if (task->itk_self != IP_NULL)
-		port = ipc_port_copy_send(task->itk_sself);
-	else
-		port = IP_NULL;
-	itk_unlock(task);
-
-	return port;
-}
-
-/*
- *	Routine:	retrieve_thread_self
- *	Purpose:
- *		Return a send right (possibly null/dead)
- *		for the thread's user-visible self port.
- *	Conditions:
- *		Nothing locked.
- */
-
-ipc_port_t
-retrieve_thread_self(thread)
-	thread_t thread;
-{
-	ipc_port_t port;
-
-	assert(thread != ITH_NULL);
-
-	ith_lock(thread);
-	if (thread->ith_self != IP_NULL)
-		port = ipc_port_copy_send(thread->ith_sself);
-	else
-		port = IP_NULL;
-	ith_unlock(thread);
-
-	return port;
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	retrieve_task_self_fast
@@ -446,61 +391,6 @@ retrieve_thread_self_fast(thread_t thread)
 	return port;
 }
 
-#if	0
-/*
- *	Routine:	retrieve_task_exception
- *	Purpose:
- *		Return a send right (possibly null/dead)
- *		for the task's exception port.
- *	Conditions:
- *		Nothing locked.
- */
-
-ipc_port_t
-retrieve_task_exception(task)
-	task_t task;
-{
-	ipc_port_t port;
-
-	assert(task != TASK_NULL);
-
-	itk_lock(task);
-	if (task->itk_self != IP_NULL)
-		port = ipc_port_copy_send(task->itk_exception);
-	else
-		port = IP_NULL;
-	itk_unlock(task);
-
-	return port;
-}
-
-/*
- *	Routine:	retrieve_thread_exception
- *	Purpose:
- *		Return a send right (possibly null/dead)
- *		for the thread's exception port.
- *	Conditions:
- *		Nothing locked.
- */
-
-ipc_port_t
-retrieve_thread_exception(thread)
-	thread_t thread;
-{
-	ipc_port_t port;
-
-	assert(thread != ITH_NULL);
-
-	ith_lock(thread);
-	if (thread->ith_self != IP_NULL)
-		port = ipc_port_copy_send(thread->ith_exception);
-	else
-		port = IP_NULL;
-	ith_unlock(thread);
-
-	return port;
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	mach_task_self [mach trap]

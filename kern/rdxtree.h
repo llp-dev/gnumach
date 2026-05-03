@@ -46,9 +46,6 @@ void rdxtree_cache_init(void);
 /*
  * This macro selects between 32 or 64-bits (the default) keys.
  */
-#if 0
-#define RDXTREE_KEY_32
-#endif
 
 #ifdef RDXTREE_KEY_32
 typedef uint32_t rdxtree_key_t;

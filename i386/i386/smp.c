@@ -165,24 +165,6 @@ smp_send_ipi_startup_twice(int bsp_apic_id, int vector)
 int smp_startup_cpus(unsigned bsp_apic_id, phys_addr_t start_eip)
 {
     int err;
-#if 0
-    /* This block goes with a legacy method of INIT that only works with
-     * old hardware that does not support SIPIs.
-     * Must use INIT DEASSERT LEVEL triggered IPI to use this block.
-     * (At least one AMD FCH does not support this IPI mode,
-     * See AMD BKDG FAM16h document # 48751 page 461).
-     */
-
-    /* Tell CMOS to warm reset through through 40:67 */
-    outb(CMOS_ADDR, CMOS_SHUTDOWN);
-    outb(CMOS_DATA, CM_JMP_467);
-
-    /* Set warm reset vector to point to AP startup code */
-    uint16_t dword[2];
-    dword[0] = 0;
-    dword[1] = start_eip >> 4;
-    memcpy((uint8_t *)phystokv(0x467), dword, 4);
-#endif
 
     /* Local cache flush */
     asm("wbinvd":::"memory");

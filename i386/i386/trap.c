@@ -125,15 +125,6 @@ void kernel_trap(struct i386_saved_state *regs)
 	code = regs->err;
 	thread = current_thread();
 
-#if 0
-((short*)0xb8700)[0] = 0x0f00+'K';
-((short*)0xb8700)[1] = 0x0f30+(type / 10);
-((short*)0xb8700)[2] = 0x0f30+(type % 10);
-#endif
-#if 0
-printf("kernel trap %d error %d\n", (int) type, (int) code);
-dump_ss(regs);
-#endif
 
 	switch (type) {
 	    case T_NO_FPU:
@@ -152,23 +143,14 @@ dump_ss(regs);
 
 		/* Get faulting linear address */
 		subcode = regs->cr2;
-#if 0
-		printf("kernel page fault at linear address %08x\n", subcode);
-#endif
 
 		/* If it's in the kernel linear address region,
 		   convert it to a kernel virtual address
 		   and use the kernel map to process the fault.  */
 		if (lintokv(subcode) == 0 ||
 			subcode >= LINEAR_MIN_KERNEL_ADDRESS) {
-#if 0
-		printf("%08x in kernel linear address range\n", subcode);
-#endif
 			map = kernel_map;
 			subcode = lintokv(subcode);
-#if 0
-		printf("now %08x\n", subcode);
-#endif
 			if (trunc_page(subcode) == 0
 			    || (subcode >= (long)_start
 				&& subcode < (long)etext)) {
@@ -310,15 +292,6 @@ int user_trap(struct i386_saved_state *regs)
 	code = 0;
 	subcode = 0;
 
-#if 0
-	((short*)0xb8700)[3] = 0x0f00+'U';
-	((short*)0xb8700)[4] = 0x0f30+(type / 10);
-	((short*)0xb8700)[5] = 0x0f30+(type % 10);
-#endif
-#if 0
-	printf("user trap %ld error %ld\n", type, code);
-	dump_ss(regs);
-#endif
 
 	switch (type) {
 
@@ -404,11 +377,6 @@ int user_trap(struct i386_saved_state *regs)
 
 	    case T_PAGE_FAULT:
 		subcode = regs->cr2;
-#if 0
-		printf("user page fault at linear address %08x\n", subcode);
-		dump_ss (regs);
-
-#endif
 		if (subcode >= LINEAR_MIN_KERNEL_ADDRESS)
 			i386_exception(EXC_BAD_ACCESS, EXC_I386_PGFLT, subcode);
 		(void) vm_fault(thread->task->map,

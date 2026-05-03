@@ -2896,18 +2896,12 @@ kdcnmaygetc(void)
 	unsigned char	c;
 	unsigned char	scancode;
 	unsigned int	char_idx;
-#ifdef	notdef
-	spl_t	o_pri;
-#endif
 	boolean_t	up;
 
 	if (! kd_initialized)
 		return -1;
 
 	kd_extended = FALSE;
-#ifdef	notdef
-	o_pri = splhi();
-#endif
 	for ( ; ; ) {
 		if (!(inb(K_STATUS) & K_OBUF_FUL))
 			return -1;
@@ -2952,9 +2946,6 @@ kdcnmaygetc(void)
 			if (c == K_SCAN) {
 				c = key_map[scancode][++char_idx];
 				kd_state = do_modifier(kd_state, c, up);
-#ifdef notdef
-				cnsetleds(state2leds(kd_state));
-#endif
 			} else if (! up
 				   && c == K_ESC
 				   && key_map[scancode][char_idx+1] == 0x5b) {
@@ -2992,9 +2983,6 @@ kdcnmaygetc(void)
 				/* regular key-down */
 				if (c == K_CR)
 					c = K_LF;
-#ifdef	notdef
-				splx(o_pri);
-#endif
 				return(c & 0177);
 			}
 		}

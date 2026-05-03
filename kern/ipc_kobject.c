@@ -114,37 +114,6 @@ ipc_kobject_server(ipc_kmsg_t request)
 	    OutP->Head.msgh_local_port  = MACH_PORT_NULL;
 	    OutP->Head.msgh_seqno = 0;
 	    OutP->Head.msgh_id = InP->msgh_id + 100;
-#if 0
-	    if (InP->msgh_id) {
-		    static long _calls;
-		    static struct { long id, count; } _counts[512];
-		    int i, id;
-
-		    id = InP->msgh_id;
-		    for (i = 0; i < 511; i++) {
-			    if (_counts[i].id == 0) {
-				    _counts[i].id = id;
-				    _counts[i].count++;
-				    break;
-			    }
-			    if (_counts[i].id == id) {
-				    _counts[i].count++;
-				    break;
-			    }
-		    }
-		    if (i == 511) {
-			    _counts[i].id = id;
-			    _counts[i].count++;
-		    }
-		    if ((++_calls & 0x7fff) == 0)
-			    for (i = 0; i < 512; i++) {
-				    if (_counts[i].id == 0)
-					    break;
-				    printf("%d: %d\n",
-					   _counts[i].id, _counts[i].count);
-			    }
-	    }
-#endif
 
 	    OutP->RetCodeType = RetCodeType;
 

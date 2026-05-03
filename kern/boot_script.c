@@ -242,12 +242,6 @@ boot_script_parse_line (void *hook, char *cmdline)
     /* Ignore comment line.  */
     return 0;
 
-#if 0
-  if (*p && *p != ' ' && *p != '\t' && *p != '\n')
-    {
-      printf ("(bootstrap): %s\n", cmdline);
-    }
-#endif
 
   for (q = p; *q && *q != ' ' && *q != '\t' && *q != '\n'; q++)
     ;

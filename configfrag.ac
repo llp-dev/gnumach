@@ -39,20 +39,6 @@ AC_DEFINE_UNQUOTED([NLPR], [$nlpr], [NLPR])
   AM_CONDITIONAL([enable_pae], [false])
 [fi]
 
-# When set, the bootstrap task symbols are preserved by the kernel debugger.
-# Used in `kern/bootstrap.c'.
-AC_DEFINE([BOOTSTRAP_SYMBOLS], [0], [BOOTSTRAP_SYMBOLS])
-
-# Restartable Atomic Sequences to get a really fast test-n-set.  Can't be
-# enabled, as the `void recover_ras()' function is missing.
-AC_DEFINE([FAST_TAS], [0], [FAST_TAS])
-
-# Cache footprint support.
-AC_DEFINE([HW_FOOTPRINT], [0], [HW_FOOTPRINT])
-
-# Counters.
-AC_DEFINE([MACH_COUNTERS], [0], [MACH_COUNTERS])
-
 # IPC debugging interface.
 AC_DEFINE([MACH_DEBUG], [1], [MACH_DEBUG])
 
@@ -69,24 +55,10 @@ AC_DEFINE([MACH_FIXPRI], [1], [MACH_FIXPRI])
 # IPC debugging calls.
 AC_DEFINE([MACH_IPC_DEBUG], [1], [MACH_IPC_DEBUG])
 
-# Testing code/printfs.
-AC_DEFINE([MACH_IPC_TEST], [0], [MACH_IPC_TEST])
-
-# Sanity-check locking.
-AC_DEFINE([MACH_LDEBUG], [0], [MACH_LDEBUG])
-
-# MP lock monitoring.  Registers use of locks, contention.  Depending on
-# hardware also records time spent with locks held.  Used in `kern/lock_mon.c'.
-AC_DEFINE([MACH_LOCK_MON], [0], [MACH_LOCK_MON])
-
 # Does the architecture provide machine-specific interfaces?
 mach_machine_routines=${mach_machine_routines-0}
 AC_DEFINE_UNQUOTED([MACH_MACHINE_ROUTINES], [$mach_machine_routines],
   [MACH_MACHINE_ROUTINES])
-
-# MP debugging.  Use alternate locking routines to detect deadlocks.  Used in
-# `kern/lock_mon.c'.
-AC_DEFINE([MACH_MP_DEBUG], [0], [MACH_MP_DEBUG])
 
 # Paged-out page map hints.
 AC_DEFINE([MACH_PAGEMAP], [1], [MACH_PAGEMAP])
@@ -117,15 +89,6 @@ AC_DEFINE([POWER_SAVE], [1], [POWER_SAVE])
 # Use statistical timing.
 AC_DEFINE([STAT_TIME], [1], [STAT_TIME])
 
-# Kernel tracing.
-AC_DEFINE([XPR_DEBUG], [0], [XPR_DEBUG])
-
-# Slab allocator debugging facilities.
-AC_DEFINE([SLAB_VERIFY], [0], [SLAB_VERIFY])
-
-# Enable the CPU pool layer in the slab allocator.
-AC_DEFINE([SLAB_USE_CPU_POOLS], [0], [SLAB_USE_CPU_POOLS])
-
 #
 # Options.
 #

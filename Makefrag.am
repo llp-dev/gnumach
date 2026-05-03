@@ -75,7 +75,6 @@ libkernel_a_SOURCES += \
 	kern/boot_script.h \
 	kern/bootstrap.c \
 	kern/bootstrap.h \
-	kern/counters.c \
 	kern/counters.h \
 	kern/cpu_number.h \
 	kern/debug.c \
@@ -105,7 +104,6 @@ libkernel_a_SOURCES += \
 	kern/list.h \
 	kern/lock.c \
 	kern/lock.h \
-	kern/lock_mon.c \
 	kern/log2.h \
 	kern/mach_clock.c \
 	kern/mach_clock.h \
@@ -122,7 +120,6 @@ libkernel_a_SOURCES += \
 	kern/priority.h \
 	kern/processor.c \
 	kern/processor.h \
-	kern/profile.c \
 	kern/queue.c \
 	kern/queue.h \
 	kern/rbtree.c \
@@ -157,8 +154,6 @@ libkernel_a_SOURCES += \
 	kern/thread_swap.h \
 	kern/timer.c \
 	kern/timer.h \
-	kern/xpr.c \
-	kern/xpr.h \
 	kern/elf-load.c \
 	kern/boot_script.c
 EXTRA_DIST += \

@@ -132,21 +132,8 @@ timeout_data_t	recompute_priorities_timer;
 decl_simple_lock_data(static,	wait_lock[NUMQUEUES])	 /* Lock for... */
 queue_head_t		wait_queue[NUMQUEUES];
 
-#ifdef MACH_LDEBUG
-#define waitq_lock(wl)		\
-MACRO_BEGIN \
-	assert_splsched(); \
-	simple_lock_nocheck(wl); \
-MACRO_END
-#define waitq_unlock(wl)	\
-MACRO_BEGIN \
-	assert_splsched(); \
-	simple_unlock_nocheck(wl); \
-MACRO_END
-#else
 #define waitq_lock(wl)		simple_lock_nocheck(wl)
 #define waitq_unlock(wl)	simple_unlock_nocheck(wl)
-#endif
 
 
 /* NOTE: we want a small positive integer out of this */
@@ -878,15 +865,6 @@ void thread_block(
 
 	s = splsched();
 
-#if	FAST_TAS
-	{
-		extern void recover_ras();
-
-		if (csw_needed(thread, myprocessor))
-			recover_ras(thread);
-	}
-#endif	/* FAST_TAS */
-
 	ast_off(cpu_number(), AST_BLOCK);
 
 	do
@@ -1267,34 +1245,6 @@ void thread_setrun(
 	     *	Not bound, any processor in the processor set is ok.
 	     */
 	    pset = th->processor_set;
-#if	HW_FOOTPRINT
-	    /*
-	     *	But first check the last processor it ran on.
-	     */
-	    processor = th->last_processor;
-	    if (processor->state == PROCESSOR_IDLE) {
-		    processor_lock(processor);
-		    pset_idle_lock();
-		    if ((processor->state == PROCESSOR_IDLE)
-#if	MACH_HOST
-			&& (processor->processor_set == pset)
-#endif	/* MACH_HOST */
-			) {
-			    queue_remove(&pset->idle_queue, processor,
-			        processor_t, processor_queue);
-			    pset->idle_count--;
-			    processor->next_thread = th;
-			    processor->state = PROCESSOR_DISPATCHING;
-			    pset_idle_unlock();
-			    processor_unlock(processor);
-			    if (processor != current_processor())
-				cause_ast_check(processor);
-		            return;
-		    }
-		    pset_idle_unlock();
-		    processor_unlock(processor);
-	    }
-#endif	/* HW_FOOTPRINT */
 
 	    if (pset->idle_count > 0) {
 		pset_idle_lock();

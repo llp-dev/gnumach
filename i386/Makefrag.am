@@ -192,16 +192,4 @@ include_mach_i386_HEADERS = \
 	i386/include/mach/i386/vm_param.h \
 	i386/include/mach/i386/vm_types.h
 
-#
-# Platform specific parts.
-#
-
-if PLATFORM_xen
-include i386/xen/Makefrag.am
-
-libkernel_a_SOURCES += \
-	i386/i386/xen.h
-
-endif
-
 endif # HOST_i386

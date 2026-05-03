@@ -107,10 +107,6 @@ extern struct device_emulation_ops linux_pcmcia_emulation_ops;
 #endif /* CONFIG_PCMCIA */
 #endif /* CONFIG_INET */
 #endif /* LINUX_DEV */
-#ifdef MACH_HYP
-extern struct device_emulation_ops hyp_block_emulation_ops;
-extern struct device_emulation_ops hyp_net_emulation_ops;
-#endif /* MACH_HYP */
 extern struct device_emulation_ops mach_device_emulation_ops;
 
 /* List of emulations.  */
@@ -125,10 +121,6 @@ static struct device_emulation_ops *emulation_list[] =
 #endif /* CONFIG_PCMCIA */
 #endif /* CONFIG_INET */
 #endif /* LINUX_DEV */
-#ifdef MACH_HYP
-  &hyp_block_emulation_ops,
-  &hyp_net_emulation_ops,
-#endif /* MACH_HYP */
   &mach_device_emulation_ops,
 };
 
@@ -334,9 +326,6 @@ io_return_t
 ds_device_intr_register (device_t dev, int id,
                          int flags, ipc_port_t receive_port)
 {
-#if defined(MACH_XEN)
-  return D_INVALID_OPERATION;
-#else /* MACH_XEN */
   kern_return_t err;
   mach_device_t mdev;
 
@@ -371,15 +360,11 @@ ds_device_intr_register (device_t dev, int id,
       ip_reference (receive_port);
     }
   return err;
-#endif /* MACH_XEN */
 }
 
 kern_return_t
 ds_device_intr_ack (device_t dev, ipc_port_t receive_port)
 {
-#if defined(MACH_XEN)
-  return D_INVALID_OPERATION;
-#else /* MACH_XEN */
   mach_device_t mdev;
   kern_return_t ret;
 
@@ -399,7 +384,6 @@ ds_device_intr_ack (device_t dev, ipc_port_t receive_port)
     ipc_port_release_send(receive_port);
 
   return ret;
-#endif /* MACH_XEN */
 }
 
 boolean_t

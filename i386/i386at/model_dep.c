@@ -41,7 +41,6 @@
 #include <mach/vm_prot.h>
 #include <mach/machine.h>
 #include <mach/machine/multiboot.h>
-#include <mach/xen.h>
 
 #include <kern/assert.h>
 #include <kern/cpu_number.h>
@@ -79,13 +78,6 @@
 #include <i386at/model_dep.h>
 #include <machine/irq.h>
 
-#ifdef	MACH_XEN
-#include <xen/console.h>
-#include <xen/store.h>
-#include <xen/evt.h>
-#include <xen/xen.h>
-#endif	/* MACH_XEN */
-
 #if	ENABLE_IMMEDIATE_CONSOLE
 #include "immc.h"
 #endif	/* ENABLE_IMMEDIATE_CONSOLE */
@@ -93,20 +85,7 @@
 #define RESERVED_BIOS 0x10000
 
 /* A copy of the multiboot info structure passed by the boot loader.  */
-#ifdef MACH_XEN
-struct start_info boot_info;
-#ifdef MACH_PSEUDO_PHYS
-unsigned long *mfn_list;
-#if VM_MIN_KERNEL_ADDRESS != LINEAR_MIN_KERNEL_ADDRESS
-unsigned long *pfn_list = (void*) PFN_LIST;
-#endif
-#endif	/* MACH_PSEUDO_PHYS */
-#if VM_MIN_KERNEL_ADDRESS != LINEAR_MIN_KERNEL_ADDRESS
-unsigned long la_shift = VM_MIN_KERNEL_ADDRESS;
-#endif
-#else	/* MACH_XEN */
 struct multiboot_raw_info boot_info;
-#endif	/* MACH_XEN */
 
 /* Command line supplied to kernel.  */
 char *kernel_cmdline = "";
@@ -144,9 +123,6 @@ void machine_init(void)
 	 */
 	init_fpu();
 
-#ifdef MACH_HYP
-	hyp_init();
-#else	/* MACH_HYP */
 #if defined(APIC)
 	int err;
 
@@ -180,19 +156,16 @@ void machine_init(void)
 	 * Find the devices
 	 */
 	probeio();
-#endif	/* MACH_HYP */
 
 	/*
 	 * Get the time
 	 */
 	inittodr();
 
-#ifndef MACH_HYP
 	/*
 	 * Tell the BIOS not to clear and test memory.
 	 */
 	*(unsigned short *)phystokv(0x472) = 0x1234;
-#endif	/* MACH_HYP */
 
 #if VM_MIN_KERNEL_ADDRESS == 0
 	/*
@@ -203,7 +176,6 @@ void machine_init(void)
 	pmap_unmap_page_zero();
 #endif
 
-#ifndef MACH_XEN
 #if NCPUS > 1
 	/*
 	 * Patch the realmode gdt with the correct offset and the first jmp to
@@ -220,7 +192,6 @@ void machine_init(void)
 	*(uint32_t *)phystokv(&apboot_jmp_offset) += apboot_addr;
 #endif
 #endif
-#endif
 
 #ifdef APIC
 	/*
@@ -233,12 +204,8 @@ void machine_init(void)
 /* Conserve power on processor CPU.  */
 void machine_idle (int cpu)
 {
-#ifdef	MACH_HYP
-  hyp_idle();
-#else	/* MACH_HYP */
   assert (cpu == cpu_number ());
   asm volatile ("hlt" : : : "memory");
-#endif	/* MACH_HYP */
 }
 
 void machine_relax (void)
@@ -251,13 +218,9 @@ void machine_relax (void)
  */
 void halt_cpu(void)
 {
-#ifdef	MACH_HYP
-	hyp_halt();
-#else	/* MACH_HYP */
 	asm volatile("cli");
 	while (TRUE)
 	  machine_idle (cpu_number ());
-#endif	/* MACH_HYP */
 }
 
 /*
@@ -266,16 +229,10 @@ void halt_cpu(void)
 void halt_all_cpus(boolean_t reboot)
 {
 	if (reboot) {
-#ifdef	MACH_HYP
-	    hyp_reboot();
-#endif	/* MACH_HYP */
 	    kdreboot();
 	}
 	else {
 	    rebootflag = TRUE;
-#ifdef	MACH_HYP
-	    hyp_halt();
-#endif	/* MACH_HYP */
 	    printf("Shutdown completed successfully, now in tight loop.\n");
 	    printf("You can safely power off the system or hit ctl-alt-del to reboot\n");
 	    (void) spl0();
@@ -293,8 +250,6 @@ void db_reset_cpu(void)
 {
 	halt_all_cpus(1);
 }
-
-#ifndef	MACH_HYP
 
 static void
 register_boot_data(const struct multiboot_raw_info *mbi)
@@ -358,8 +313,6 @@ register_boot_data(const struct multiboot_raw_info *mbi)
 	mbinfo_register_boot_data(mbi);
 }
 
-#endif /* MACH_HYP */
-
 /*
  * Basic PC VM initialization.
  * Turns on paging and changes the kernel segments to use high linear addresses.
@@ -370,29 +323,18 @@ i386at_init(void)
 	/*
 	 * Initialize the PIC prior to any possible call to an spl.
 	 */
-#ifndef	MACH_HYP
-# ifdef APIC
+#ifdef APIC
 	picdisable();
-# else
+#else
 	picinit();
-# endif
-#else	/* MACH_HYP */
-	hyp_intrinit();
-#endif	/* MACH_HYP */
+#endif
 
 	/*
 	 * Read memory map and load it into the physical page allocator.
 	 */
-#ifdef MACH_HYP
-	biosmem_xen_bootstrap();
-#else /* MACH_HYP */
 	register_boot_data((struct multiboot_raw_info *) &boot_info);
 	biosmem_bootstrap((struct multiboot_raw_info *) &boot_info);
-#endif /* MACH_HYP */
 
-#ifdef MACH_XEN
-	kernel_cmdline = (char*) boot_info.cmd_line;
-#else	/* MACH_XEN */
 	vm_offset_t addr;
 
 	/* Copy content pointed by boot_info before losing access to it when it
@@ -435,7 +377,6 @@ i386at_init(void)
 			m[i].string = addr;
 		}
 	}
-#endif	/* MACH_XEN */
 
 	/*
 	 *	Initialize kernel physical map, mapping the
@@ -455,7 +396,6 @@ i386at_init(void)
 	pmap_make_temporary_mapping();
 	pmap_set_page_dir();
 
-#ifndef	MACH_HYP
 	/* Turn paging on.
 	 * Also set the WP bit so that on 486 or better processors
 	 * page-level write protection works in kernel mode.
@@ -464,36 +404,24 @@ i386at_init(void)
 	set_cr0(get_cr0() & ~(CR0_CD | CR0_NW));
 	if (CPU_HAS_FEATURE(CPU_FEATURE_PGE))
 		set_cr4(get_cr4() | CR4_PGE);
-#endif	/* MACH_HYP */
 	flush_instr_queue();
-#ifdef	MACH_PV_PAGETABLES
-	pmap_clear_bootstrap_pagetable((void *)boot_info.pt_base);
-#endif	/* MACH_PV_PAGETABLES */
 
 	/*
 	 * Initialize and activate the real i386 protected-mode structures.
 	 */
 	gdt_init();
 	idt_init();
-#ifndef	MACH_HYP
 	int_init();
-#endif	/* MACH_HYP */
 	ldt_init();
 	ktss_init();
 
-#ifndef MACH_XEN
 	init_percpu(0);
-#endif
 #if NCPUS > 1
 	/* Initialize SMP structures in the master processor */
 	mp_desc_init(0);
 #endif // NCPUS
 
 	pmap_remove_temporary_mapping();
-
-#ifdef	MACH_XEN
-	hyp_p2m_init();
-#endif	/* MACH_XEN */
 
 	interrupt_stack_alloc();
 	spl_init = 1;
@@ -518,17 +446,6 @@ void c_boot_entry(vm_offset_t bi)
 	   it will be stored and printed at the first opportunity.  */
 	printf("%s", version);
 	printf("\n");
-
-#ifdef MACH_XEN
-	printf("Running on %s.\n", boot_info.magic);
-	if (boot_info.flags & SIF_PRIVILEGED)
-		panic("Mach can't run as dom0.");
-#ifdef MACH_PSEUDO_PHYS
-	mfn_list = (void*)boot_info.mfn_list;
-#endif
-#else	/* MACH_XEN */
-
-#endif	/* MACH_XEN */
 
 	cpu_type = discover_x86_cpu_type ();
 
@@ -595,9 +512,7 @@ startrtclock(void)
 	}
 #else
 	clkstart();
-#ifndef MACH_HYP
 	unmask_irq(0);
-#endif
 #endif
 }
 

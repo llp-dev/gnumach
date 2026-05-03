@@ -38,7 +38,6 @@
 #include <i386/i386/msr.h>
 #include <i386/i386/i386asm.h>
 #include <i386/i386/cpu_number.h>
-#include <i386/i386/xen.h>
 
 
 /*
@@ -631,11 +630,7 @@ ENTRY(t_page_fault)
 	INT_FIX
 	pushq	$(T_PAGE_FAULT)		/* mark a page fault trap */
 	pusha				/* save the general registers */
-#ifdef	MACH_XEN
-	movq	%ss:hyp_shared_info+CR2,%rax
-#else	/* MACH_XEN */
 	movq	%cr2,%rax		/* get the faulting address */
-#endif	/* MACH_XEN */
 	movq	%rax,R_CR2-R_R15(%rsp)	/* save in rsp save slot */
 	jmp	trap_push_segs		/* continue fault */
 

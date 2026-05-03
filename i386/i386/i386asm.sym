@@ -46,7 +46,6 @@
 #include <i386/ldt.h>
 #include <i386/mp_desc.h>
 #include <i386/apic.h>
-#include <i386/xen.h>
 
 expr	CALL_AST_CHECK
 expr	CALL_PMAP_UPDATE
@@ -137,9 +136,6 @@ expr	VM_MIN_ADDRESS
 expr	VM_MAX_ADDRESS
 expr	VM_MIN_KERNEL_ADDRESS				KERNELBASE
 expr	KERNEL_STACK_SIZE
-#if defined MACH_PSEUDO_PHYS && (VM_MIN_KERNEL_ADDRESS == LINEAR_MIN_KERNEL_ADDRESS)
-expr    PFN_LIST					pfn_list
-#endif
 
 #if PAE
 expr	PDPSHIFT
@@ -176,15 +172,5 @@ offset	thread			th	system_timer
 offset	thread			th	user_timer
 #endif
 
-#ifdef	MACH_XEN
-offset	shared_info		si	vcpu_info[0].evtchn_upcall_mask	CPU_CLI
-offset	shared_info		si	vcpu_info[0].evtchn_upcall_pending	CPU_PENDING
-offset	shared_info		si	vcpu_info[0].evtchn_pending_sel	CPU_PENDING_SEL
-offset	shared_info		si	evtchn_pending	PENDING
-offset	shared_info		si	evtchn_mask	EVTMASK
-#ifdef	MACH_PV_PAGETABLES
-offset	shared_info		si	vcpu_info[0].arch.cr2	CR2
-#endif	/* MACH_PV_PAGETABLES */
-#endif	/* MACH_XEN */
 
 offset	mach_msg_header		msgh	msgh_size

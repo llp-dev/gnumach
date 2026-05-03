@@ -91,6 +91,5 @@ extern void minphys(io_req_t);
  * Alternate name for iodone
  */
 #define	biodone	iodone
-#define biowait iowait
 
 #endif /* _DEVICE_BUF_H_ */

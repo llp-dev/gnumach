@@ -182,53 +182,6 @@ void	thread_read_times(
 
 
 /*
- *
- * 	Db_timer_grab(): used by db_thread_read_times. An nonblocking
- *      version of db_thread_get_times. Keep coherent with timer_grab
- *      above.
- *
- */
-static void db_timer_grab(
-	timer_t		timer,
-	timer_save_t	save)
-{
-  /* Don't worry about coherency */
-
-  (save)->high = (timer)->high_bits;
-  (save)->low = (timer)->low_bits;
-}
-
-static void
-nonblocking_timer_read(
-	timer_t 	timer,
-	time_value64_t 	*tv)
-{
-	timer_save_data_t	temp;
-
-	db_timer_grab(timer, &temp);
-	/*
-	 *	Normalize the result
-	 */
-	TIMER_TO_TIME_VALUE64(tv, &temp);
-}
-
-/*
- *      Db_thread_read_times: A version of thread_read_times that
- *      can be called by the debugger. This version does not call
- *      timer_grab, which can block. Please keep it up to date with
- *      thread_read_times above.
- *
- */
-void	db_thread_read_times(
-	thread_t 	thread,
-	time_value64_t	*user_time_p,
-	time_value64_t	*system_time_p)
-{
-	nonblocking_timer_read(&thread->user_timer, user_time_p);
-	nonblocking_timer_read(&thread->system_timer, system_time_p);
-}
-
-/*
  *	timer_delta takes the difference of a saved timer value
  *	and the current one, and updates the saved value to current.
  *	The difference is returned as a function value.  See

@@ -488,11 +488,6 @@ const char * vm_page_seg_name(unsigned int seg_index);
 void vm_page_info_all(void);
 
 /*
- * Return the maximum physical address for a given segment selector.
- */
-phys_addr_t vm_page_seg_end(unsigned int selector);
-
-/*
  * Return the total number of physical pages.
  */
 unsigned long vm_page_table_size(void);

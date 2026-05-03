@@ -1834,12 +1834,6 @@ vm_page_info_all(void)
     }
 }
 
-phys_addr_t
-vm_page_seg_end(unsigned int selector)
-{
-    return vm_page_segs[vm_page_select_alloc_seg(selector)].end;
-}
-
 static unsigned long
 vm_page_boot_table_size(void)
 {

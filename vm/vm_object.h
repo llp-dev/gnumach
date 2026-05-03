@@ -364,11 +364,4 @@ vm_object_reference_locked (vm_object_t obj)
   return (++obj->ref_count);
 }
 
-/* Remove a reference from a locked VM object. */
-static inline int
-vm_object_unreference_locked (vm_object_t obj)
-{
-  return (--obj->ref_count);
-}
-
 #endif	/* _VM_VM_OBJECT_H_ */

@@ -55,8 +55,6 @@ boolean_t	ds_open_done(io_req_t);
 boolean_t	ds_read_done(io_req_t);
 boolean_t	ds_write_done(io_req_t);
 
-void		iowait (io_req_t ior);
-
 kern_return_t	device_pager_setup(
 	const mach_device_t	device,
 	int			prot,

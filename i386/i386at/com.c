@@ -620,6 +620,17 @@ comst_3++;
 		return;
 	}
 
+	nch = getc(&tp->t_outq);
+	if (nch == -1)
+		return;
+	if ((nch & 0200) && ((tp->t_flags & LITOUT) == 0)) {
+	    timeout((timer_func_t *)ttrstrt, (char *)tp, (nch & 0x7f) + 6);
+	    tp->t_state |= TS_TIMEOUT;
+comst_4++;
+	    return;
+	}
+	outb(TXRX((uintptr_t)tp->t_addr), nch);
+	tp->t_state |= TS_BUSY;
 }
 
 /* Check for stuck xmitters */
@@ -763,36 +774,6 @@ comstop(
 {
 	if ((tp->t_state & TS_BUSY) && (tp->t_state & TS_TTSTOP) == 0)
 	    tp->t_state |= TS_FLUSH;
-}
-
-/*
- *
- * Code to be called from debugger.
- *
- */
-void compr_addr(vm_offset_t addr)
-{
-	/* The two line_stat prints may show different values, since
-	*  touching some of the registers constitutes changing them.
-	*/
-	printf("LINE_STAT(%zu) %x\n",
-		LINE_STAT(addr), inb(LINE_STAT(addr)));
-
-	printf("TXRX(%zu) %x, INTR_ENAB(%zu) %x, INTR_ID(%zu) %x, LINE_CTL(%zu) %x,\n\
-MODEM_CTL(%zu) %x, LINE_STAT(%zu) %x, MODEM_STAT(%zu) %x\n",
-	TXRX(addr), 	 inb(TXRX(addr)),
-	INTR_ENAB(addr), inb(INTR_ENAB(addr)),
-	INTR_ID(addr), 	 inb(INTR_ID(addr)),
-	LINE_CTL(addr),  inb(LINE_CTL(addr)),
-	MODEM_CTL(addr), inb(MODEM_CTL(addr)),
-	LINE_STAT(addr), inb(LINE_STAT(addr)),
-	MODEM_STAT(addr),inb(MODEM_STAT(addr)));
-}
-
-int compr(int unit)
-{
-	compr_addr(cominfo[unit]->address);
-	return(0);
 }
 
 int

@@ -193,9 +193,4 @@ void slab_init(void);
  */
 void slab_collect(void);
 
-/*
- * Display a summary of all kernel caches.
- */
-void slab_info(void);
-
 #endif /* _KERN_SLAB_H */

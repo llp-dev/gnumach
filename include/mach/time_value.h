@@ -65,9 +65,8 @@ struct time_value64 {
 };
 typedef struct time_value64 time_value64_t;
 
-/**
+/*
  * Functions used by Mig to perform user to kernel conversion and vice-versa.
- * We only do this because we may run a 64 bit kernel with a 32 bit user space.
  */
 static __inline__ rpc_time_value_t convert_time_value_to_user(time_value_t tv)
 {

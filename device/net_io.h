@@ -111,14 +111,6 @@ net_do_filter(
 	unsigned int	data_count,
 	const char *	header); /* CSPF */
 
-io_return_t
-net_set_filter(
-	struct ifnet	*ifp,
-	ipc_port_t	rcv_port,
-	int		priority,
-	filter_t	*filter,
-	unsigned int	filter_count);
-
 extern int
 bpf_do_filter(
 	net_rcv_port_t		infp,
@@ -140,18 +132,6 @@ int hash_ent_remove(
 void net_free_dead_infp(queue_entry_t dead_infp);
 void net_free_dead_entp (queue_entry_t dead_entp);
 
-int bpf_validate(
-	bpf_insn_t 	f,
-	int 		bytes,
-	bpf_insn_t 	*match);
-
-int bpf_eq(
-	bpf_insn_t 	f1,
-	bpf_insn_t 	f2,
-	int 		bytes);
-
-int net_add_q_info(ipc_port_t rcv_port);
-
 int bpf_match (
 	net_hash_header_t 	hash,
 	int 			n_keys,
@@ -159,6 +139,5 @@ int bpf_match (
 	net_hash_entry_t 	**hash_headpp,
 	net_hash_entry_t 	*entpp);
 
-boolean_t ethernet_priority(const ipc_kmsg_t kmsg);
 
 #endif	/* _DEVICE_NET_IO_H_ */

@@ -618,22 +618,6 @@ struct kbentry {
 extern	int	kb_mode;
 #endif
 
-struct X_kdb {
-	u_int *ptr;
-	u_int size;
-};
-
-#define K_X_KDB_ENTER	_IOW('K', 16, struct X_kdb)
-#define K_X_KDB_EXIT	_IOW('K', 17, struct X_kdb)
-
-#define K_X_IN		0x01000000
-#define K_X_OUT		0x02000000
-#define K_X_BYTE	0x00010000
-#define K_X_WORD	0x00020000
-#define K_X_LONG	0x00040000
-#define K_X_TYPE	0x03070000
-#define K_X_PORT	0x0000ffff
-
 extern boolean_t kd_isupper (u_char);
 extern boolean_t kd_islower (u_char);
 extern void kd_senddata (unsigned char);

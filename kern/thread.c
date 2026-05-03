@@ -2543,24 +2543,6 @@ kern_return_t processor_set_stack_usage(
 	return KERN_SUCCESS;
 }
 
-/*
- *	Useful in the debugger:
- */
-void
-thread_stats(void)
-{
-	thread_t thread;
-	int total = 0, rpcreply = 0;
-
-	queue_iterate(&default_pset.threads, thread, thread_t, pset_threads) {
-		total++;
-		if (thread->ith_rpc_reply != IP_NULL)
-			rpcreply++;
-	}
-
-	printf("%d total threads.\n", total);
-	printf("%d using rpc_reply.\n", rpcreply);
-}
 
 /*
  *	thread_set_name

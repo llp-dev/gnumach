@@ -300,17 +300,6 @@ ipc_reverse_remove(ipc_space_t space,
 	return rdxtree_remove(&space->is_reverse_map, KEY(obj));
 }
 
-/* Remove all entries from the reverse mapping.  SPACE must be
-   write-locked.  */
-static inline void
-ipc_reverse_remove_all(ipc_space_t space)
-{
-	assert(space != IS_NULL);
-	rdxtree_remove_all(&space->is_reverse_map);
-	assert(space->is_reverse_map.height == 0);
-	assert(space->is_reverse_map.root == NULL);
-}
-
 /* Return ENTRY related to OBJ, or NULL if no such entry is found in
    the reverse mapping.  SPACE must be read-locked or
    write-locked.  */

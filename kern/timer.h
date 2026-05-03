@@ -153,10 +153,4 @@ extern void init_timers(void);
 
 void timer_init(timer_t this_timer);
 
-void	db_thread_read_times(
-	thread_t 	thread,
-	time_value64_t	*user_time_p,
-	time_value64_t	*system_time_p);
-
-
 #endif	/* _KERN_TIMER_H_ */

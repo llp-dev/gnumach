@@ -303,50 +303,6 @@ convert_device_to_port(const device_t	device)
 }
 
 /*
- * Call a supplied routine on each device, passing it
- * the port as an argument.  If the routine returns TRUE,
- * stop the search and return TRUE.  If none returns TRUE,
- * return FALSE.
- */
-boolean_t
-dev_map(
-	dev_map_fn	routine,
-	mach_port_t	port)
-{
-	int		i;
-	queue_t		q;
-	mach_device_t	dev, prev_dev;
-
-	for (i = 0, q = &dev_number_hash_table[0];
-	     i < NDEVHASH;
-	     i++, q++) {
-	    prev_dev = MACH_DEVICE_NULL;
-	    simple_lock(&dev_number_lock);
-	    queue_iterate(q, dev, mach_device_t, number_chain) {
-		mach_device_reference(dev);
-		simple_unlock(&dev_number_lock);
-		if (prev_dev != MACH_DEVICE_NULL)
-		    mach_device_deallocate(prev_dev);
-
-		if ((*routine)(dev, port)) {
-		    /*
-		     * Done
-		     */
-		    mach_device_deallocate(dev);
-		    return (TRUE);
-		}
-
-		simple_lock(&dev_number_lock);
-		prev_dev = dev;
-	    }
-	    simple_unlock(&dev_number_lock);
-	    if (prev_dev != MACH_DEVICE_NULL)
-		mach_device_deallocate(prev_dev);
-	}
-	return (FALSE);
-}
-
-/*
  * Initialization
  */
 void

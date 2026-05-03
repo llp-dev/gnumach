@@ -1179,50 +1179,6 @@ void kfree(vm_offset_t data, vm_size_t size)
     }
 }
 
-static void _slab_info(int (printx)(const char *fmt, ...))
-{
-    struct kmem_cache *cache;
-    vm_size_t mem_usage, mem_reclaimable, mem_total, mem_total_reclaimable;
-
-    mem_total = 0;
-    mem_total_reclaimable = 0;
-
-    printx("cache                         obj slab  bufs   objs   bufs"
-           "    total reclaimable\n"
-           "name                 flags   size size /slab  usage  count"
-           "   memory      memory\n");
-
-    simple_lock(&kmem_cache_list_lock);
-
-    list_for_each_entry(&kmem_cache_list, cache, node) {
-        simple_lock(&cache->lock);
-
-        mem_usage = (cache->nr_slabs * cache->slab_size) >> 10;
-        mem_reclaimable = (cache->nr_free_slabs * cache->slab_size) >> 10;
-
-        printx("%-20s %04x %7lu %3luk  %4lu %6lu %6lu %7uk %10uk\n",
-               cache->name, cache->flags, cache->obj_size,
-               cache->slab_size >> 10,
-               cache->bufs_per_slab, cache->nr_objs, cache->nr_bufs,
-               mem_usage, mem_reclaimable);
-
-        simple_unlock(&cache->lock);
-
-        mem_total += mem_usage;
-        mem_total_reclaimable += mem_reclaimable;
-    }
-
-    simple_unlock(&kmem_cache_list_lock);
-
-    printx("total: %uk, reclaimable: %uk\n",
-           mem_total, mem_total_reclaimable);
-}
-
-void slab_info(void)
-{
-    _slab_info(printf);
-}
-
 kern_return_t host_slab_info(host_t host, cache_info_array_t *infop,
                              unsigned int *infoCntp)
 {

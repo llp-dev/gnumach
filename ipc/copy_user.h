@@ -25,32 +25,6 @@
 #include <machine/locore.h>
 #include <mach/message.h>
 
-/*
- * The copyin_32to64() and copyout_64to32() routines are meant for data types
- * that have different size in kernel and user space. They should be independent
- * of endianness and hopefully can be reused on all archs.
- * These types are e.g.:
- * - port names vs port pointers, on a 64-bit kernel
- * - memory addresses, on a 64-bit kernel and 32-bit user
- */
-
-static inline int copyin_32to64(const uint32_t *uaddr, uint64_t *kaddr)
-{
-  uint32_t rkaddr;
-  int ret;
-  ret = copyin(uaddr, &rkaddr, sizeof(uint32_t));
-  if (ret)
-    return ret;
-  *kaddr = rkaddr;
-  return 0;
-}
-
-static inline int copyout_64to32(const uint64_t *kaddr, uint32_t *uaddr)
-{
-  uint32_t rkaddr=*kaddr;
-  return copyout(&rkaddr, uaddr, sizeof(uint32_t));
-}
-
 static inline int copyin_address(const rpc_vm_offset_t *uaddr, vm_offset_t *kaddr)
 {
   return copyin(uaddr, kaddr, sizeof(*uaddr));

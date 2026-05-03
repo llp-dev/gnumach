@@ -670,24 +670,6 @@ boot_script_set_variable (const char *name, int type, long val)
 }
 
 
-/* Define the function NAME, which will return type RET_TYPE.  */
-int
-boot_script_define_function (const char *name, int ret_type,
-			     int (*func) (const struct cmd *cmd, int *val))
-{
-  struct sym *sym = sym_enter (name);
-
-  if (sym)
-    {
-      sym->type = VAL_FUNC;
-      sym->val = (long) func;
-      sym->ret_type = ret_type;
-      sym->run_on_exec = ret_type == VAL_NONE;
-    }
-  return sym ? 0 : 1;
-}
-
-
 /* Return a string describing ERR.  */
 char *
 boot_script_error_string (int err)

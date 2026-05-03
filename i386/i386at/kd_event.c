@@ -184,10 +184,6 @@ io_return_t kbdsetstat(
 	            return (D_INVALID_OPERATION);
 		kd_setleds1 (*data);
 		break;
-	    case K_X_KDB_ENTER:
-		return X_kdb_enter_init((unsigned int *)data, count);
-	    case K_X_KDB_EXIT:
-		return X_kdb_exit_init((unsigned int *)data, count);
 	    default:
 		return (D_INVALID_OPERATION);
 	}
@@ -308,85 +304,3 @@ kbd_enqueue(kd_event *ev)
 	}
 }
 
-u_int X_kdb_enter_str[512], X_kdb_exit_str[512];
-int   X_kdb_enter_len = 0,  X_kdb_exit_len = 0;
-
-static void
-kdb_in_out(const u_int *p)
-{
-	int t = p[0];
-
-	switch (t & K_X_TYPE) {
-		case K_X_IN|K_X_BYTE:
-			inb(t & K_X_PORT);
-			break;
-
-		case K_X_IN|K_X_WORD:
-			inw(t & K_X_PORT);
-			break;
-
-		case K_X_IN|K_X_LONG:
-			inl(t & K_X_PORT);
-			break;
-
-		case K_X_OUT|K_X_BYTE:
-			outb(t & K_X_PORT, p[1]);
-			break;
-
-		case K_X_OUT|K_X_WORD:
-			outw(t & K_X_PORT, p[1]);
-			break;
-
-		case K_X_OUT|K_X_LONG:
-			outl(t & K_X_PORT, p[1]);
-			break;
-	}
-}
-
-void
-X_kdb_enter(void)
-{
-	u_int *u_ip, *endp;
-
-	for (u_ip = X_kdb_enter_str, endp = &X_kdb_enter_str[X_kdb_enter_len];
-	     u_ip < endp;
-	     u_ip += 2)
-	    kdb_in_out(u_ip);
-}
-
-void
-X_kdb_exit(void)
-{
-	u_int *u_ip, *endp;
-
-	for (u_ip = X_kdb_exit_str, endp = &X_kdb_exit_str[X_kdb_exit_len];
-	     u_ip < endp;
-	     u_ip += 2)
-	   kdb_in_out(u_ip);
-}
-
-io_return_t
-X_kdb_enter_init(
-    u_int *data,
-    u_int count)
-{
-    if (count * sizeof X_kdb_enter_str[0] > sizeof X_kdb_enter_str)
-	return D_INVALID_OPERATION;
-
-    memcpy(X_kdb_enter_str, data, count * sizeof X_kdb_enter_str[0]);
-    X_kdb_enter_len = count;
-    return D_SUCCESS;
-}
-
-io_return_t
-X_kdb_exit_init(
-    u_int *data,
-    u_int count)
-{
-    if (count * sizeof X_kdb_exit_str[0] > sizeof X_kdb_exit_str)
-	return D_INVALID_OPERATION;
-
-    memcpy(X_kdb_exit_str, data, count * sizeof X_kdb_exit_str[0]);
-    X_kdb_exit_len = count;
-    return D_SUCCESS;
-}

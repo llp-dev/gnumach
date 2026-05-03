@@ -60,7 +60,6 @@
 #include "debug.h"
 
 /* Called from assembly (locore.S) */
-void handle_double_fault(struct i386_saved_state *regs);
 
 
 
@@ -484,8 +483,3 @@ interrupted_pc(const thread_t t)
 }
 #endif	/* MACH_PCSAMPLE > 0 */
 
-void handle_double_fault(struct i386_saved_state *regs)
-{
-  dump_ss(regs);
-  panic("DOUBLE FAULT! This is critical\n");
-}

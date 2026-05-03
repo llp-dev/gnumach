@@ -100,10 +100,6 @@ int boot_script_exec (void);
    non-zero otherwise.  */
 int boot_script_set_variable (const char *name, int type, long val);
 
-/* Define the function NAME, which will return type RET_TYPE.  */
-int boot_script_define_function (const char *name, int ret_type,
-				 int (*func) (const struct cmd *cmd, int *val));
-
 /* Returns a string describing the error ERR.  */
 char *boot_script_error_string (int err);
 

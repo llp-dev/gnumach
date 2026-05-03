@@ -1602,23 +1602,6 @@ void mach_device_init(void)
 	mach_device_trap_init();
 }
 
-void iowait(io_req_t ior)
-{
-    spl_t s;
-
-    s = splio();
-    ior_lock(ior);
-    while ((ior->io_op&IO_DONE)==0) {
-	assert_wait((event_t)ior, FALSE);
-	ior_unlock(ior);
-	thread_block((void (*)()) 0);
-        ior_lock(ior);
-    }
-    ior_unlock(ior);
-    splx(s);
-}
-
-
 /*
  * Device trap support.
  */

@@ -336,43 +336,8 @@ short	char_byte_width	= 0;		/* char_width/NBBY */
 short	fb_byte_width	= 0;		/* fb_width/NBBY */
 short	font_byte_width	= 0;		/* num bytes in 1 scan line of font */
 
-/*
- * Switch for poll vs. interrupt.
- */
-int	kd_pollc = 0;
-
 
 extern boolean_t	mouse_in_use;
-int			old_kb_mode;
-
-void
-cnpollc(boolean_t on)
-{
-	if (mouse_in_use) {
-		if (on) {
-		    /* switch into X */
-		    old_kb_mode = kb_mode;
-		    kb_mode = KB_ASCII;
-		    X_kdb_enter();
-
-		    kd_pollc++;
-		} else {
-		    --kd_pollc;
-
-		    /* switch out of X */
-		    X_kdb_exit();
-		    kb_mode = old_kb_mode;
-		}
-	} else {
-		if (on) {
-		    kd_pollc++;
-		} else {
-		    --kd_pollc;
-		}
-	}
-}
-
-
 
 /*
  * kdopen:
@@ -661,17 +626,10 @@ kdintr(int vec)
 	unsigned int	char_idx;
 	boolean_t	up = FALSE;		/* key-up event */
 
-	if (kd_pollc)
-	    return;				/* kdb polling kbd */
-
 	if (!kd_initialized)
 		return;
 
 	tp = &kd_tty;
-#ifdef	old
-	while ((inb(K_STATUS) & K_OBUF_FUL) == 0)
-		;	/* this should never loop */
-#else	/* old */
 	{
 		/*
 		 * Allow for keyboards that raise interrupt before
@@ -693,7 +651,6 @@ kdintr(int vec)
 		while ((inb(K_STATUS) & K_OBUF_FUL) == 0)
 			if (!safety--) break;  /* XXX */
 	}
-#endif	/* old */
 	/*
 	 * We may have seen a mouse event.
 	 */

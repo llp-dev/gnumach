@@ -65,13 +65,7 @@
 #include <device/device_init.h>
 #include <device/intr.h>
 
-#if MACH_KDB
-#include <device/cons.h>
-#endif /* MACH_KDB */
-
-#if ! MACH_KBD
 boolean_t reboot_on_panic = TRUE;
-#endif
 
 #if	NCPUS > 1
 #include <machine/mp_desc.h>
@@ -93,22 +87,9 @@ void setup_main(void)
 	thread_t		startup_thread;
 	phys_addr_t		memsize;
 
-#if	MACH_KDB
-	/*
-	 * Cause a breakpoint trap to the debugger before proceeding
-	 * any further if the proper option flag was specified
-	 * on the kernel's command line.
-	 * XXX check for surrounding spaces.
-	 */
-	if (strstr(kernel_cmdline, "-d ")) {
-	    cninit();		/* need console for debugger */
-	    SoftDebugger("init");
-	}
-#else	/* MACH_KDB */
 	if (strstr (kernel_cmdline, "-H ")) {
 	    reboot_on_panic = FALSE;
 	}
-#endif	/* MACH_KDB */
 
 	panic_init();
 

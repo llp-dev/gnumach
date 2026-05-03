@@ -308,10 +308,6 @@ MACRO_BEGIN \
 	splx(s); \
 MACRO_END
 
-#if	MACH_KDB
-extern void db_show_all_slocks(void);
-#endif	/* MACH_KDB */
-
 extern void lip(void);
 
 #endif	/* _KERN_LOCK_H_ */

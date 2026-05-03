@@ -48,8 +48,6 @@
 #include <kern/printf.h>
 #include <kern/mach_clock.h>
 #include <machine/ipl.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_output.h>
 
 def_simple_lock_data(, kdb_lock)
 def_simple_lock_data(, printf_lock)

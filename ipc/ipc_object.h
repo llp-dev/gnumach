@@ -163,7 +163,4 @@ ipc_object_copyout_dest(ipc_space_t, ipc_object_t,
 extern kern_return_t
 ipc_object_rename(ipc_space_t, mach_port_name_t, mach_port_name_t);
 
-extern void
-ipc_object_print(ipc_object_t);
-
 #endif	/* _IPC_IPC_OBJECT_H_ */

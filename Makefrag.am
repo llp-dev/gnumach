@@ -128,7 +128,6 @@ libkernel_a_SOURCES += \
 	kern/rdxtree.c \
 	kern/rdxtree.h \
 	kern/rdxtree_i.h \
-	kern/refcount.h \
 	kern/slab.c \
 	kern/slab.h \
 	kern/smp.h \
@@ -136,7 +135,6 @@ libkernel_a_SOURCES += \
 	kern/sched.h \
 	kern/sched_prim.c \
 	kern/sched_prim.h \
-	kern/shuttle.h \
 	kern/startup.c \
 	kern/startup.h \
 	kern/strings.c \
@@ -234,7 +232,6 @@ libkernel_a_SOURCES += \
 	device/device_emul.h \
 	device/dev_hdr.h \
 	device/dev_lookup.c \
-	device/dev_master.h \
 	device/dev_name.c \
 	device/dev_pager.c \
 	device/dev_pager.h \

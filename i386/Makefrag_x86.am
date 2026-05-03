@@ -33,7 +33,6 @@ libkernel_a_SOURCES += \
 	i386/i386/ipl.h \
 	i386/i386/ktss.c \
 	i386/i386/ktss.h \
-	i386/i386/kttd_machdep.h \
 	i386/i386/ldt.c \
 	i386/i386/ldt.h \
 	i386/i386/lock.h \
@@ -52,7 +51,6 @@ libkernel_a_SOURCES += \
 	i386/i386/pio.h \
 	i386/i386/pmap.h \
 	i386/i386/proc_reg.h \
-	i386/i386/sched_param.h \
 	i386/i386/seg.h \
 	i386/i386/smp.c \
 	i386/i386/smp.h \
@@ -60,7 +58,6 @@ libkernel_a_SOURCES += \
 	i386/i386/strings.c \
 	i386/i386/task.h \
 	i386/i386/thread.h \
-	i386/i386/time_stamp.h \
 	i386/i386/trap.c \
 	i386/i386/trap.h \
 	i386/i386/tss.h \

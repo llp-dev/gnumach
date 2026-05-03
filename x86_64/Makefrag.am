@@ -50,7 +50,6 @@ libkernel_a_SOURCES += \
 	i386/i386at/comreg.h \
 	i386/i386at/cram.h \
 	x86_64/cpuboot.S \
-	i386/i386at/disk.h \
 	i386/i386at/i8250.h \
 	i386/i386at/immc.c \
 	i386/i386at/int_init.c \

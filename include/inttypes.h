@@ -23,13 +23,8 @@
 
 #include <stdint.h>
 
-#ifdef __x86_64__
-#define __64PREFIX "l"
-#define __PTRPREFIX "l"
-#else
 #define __64PREFIX "ll"
 #define __PTRPREFIX
-#endif
 
 #define PRId8		"d"
 #define PRId16		"d"

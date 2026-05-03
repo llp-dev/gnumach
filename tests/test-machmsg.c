@@ -560,11 +560,7 @@ void test_recv_interrupted_setreturn(void)
                          (thread_state_t) &state, &count);
   ASSERT_RET(ret, "thread_get_state()");
 
-#ifdef __i386__
   state.eax = 123;
-#elif defined(__x86_64__)
-  state.rax = 123;
-#endif
   ret = thread_set_state(th, i386_REGS_SEGS_STATE,
                          (thread_state_t) &state, i386_THREAD_STATE_COUNT);
   ASSERT_RET(ret, "thread_set_state");

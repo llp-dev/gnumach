@@ -114,19 +114,11 @@
 /*
  * Redzone guard word.
  */
-#ifdef __LP64__
-#if _HOST_BIG_ENDIAN
-#define KMEM_REDZONE_WORD 0xfeedfacefeedfaceUL
-#else /* _HOST_BIG_ENDIAN */
-#define KMEM_REDZONE_WORD 0xcefaedfecefaedfeUL
-#endif /* _HOST_BIG_ENDIAN */
-#else /* __LP64__ */
 #if _HOST_BIG_ENDIAN
 #define KMEM_REDZONE_WORD 0xfeedfaceUL
 #else /* _HOST_BIG_ENDIAN */
 #define KMEM_REDZONE_WORD 0xcefaedfeUL
 #endif /* _HOST_BIG_ENDIAN */
-#endif /* __LP64__ */
 
 /*
  * Redzone byte for padding.
@@ -146,15 +138,6 @@
 /*
  * Values the buftag state member can take.
  */
-#ifdef __LP64__
-#if _HOST_BIG_ENDIAN
-#define KMEM_BUFTAG_ALLOC   0xa110c8eda110c8edUL
-#define KMEM_BUFTAG_FREE    0xf4eeb10cf4eeb10cUL
-#else /* _HOST_BIG_ENDIAN */
-#define KMEM_BUFTAG_ALLOC   0xedc810a1edc810a1UL
-#define KMEM_BUFTAG_FREE    0x0cb1eef40cb1eef4UL
-#endif /* _HOST_BIG_ENDIAN */
-#else /* __LP64__ */
 #if _HOST_BIG_ENDIAN
 #define KMEM_BUFTAG_ALLOC   0xa110c8edUL
 #define KMEM_BUFTAG_FREE    0xf4eeb10cUL
@@ -162,7 +145,6 @@
 #define KMEM_BUFTAG_ALLOC   0xedc810a1UL
 #define KMEM_BUFTAG_FREE    0x0cb1eef4UL
 #endif /* _HOST_BIG_ENDIAN */
-#endif /* __LP64__ */
 
 /*
  * Free and uninitialized patterns.

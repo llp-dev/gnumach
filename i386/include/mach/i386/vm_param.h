@@ -76,14 +76,6 @@
    */
 #define VM_MIN_ADDRESS		(0ULL)
 
-#ifdef __x86_64__
-#if defined(KERNEL) && defined(USER32)
-#define VM_MAX_ADDRESS		(0xfffff000ULL)
-#else /* defined(KERNEL) && defined(USER32) */
-#define VM_MAX_ADDRESS		(0x800000000000ULL)
-#endif /* defined(KERNEL) && defined(USER32) */
-#else /* __x86_64__ */
 #define VM_MAX_ADDRESS		(0xc0000000UL)
-#endif /* __x86_64__ */
 
 #endif	/* _MACH_I386_VM_PARAM_H_ */

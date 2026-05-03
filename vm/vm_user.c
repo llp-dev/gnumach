@@ -340,10 +340,6 @@ kern_return_t vm_map(
 	if (size == 0)
 		return KERN_INVALID_ARGUMENT;
 
-#ifdef USER32
-        if (mask & 0x80000000)
-            mask |= 0xffffffff00000000;
-#endif
 
 	*address = trunc_page(*address);
 	size = round_page(size);
@@ -604,10 +600,6 @@ kern_return_t vm_allocate_contiguous(
 	if (palign != PAGE_SIZE)
 		return KERN_INVALID_ARGUMENT;
 
-#ifdef USER32
-	if (pmax > 0x100000000ULL)
-		pmax = 0x100000000ULL;
-#endif
 
 	selector = VM_PAGE_SEL_DMA;
 	if (pmax > VM_PAGE_DMA_LIMIT)

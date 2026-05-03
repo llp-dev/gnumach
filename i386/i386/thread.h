@@ -51,22 +51,10 @@
  */
 
 struct i386_saved_state {
-#if !defined(__x86_64__) || defined(USER32)
 	unsigned long	gs;
 	unsigned long	fs;
 	unsigned long	es;
 	unsigned long	ds;
-#endif
-#ifdef __x86_64__
-	unsigned long	r15;
-	unsigned long	r14;
-	unsigned long	r13;
-	unsigned long	r12;
-	unsigned long	r11;
-	unsigned long	r10;
-	unsigned long	r9;
-	unsigned long	r8;
-#endif
 	unsigned long	edi;
 	unsigned long	esi;
 	unsigned long	ebp;
@@ -83,14 +71,12 @@ struct i386_saved_state {
 	unsigned long	efl;
 	unsigned long	uesp;
 	unsigned long	ss;
-#if !defined(__x86_64__) || defined(USER32)
 	struct v86_segs {
 	    unsigned long v86_es;	/* virtual 8086 segment registers */
 	    unsigned long v86_ds;
 	    unsigned long v86_fs;
 	    unsigned long v86_gs;
 	} v86_segs;
-#endif
 };
 
 /*
@@ -114,17 +100,9 @@ struct i386_kernel_state {
 	long			k_ebx;	/* kernel context */
 	long			k_esp;
 	long			k_ebp;
-#ifdef __i386__
 	long			k_edi;
 	long			k_esi;
-#endif
 	long			k_eip;
-#ifdef __x86_64__
-	long			k_r12;
-	long			k_r13;
-	long			k_r14;
-	long			k_r15;
-#endif
 };
 
 /*
@@ -144,7 +122,6 @@ struct i386_fpsave_state {
 	};
 };
 
-#if !defined(__x86_64__) || defined(USER32)
 /*
  *	v86_assist_state:
  *
@@ -158,14 +135,7 @@ struct v86_assist_state {
 	unsigned short		flags;	/* 8086 flag bits */
 };
 #define	V86_IF_PENDING		0x8000	/* unused bit */
-#endif
 
-#if defined(__x86_64__) && !defined(USER32)
-struct i386_segment_base_state {
-	unsigned long fsbase;
-	unsigned long gsbase;
-};
-#endif
 
 /*
  *	i386_interrupt_state:
@@ -176,21 +146,10 @@ struct i386_segment_base_state {
  */
 
 struct i386_interrupt_state {
-#if !defined(__x86_64__) || defined(USER32)
 	long	gs;
 	long	fs;
 	long	es;
 	long	ds;
-#endif
-#ifdef __x86_64__
-	long	r12;
-	long	r11;
-	long	r10;
-	long	r9;
-	long	r8;
-	long	rdi;
-	long	rsi;
-#endif
 	long	edx;
 	long	ecx;
 	long	eax;
@@ -209,14 +168,9 @@ struct i386_interrupt_state {
 struct i386_machine_state {
 	struct user_ldt	*	ldt;
 	struct i386_fpsave_state *ifps;
-#if !defined(__x86_64__) || defined(USER32)
 	struct v86_assist_state	v86s;
-#endif
 	struct real_descriptor user_gdt[USER_GDT_SLOTS];
 	struct i386_debug_state ids;
-#if defined(__x86_64__) && !defined(USER32)
-	struct i386_segment_base_state sbs;
-#endif
 };
 
 typedef struct pcb {
@@ -226,9 +180,6 @@ typedef struct pcb {
 	 * switch to a proper stack area, even considering recursive
 	 * exceptions, otherwise it could corrupt nearby memory */
 	struct i386_interrupt_state iis[2];	/* interrupt and NMI */
-#ifdef __x86_64__
-	unsigned long pad;	   /* ensure exception stack is aligned to 16 */
-#endif
 	struct i386_saved_state iss;
 	/* END of exception stack*/
 	struct i386_machine_state ims;
@@ -249,18 +200,9 @@ typedef struct pcb {
 #define STACK_IEL(stack)	\
 	((struct i386_exception_link *)STACK_IKS(stack) - 1)
 
-#ifdef __x86_64__
-#define KERNEL_STACK_ALIGN 16
-#else
 #define KERNEL_STACK_ALIGN 4
-#endif
 
-#if defined(__x86_64__) && !defined(USER32)
-/* Follow System V AMD64 ABI guidelines. */
-#define USER_STACK_ALIGN 16
-#else
 #define USER_STACK_ALIGN 4
-#endif
 
 #define USER_REGS(thread)	(&(thread)->pcb->iss)
 

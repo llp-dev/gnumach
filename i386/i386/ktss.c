@@ -47,9 +47,6 @@ ktss_fill(struct task_tss *myktss, struct real_descriptor *mygdt)
 	/* FIXME: make it per-processor */
 	static int exception_stack[1024];
 	/* only used on 64-bit builds */
-#ifdef __x86_64__
-	static int double_fault_stack[1024];
-#endif /* __x86_64__ */
 
 	/* Initialize the master TSS descriptor.  */
 	_fill_gdt_sys_descriptor(mygdt, KERNEL_TSS,
@@ -57,13 +54,8 @@ ktss_fill(struct task_tss *myktss, struct real_descriptor *mygdt)
 				ACC_PL_K|ACC_TSS, 0);
 
 	/* Initialize the master TSS.  */
-#ifdef __x86_64__
-	myktss->tss.rsp0 = (unsigned long)(exception_stack+1024);
-	myktss->tss.ist1 = (unsigned long)(double_fault_stack+1024);
-#else /* ! __x86_64__ */
 	myktss->tss.ss0 = KERNEL_DS;
 	myktss->tss.esp0 = (unsigned long)(exception_stack+1024);
-#endif /* __x86_64__ */
 
 	myktss->tss.io_bit_map_offset = IOPB_INVAL;
 	/* Set the last byte in the I/O bitmap to all 1's.  */

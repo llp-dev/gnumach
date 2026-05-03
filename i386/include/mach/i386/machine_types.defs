@@ -58,18 +58,8 @@ type integer_t = int32_t;
  * long_natural_t and long_integer_t for kernel <-> userland interfaces as the
  * size depends on the architecture of both kernel and userland.
  */
-#if defined(KERNEL_SERVER) && defined(USER32)
 type rpc_long_natural_t = uint32_t;
 type rpc_long_integer_t = int32_t;
-#else /* KERNEL and USER32 */
-#if defined(__x86_64__)
-type rpc_long_natural_t = uint64_t;
-type rpc_long_integer_t = int64_t;
-#else
-type rpc_long_natural_t = uint32_t;
-type rpc_long_integer_t = int32_t;
-#endif /* __x86_64__ */
-#endif /* KERNEL_SERVER and USER32 */
 
 /*
  * A long_natural_t is a possibly larger unsigned integer type than natural_t.

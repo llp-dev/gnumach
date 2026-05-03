@@ -36,19 +36,10 @@
 /* This can be changed freely to separate kernel addresses from user addresses
  * for better trace support in kdb; the _START symbol has to be offset by the
  * same amount. */
-#ifdef __x86_64__
-#define VM_MIN_KERNEL_ADDRESS	KERNEL_MAP_BASE
-#else
 #define VM_MIN_KERNEL_ADDRESS	0xC0000000UL
-#endif
 
-#ifdef __x86_64__
-/* PV kernels can be loaded directly to the target virtual address */
-#define INIT_VM_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
-#else
 /* This must remain 0 */
 #define INIT_VM_MIN_KERNEL_ADDRESS	0x00000000UL
-#endif
 
 #define VM_MAX_KERNEL_ADDRESS	(LINEAR_MAX_KERNEL_ADDRESS - LINEAR_MIN_KERNEL_ADDRESS + VM_MIN_KERNEL_ADDRESS)
 
@@ -56,38 +47,19 @@
  * Reserve mapping room for the kernel map, which includes
  * the device I/O map and the IPC map.
  */
-#ifdef __x86_64__
-/*
- * Vm structures are quite bigger on 64 bit.
- * This should be well enough for 30G of physical memory; on the other hand,
- * maybe not all of them need to be in directly-mapped memory, see the parts
- * allocated with pmap_steal_memory().
- */
-#define VM_KERNEL_MAP_SIZE (1000 * 1024 * 1024)
-#else
 #define VM_KERNEL_MAP_SIZE (170 * 1024 * 1024)
-#endif
 
 /*
  * Maximum supported memory size.
  * These were tested as working.
  */
-#ifdef __x86_64__
-#define MAX_PHYS_END (27ULL * 1024 * 1024 * 1024)
-#else
 #define MAX_PHYS_END (8ULL * 1024 * 1024 * 1024)
-#endif
 
 /* This is the kernel address range in linear addresses.  */
-#ifdef __x86_64__
-#define LINEAR_MIN_KERNEL_ADDRESS	VM_MIN_KERNEL_ADDRESS
-#define LINEAR_MAX_KERNEL_ADDRESS	(0xffffffffffffffffUL)
-#else
 /* On x86, the kernel virtual address space is actually located
    at high linear addresses. */
 #define LINEAR_MIN_KERNEL_ADDRESS	(VM_MAX_USER_ADDRESS)
 #define LINEAR_MAX_KERNEL_ADDRESS	(0xffffffffUL)
-#endif
 
 #define KERNEL_STACK_SIZE	(1*I386_PGBYTES)
 #define INTSTACK_SIZE		(1*I386_PGBYTES)
@@ -122,14 +94,6 @@
  */
 #define VM_PAGE_DMA_LIMIT       DECL_CONST(0x1000000, UL)
 
-#ifdef __LP64__
-#define VM_PAGE_MAX_SEGS 4
-#define VM_PAGE_DMA32_LIMIT     DECL_CONST(0x100000000, UL)
-#define VM_PAGE_DIRECTMAP_LIMIT (VM_MAX_KERNEL_ADDRESS \
-				 - VM_MIN_KERNEL_ADDRESS \
-				 - VM_KERNEL_MAP_SIZE + 1)
-#define VM_PAGE_HIGHMEM_LIMIT   DECL_CONST(0x10000000000000, UL)
-#else /* __LP64__ */
 #define VM_PAGE_DIRECTMAP_LIMIT (VM_MAX_KERNEL_ADDRESS \
 				 - VM_MIN_KERNEL_ADDRESS \
 				 - VM_KERNEL_MAP_SIZE + 1)
@@ -141,7 +105,6 @@
 #define VM_PAGE_MAX_SEGS 3
 #define VM_PAGE_HIGHMEM_LIMIT   DECL_CONST(0xfffff000, UL)
 #endif /* PAE */
-#endif /* __LP64__ */
 
 /*
  * Physical segment indexes.

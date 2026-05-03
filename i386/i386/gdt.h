@@ -44,24 +44,13 @@
 
 #define	KERNEL_LDT	0x18		/* master LDT */
 
-#ifdef __x86_64__
-/* LDT needs two entries */
-#define	KERNEL_TSS	0x40		/* master TSS (uniprocessor) */
-#else
 #define	KERNEL_TSS	0x20		/* master TSS (uniprocessor) */
-#endif
 
 
 #define	USER_LDT	0x28		/* place for per-thread LDT */
 
-#ifdef __x86_64__
-/* LDT needs two entries */
-#define	USER_TSS	0x58		/* place for per-thread TSS
-					   that holds IO bitmap */
-#else
 #define	USER_TSS	0x30		/* place for per-thread TSS
 					   that holds IO bitmap */
-#endif
 
 
 #define	LINEAR_DS	0x38		/* linear mapping */
@@ -89,26 +78,12 @@ extern struct real_descriptor gdt[GDTSZ];
 	_fill_gdt_descriptor(gdt, segment, base, limit, access, sizebits)
 
 /* 64bit variant */
-#ifdef __x86_64__
-#define _fill_gdt_descriptor64(_gdt, segment, base, limit, access, sizebits) \
-	fill_descriptor64((struct real_descriptor64 *) &_gdt[sel_idx(segment)], base, limit, access, sizebits)
-
-#define fill_gdt_descriptor64(segment, base, limit, access, sizebits) \
-	_fill_gdt_descriptor64(gdt, segment, base, limit, access, sizebits)
-#endif
 
 /* System descriptor variants */
-#ifdef __x86_64__
-#define _fill_gdt_sys_descriptor(_gdt, segment, base, limit, access, sizebits) \
-	_fill_gdt_descriptor64(_gdt, segment, base, limit, access, sizebits)
-#define fill_gdt_sys_descriptor(segment, base, limit, access, sizebits) \
-	fill_gdt_descriptor64(segment, base, limit, access, sizebits)
-#else
 #define _fill_gdt_sys_descriptor(_gdt, segment, base, limit, access, sizebits) \
 	_fill_gdt_descriptor(_gdt, segment, base, limit, access, sizebits)
 #define fill_gdt_sys_descriptor(segment, base, limit, access, sizebits) \
 	fill_gdt_descriptor(segment, base, limit, access, sizebits)
-#endif
 
 extern void gdt_init(void);
 extern void ap_gdt_init(int cpu);

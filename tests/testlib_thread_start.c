@@ -45,12 +45,8 @@ thread_t test_thread_start(task_t task, void(*routine)(void*), void* arg) {
   ASSERT_RET(ret, "can't protect the stack from overflows");
 
   long *top = (long*)(local_stack + vm_page_size) - 1;
-#ifdef __i386__
   *top = (long)arg; /* The argument is passed on the stack on x86_32 */
   *(top - 1) = 0;   /* The return address */
-#elif defined(__x86_64__)
-  *top = 0;         /* The return address */
-#endif
   ret = vm_write(task, stack + stack_size - vm_page_size, local_stack, vm_page_size);
   ASSERT_RET(ret, "can't initialize the stack for the new thread");
 
@@ -68,16 +64,9 @@ thread_t test_thread_start(task_t task, void(*routine)(void*), void* arg) {
                          (thread_state_t) &state, &count);
   ASSERT_RET(ret, "thread_get_state()");
 
-#ifdef __i386__
   state.eip = (long) routine;
   state.uesp = (long) (stack + stack_size - sizeof(long) * 2);
   state.ebp = 0;
-#elif defined(__x86_64__)
-  state.rip = (long) routine;
-  state.ursp = (long) (stack + stack_size - sizeof(long) * 1);
-  state.rbp = 0;
-  state.rdi = (long)arg;
-#endif
   ret = thread_set_state(thread, i386_REGS_SEGS_STATE,
                          (thread_state_t) &state, i386_THREAD_STATE_COUNT);
   ASSERT_RET(ret, "thread_set_state");

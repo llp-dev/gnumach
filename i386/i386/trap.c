@@ -305,9 +305,6 @@ int user_trap(struct i386_saved_state *regs)
 	unsigned long	type;
 	thread_t thread = current_thread();
 
-#ifdef __x86_64__
-	assert(regs == &thread->pcb->iss);
-#endif
 
 	type = regs->trapno;
 	code = 0;
@@ -400,23 +397,6 @@ int user_trap(struct i386_saved_state *regs)
 				return 1;
 			}
 		}
-#ifdef __x86_64__
-		{
-			unsigned char opcode, addr[4], seg[2];
-			int i;
-
-			opcode = inst_fetch(regs->eip, regs->cs);
-			for (i = 0; i < 4; i++)
-				addr[i] = inst_fetch(regs->eip+i+1, regs->cs);
-			(void) addr;
-			for (i = 0; i < 2; i++)
-				seg[i] = inst_fetch(regs->eip+i+5, regs->cs);
-			if (opcode == 0x9a && seg[0] == 0x7 && seg[1] == 0) {
-				regs->eip += 7;
-				return 1;
-			}
-		}
-#endif
 		exc = EXC_BAD_INSTRUCTION;
 		code = EXC_I386_GPFLT;
 		subcode = regs->err & 0xffff;

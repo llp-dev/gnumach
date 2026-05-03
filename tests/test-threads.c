@@ -44,55 +44,9 @@ void test_many(void)
   msleep(6000);
 }
 
-#ifdef __x86_64__
-void test_fsgs_base_thread(void* tid)
-{
-  int err;
-#if defined(__SEG_FS) && defined(__SEG_GS)
-  long __seg_fs *fs_ptr;
-  long __seg_gs *gs_ptr;
-  long fs_value;
-  long gs_value;
-
-  struct i386_fsgs_base_state state;
-  state.fs_base = (unsigned long)&fs_value;
-  state.gs_base = (unsigned long)&gs_value;
-  err = thread_set_state(mach_thread_self(), i386_FSGS_BASE_STATE,
-                         (thread_state_t) &state, i386_FSGS_BASE_STATE_COUNT);
-  ASSERT_RET(err, "thread_set_state");
-
-  fs_value = 0x100 + (long)tid;
-  gs_value = 0x200 + (long)tid;
-
-  msleep(50);  // allow the others to set their segment base
-
-  fs_ptr = 0;
-  gs_ptr = 0;
-  long rdvalue = *fs_ptr;
-  printf("FS expected %lx read %lx\n", fs_value, rdvalue);
-  ASSERT(fs_value == rdvalue, "FS base error\n");
-  rdvalue = *gs_ptr;
-  printf("GS expected %lx read %lx\n", gs_value, rdvalue);
-  ASSERT(gs_value == rdvalue, "GS base error\n");
-#else
-#error " missing __SEG_FS and __SEG_GS"
-#endif
-
-  thread_terminate(mach_thread_self());
-  FAILURE("thread_terminate");
-}
-#endif
 
 void test_fsgs_base(void)
 {
-#ifdef __x86_64__
-  int err;
-  for (long tid=0; tid<10; tid++)
-    {
-      test_thread_start(mach_task_self(), test_fsgs_base_thread, (void*)tid);
-    }
-  msleep(1000);  // TODO: wait for threads
-#endif
 }
 
 

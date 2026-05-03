@@ -185,10 +185,6 @@ typedef mach_msg_header_t mach_msg_user_header_t;
  */
 
 #define MACH_MSGH_KIND_NORMAL		0x00000000
-#if	0
-/* code using this is likely to break, so better not to have it defined */
-#define MACH_MSGH_KIND_NOTIFICATION	0x00000001
-#endif
 #define	msgh_kind			msgh_seqno
 #define mach_msg_kind_t			mach_port_seqno_t
 
@@ -240,30 +236,6 @@ typedef struct {
 } mach_port_name_inlined_t;
 
 typedef struct  {
-#ifdef __LP64__
-    /*
-     * For 64 bits, this struct is 8 bytes long so we
-     * can pack the same amount of information as mach_msg_type_long_t.
-     * Note that for 64 bit userland, msgt_size only needs to be 8 bits long
-     * but for kernel compatibility with 32 bit userland we allow it to be
-     * 16 bits long.
-     *
-     * Effectively, we don't need mach_msg_type_long_t but we are keeping it
-     * for a while to make the code similar between 32 and 64 bits.
-     *
-     * We also keep the msgt_longform bit around simply because it makes it
-     * very easy to convert messages from a 32 bit userland into a 64 bit
-     * kernel. Otherwise, we would have to replicate some of the MiG logic
-     * internally in the kernel.
-     */
-    unsigned int	msgt_name : 8,
-			msgt_size : 16,
-			msgt_unused : 5,
-			msgt_inline : 1,
-			msgt_longform : 1,
-			msgt_deallocate : 1;
-    mach_msg_type_number_t   msgt_number;
-#else
     unsigned int	msgt_name : 8,
 			msgt_size : 8,
 			msgt_number : 12,
@@ -271,44 +243,15 @@ typedef struct  {
 			msgt_longform : 1,
 			msgt_deallocate : 1,
 			msgt_unused : 1;
-#endif
 } __attribute__ ((aligned (__alignof__ (uintptr_t)))) mach_msg_type_t;
 
 typedef struct {
-#ifdef __LP64__
-    union {
-        /* On 64-bit this is equivalent to mach_msg_type_t so use
-         * union to overlay with the old field names.  */
-        mach_msg_type_t	msgtl_header;
-        struct {
-            unsigned int	msgtl_name : 8,
-                    msgtl_size : 16,
-                    msgtl_unused : 5,
-                    msgtl_inline : 1,
-                    msgtl_longform : 1,
-                    msgtl_deallocate : 1;
-            mach_msg_type_number_t   msgtl_number;
-        };
-    };
-#else
     mach_msg_type_t	msgtl_header;
     unsigned short	msgtl_name;
     unsigned short	msgtl_size;
     natural_t		msgtl_number;
-#endif
 } __attribute__ ((aligned (__alignof__ (uintptr_t)))) mach_msg_type_long_t;
 
-#ifdef __LP64__
-#ifdef __cplusplus
-#if __cplusplus >= 201103L
-static_assert (sizeof (mach_msg_type_t) == sizeof (mach_msg_type_long_t),
-                "mach_msg_type_t and mach_msg_type_long_t need to have the same size.");
-#endif
-#else
-_Static_assert (sizeof (mach_msg_type_t) == sizeof (mach_msg_type_long_t),
-                "mach_msg_type_t and mach_msg_type_long_t need to have the same size.");
-#endif
-#endif
 
 /*
  *	Known values for the msgt_name field.
@@ -401,15 +344,7 @@ typedef integer_t mach_msg_option_t;
 
 #define MACH_SEND_ALWAYS	0x00010000	/* internal use only */
 
-#ifdef __LP64__
-#if defined(KERNEL) && defined(USER32)
 #define MACH_MSG_USER_ALIGNMENT 4
-#else
-#define MACH_MSG_USER_ALIGNMENT 8
-#endif
-#else
-#define MACH_MSG_USER_ALIGNMENT 4
-#endif
 
 #ifdef KERNEL
 /* This is the alignment of msg descriptors and the actual data

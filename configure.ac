@@ -56,16 +56,14 @@ AC_CANONICAL_HOST
 
 AC_ARG_ENABLE([platform],
   AS_HELP_STRING([--enable-platform=PLATFORM], [specify the platform to build a
-    kernel for.  Defaults to `at' for `i?86' / `x86_64'.]),
+    kernel for.  Defaults to `at' for `i?86'.]),
   [host_platform=$enable_platform],
   [host_platform=default])
 [# Supported configurations.
 case $host_platform:$host_cpu in
   default:i?86)
     host_platform=at;;
-  default:x86_64)]
-    [host_platform=at;;
-  at:i?86 | at:x86_64)
+  at:i?86)
     :;;
   *)]
     AC_MSG_ERROR([unsupported combination of cpu type `$host_cpu' and platform
@@ -145,16 +143,6 @@ AC_ARG_ENABLE([device-drivers],
     [;;
 esac]
 
-AC_ARG_ENABLE([user32],
-AS_HELP_STRING([--enable-user32], [enable 32-bit user space on a 64-bit kernel]))
-[if [ x"$enable_user32" = xyes ]; then]
-  AC_DEFINE([USER32], [], [enable 32-bit user on 64-bit kernel])
-  AM_CONDITIONAL([enable_user32], [true])
-[else]
-  AM_CONDITIONAL([enable_user32], [false])
-[fi]
-
-
 # Platform-specific configuration.
 
 # PC AT.
@@ -167,9 +155,6 @@ m4_include([configfrag-first.ac])
 
 # ix86.
 m4_include([i386/configfrag.ac])
-
-# x86_64
-m4_include([x86_64/configfrag.ac])
 
 # General options.
 m4_include([configfrag.ac])

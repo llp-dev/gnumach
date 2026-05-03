@@ -219,7 +219,6 @@ kern_return_t host_get_kernel_version(
 	return KERN_SUCCESS;
 }
 
-#if defined(__i386__) || (defined(__x86_64__) && defined(USER32))
 /* Same as above, but only exists on i386.  */
 kern_return_t host_kernel_version(
 	const host_t		host,
@@ -227,7 +226,6 @@ kern_return_t host_kernel_version(
 {
 	return host_get_kernel_version(host, out_version);
 }
-#endif
 
 /*
  *	host_processor_sets:

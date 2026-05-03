@@ -34,18 +34,6 @@ struct elf_shdr {
     unsigned int entsize;
 };
 
-#ifdef __LP64__
-
-struct elf_sym {
-    unsigned int name;
-    unsigned char info;
-    unsigned char other;
-    unsigned short shndx;
-    unsigned long value;
-    unsigned long size;
-};
-
-#else /* __LP64__ */
 
 struct elf_sym {
     unsigned int name;
@@ -56,6 +44,5 @@ struct elf_sym {
     unsigned short shndx;
 };
 
-#endif /* __LP64__ */
 
 #endif /* _X86_ELF_H */

@@ -35,25 +35,6 @@
 /*
  *	x86 Task State Segment
  */
-#ifdef __x86_64__
-struct i386_tss {
-  uint32_t _reserved0;
-  uint64_t rsp0;
-  uint64_t rsp1;
-  uint64_t rsp2;
-  uint64_t _reserved1;
-  uint64_t ist1;
-  uint64_t ist2;
-  uint64_t ist3;
-  uint64_t ist4;
-  uint64_t ist5;
-  uint64_t ist6;
-  uint64_t ist7;
-  uint64_t _reserved2;
-  uint16_t _reserved3;
-  uint16_t io_bit_map_offset;
-} __attribute__((__packed__));
-#else /* ! __x86_64__ */
 struct i386_tss {
 	int		back_link;	/* segment number of previous task,
 					   if nested */
@@ -87,7 +68,6 @@ struct i386_tss {
 					/* offset to start of IO permission
 					   bit map */
 };
-#endif /* __x86_64__ */
 
 /* The structure extends the above TSS structure by an I/O permission bitmap
    and the barrier.  */

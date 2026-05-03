@@ -228,10 +228,6 @@ exception_no_server(void)
 		thread_halt_self(thread_exception_return);
 
 
-#if 0
-	if (thread_suspend (self) == KERN_SUCCESS)
-	  thread_exception_return ();
-#endif
 
 	/*
 	 *	All else failed; terminate task.
@@ -263,11 +259,7 @@ struct mach_exception {
 #define	INTEGER_T_SIZE_IN_BITS	(8 * sizeof(integer_t))
 #define	INTEGER_T_TYPE		MACH_MSG_TYPE_INTEGER_T
 #define RPC_LONG_INTEGER_T_SIZE_IN_BITS	(8 * sizeof(rpc_long_integer_t))
-#if defined(__LP64__) && !defined(USER32)
-#define RPC_LONG_INTEGER_T_TYPE	MACH_MSG_TYPE_INTEGER_64
-#else
 #define RPC_LONG_INTEGER_T_TYPE	MACH_MSG_TYPE_INTEGER_32
-#endif
 					/* in mach/machine/vm_types.h */
 
 mach_msg_type_t exc_port_proto = {

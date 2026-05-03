@@ -109,15 +109,8 @@ static inline unsigned int
 gsync_key_hash (const union gsync_key *keyp)
 {
   unsigned int ret = sizeof (void *);
-#ifndef __LP64__
   ret = MIX2_LL (ret, keyp->any.u);
   ret = MIX2_LL (ret, keyp->any.v);
-#else
-  ret = MIX2_LL (ret, keyp->any.u & ~0U);
-  ret = MIX2_LL (ret, keyp->any.u >> 32);
-  ret = MIX2_LL (ret, keyp->any.v & ~0U);
-  ret = MIX2_LL (ret, keyp->any.v >> 32);
-#endif
   return (ret);
 }
 

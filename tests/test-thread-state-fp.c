@@ -22,7 +22,6 @@
 #include <mach.user.h>
 #include <mach_port.user.h>
 
-#if defined(__i386__) || defined(__x86_64__)
 #include <mach_i386.user.h>
 
 static void printx(struct i386_xfloat_state *state, int size)
@@ -237,15 +236,10 @@ static void test_xfp_state_getset()
   asm volatile ("stmxcsr %0" :: "m" (mxcsr));
   ASSERT(mxcsr == 0x1fa0, "mxcsr wasn't updated");
 }
-#endif
 
 int main(int argc, char *argv[], int envc, char *envp[])
 {
-#if defined(__i386__) || defined(__x86_64__)
   test_fp_state_getset();
   test_xfp_state_getset();
-#else
-  FAILURE("FP/XSTATE test missing on this arch!");
-#endif
   return 0;
 }

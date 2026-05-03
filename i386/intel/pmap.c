@@ -398,19 +398,11 @@ struct kmem_cache pt_cache;    /* cache of page tables */
 struct kmem_cache pd_cache;    /* cache of page directories */
 #if PAE
 struct kmem_cache pdpt_cache;  /* cache of page directory pointer tables */
-#ifdef __x86_64__
-struct kmem_cache l4_cache;    /* cache of L4 tables */
-#endif /* __x86_64__ */
 #endif /* PAE */
 
 boolean_t		pmap_debug = FALSE;	/* flag for debugging prints */
 
-#if 0
-int		ptes_per_vm_page;	/* number of hardware ptes needed
-					   to map one VM page. */
-#else
 #define		ptes_per_vm_page	1
-#endif
 
 unsigned int	inuse_ptepages_count = 0;	/* debugging */
 
@@ -427,31 +419,13 @@ pt_entry_t *kernel_page_dir;
 static pmap_mapwindow_t mapwindows[PMAP_NMAPWINDOWS * NCPUS];
 #define MAPWINDOW_SIZE (PMAP_NMAPWINDOWS * NCPUS * PAGE_SIZE)
 
-#ifdef __x86_64__
-static inline pt_entry_t *
-pmap_l4base(const pmap_t pmap, vm_offset_t lin_addr)
-{
-	return &pmap->l4base[lin2l4num(lin_addr)];
-}
-#endif
 
 #ifdef PAE
 static inline pt_entry_t *
 pmap_ptp(const pmap_t pmap, vm_offset_t lin_addr)
 {
 	pt_entry_t *pdp_table;
-#ifdef __x86_64__
-	pt_entry_t *l4_table;
-	l4_table = pmap_l4base(pmap, lin_addr);
-	if (l4_table == PT_ENTRY_NULL)
-		return(PT_ENTRY_NULL);
-	pt_entry_t pdp = *l4_table;
-	if ((pdp & INTEL_PTE_VALID) == 0)
-		return PT_ENTRY_NULL;
-	pdp_table = (pt_entry_t *) ptetokv(pdp);
-#else /* __x86_64__ */
 	pdp_table = pmap->pdpbase;
-#endif /* __x86_64__ */
 	return &pdp_table[lin2pdpnum(lin_addr)];
 }
 #endif
@@ -490,16 +464,8 @@ pmap_pte(const pmap_t pmap, vm_offset_t addr)
 	pt_entry_t	*ptp;
 	pt_entry_t	pte;
 
-#ifdef __x86_64__
-	if (pmap->l4base == 0)
-		return(PT_ENTRY_NULL);
-#elif PAE
-	if (pmap->pdpbase == 0)
-		return(PT_ENTRY_NULL);
-#else
 	if (pmap->dirbase == 0)
 		return(PT_ENTRY_NULL);
-#endif
 	ptp = pmap_pde(pmap, addr);
 	if (ptp == 0)
 		return(PT_ENTRY_NULL);
@@ -585,12 +551,7 @@ static void pmap_bootstrap_pae(void)
 	vm_offset_t addr;
 	pt_entry_t *pdp_kernel;
 
-#ifdef __x86_64__
-	kernel_pmap->l4base = (pt_entry_t*)phystokv(pmap_grab_page());
-	memset(kernel_pmap->l4base, 0, INTEL_PGBYTES);
-#else
 	const int PDPNUM_KERNEL = PDPNUM;
-#endif	/* x86_64 */
 
 	init_alloc_aligned(PDPNUM_KERNEL * INTEL_PGBYTES, &addr);
 	kernel_page_dir = (pt_entry_t*)phystokv(addr);
@@ -600,26 +561,14 @@ static void pmap_bootstrap_pae(void)
 	memset(pdp_kernel, 0, INTEL_PGBYTES);
 	for (int i = 0; i < PDPNUM_KERNEL; i++) {
 		int pdp_index = i;
-#ifdef __x86_64__
-		pdp_index += lin2pdpnum(VM_MIN_KERNEL_ADDRESS);
-#endif
 		WRITE_PTE(&pdp_kernel[pdp_index],
 			  pa_to_pte(_kvtophys((void *) kernel_page_dir
 					      + i * INTEL_PGBYTES))
 			  | INTEL_PTE_VALID
-#ifdef __x86_64__
-			  | INTEL_PTE_WRITE
-#endif
 			);
 	}
 
-#ifdef __x86_64__
-        /* only fill the kernel pdpte during bootstrap */
-	WRITE_PTE(&kernel_pmap->l4base[lin2l4num(VM_MIN_KERNEL_ADDRESS)],
-                  pa_to_pte(_kvtophys(pdp_kernel)) | INTEL_PTE_VALID | INTEL_PTE_WRITE);
-#else	/* x86_64 */
         kernel_pmap->pdpbase = pdp_kernel;
-#endif	/* x86_64 */
 }
 #endif /* PAE */
 
@@ -640,9 +589,6 @@ void pmap_bootstrap(void)
 	/*
 	 *	Set ptes_per_vm_page for general use.
 	 */
-#if 0
-	ptes_per_vm_page = PAGE_SIZE / INTEL_PGBYTES;
-#endif
 
 	/*
 	 *	The kernel's pmap is statically allocated so we don't
@@ -864,11 +810,6 @@ void pmap_init(void)
 	kmem_cache_init(&pdpt_cache, "pmap_L3",
 			INTEL_PGBYTES, INTEL_PGBYTES, NULL,
 			KMEM_CACHE_PHYSMEM);
-#ifdef __x86_64__
-	kmem_cache_init(&l4_cache, "pmap_L4",
-			INTEL_PGBYTES, INTEL_PGBYTES, NULL,
-			KMEM_CACHE_PHYSMEM);
-#endif /* __x86_64__ */
 #endif /* PAE */
 	s = (vm_size_t) sizeof(struct pv_entry);
 	kmem_cache_init(&pv_list_cache, "pv_entry", s, 0, NULL, 0);
@@ -918,10 +859,6 @@ valid_page(phys_addr_t addr)
  */
 pmap_t pmap_create(vm_size_t size)
 {
-#ifdef __x86_64__
-	// needs to be reworked if we want to dynamically allocate PDPs for kernel
-	const int PDPNUM = PDPNUM_KERNEL;
-#endif
 	pt_entry_t		*page_dir[PDPNUM];
 	int			i;
 	pmap_t			p;
@@ -975,28 +912,13 @@ pmap_t pmap_create(vm_size_t size)
 	{
 		for (i = 0; i < PDPNUM; i++) {
 			int pdp_index = i;
-#ifdef __x86_64__
-			pdp_index += lin2pdpnum(VM_MIN_KERNEL_ADDRESS);
-#endif
 			WRITE_PTE(&pdp_kernel[pdp_index],
 				  pa_to_pte(kvtophys((vm_offset_t) page_dir[i]))
 				  | INTEL_PTE_VALID
-#ifdef __x86_64__
-				  | INTEL_PTE_WRITE
-#endif
 				  );
 			}
 	}
-#ifdef __x86_64__
-	p->l4base = (pt_entry_t *) kmem_cache_alloc(&l4_cache);
-	if (p->l4base == NULL)
-		panic("pmap_create");
-	memset(p->l4base, 0, INTEL_PGBYTES);
-	WRITE_PTE(&p->l4base[lin2l4num(VM_MIN_KERNEL_ADDRESS)],
-		  pa_to_pte(kvtophys((vm_offset_t) pdp_kernel)) | INTEL_PTE_VALID | INTEL_PTE_WRITE);
-#else	/* _x86_64 */
 	p->pdpbase = pdp_kernel;
-#endif	/* _x86_64 */
 #else	/* PAE */
 	p->dirbase = page_dir[0];
 #endif	/* PAE */
@@ -1044,27 +966,14 @@ void pmap_destroy(pmap_t p)
          * Free the page table tree.
          */
 #if PAE
-#ifdef __x86_64__
-	for (int l4i = 0; l4i < NPTES; l4i++) {
-		pt_entry_t pdp = (pt_entry_t) p->l4base[l4i];
-		if (!(pdp & INTEL_PTE_VALID))
-			continue;
-		pt_entry_t *pdpbase = (pt_entry_t*) ptetokv(pdp);
-#else /* __x86_64__ */
 		pt_entry_t *pdpbase = p->pdpbase;
-#endif /* __x86_64__ */
 		for (int l3i = 0; l3i < NPTES; l3i++) {
 			pt_entry_t pde = (pt_entry_t) pdpbase[l3i];
 			if (!(pde & INTEL_PTE_VALID))
 				continue;
 			pt_entry_t *pdebase = (pt_entry_t*) ptetokv(pde);
 			if (
-#ifdef __x86_64__
-			    l4i < lin2l4num(VM_MAX_USER_ADDRESS) ||
-			    (l4i == lin2l4num(VM_MAX_USER_ADDRESS) && l3i < lin2pdpnum(VM_MAX_USER_ADDRESS))
-#else /* __x86_64__ */
 			    l3i < lin2pdpnum(VM_MAX_USER_ADDRESS)
-#endif /* __x86_64__ */
 			    )
 			for (int l2i = 0; l2i < NPTES; l2i++)
 #else /* PAE */
@@ -1081,10 +990,6 @@ void pmap_destroy(pmap_t p)
 #if PAE
 		}
 		kmem_cache_free(&pdpt_cache, (vm_offset_t)pdpbase);
-#ifdef __x86_64__
-	}
-	kmem_cache_free(&l4_cache, (vm_offset_t) p->l4base);
-#endif /* __x86_64__ */
 #endif /* PAE */
 
         /* Finally, free the pmap itself */
@@ -1604,9 +1509,6 @@ static inline pt_entry_t* pmap_expand_level(pmap_t pmap, vm_offset_t v, int spl,
 static inline pt_entry_t* pmap_expand(pmap_t pmap, vm_offset_t v, int spl)
 {
 #ifdef PAE
-#ifdef __x86_64__
-	pmap_expand_level(pmap, v, spl, pmap_ptp, pmap_l4base, 1, &pdpt_cache);
-#endif /* __x86_64__ */
 	pmap_expand_level(pmap, v, spl, pmap_pde, pmap_ptp, 1, &pd_cache);
 #endif /* PAE */
 	return pmap_expand_level(pmap, v, spl, pmap_pte, pmap_pde, ptes_per_vm_page, &pt_cache);
@@ -1922,16 +1824,6 @@ phys_addr_t pmap_extract(
  *
  *	This routine is only advisory and need not do anything.
  */
-#if	0
-void pmap_copy(
-	pmap_t		dst_pmap,
-	pmap_t		src_pmap,
-	vm_offset_t	dst_addr,
-	vm_size_t	len,
-	vm_offset_t	src_addr)
-{
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	pmap_collect
@@ -1962,17 +1854,8 @@ void pmap_collect(pmap_t p)
 	 */
 	PMAP_READ_LOCK(p, spl);
 #if PAE
-#ifdef __x86_64__
-	for (int l4i = 0; l4i < lin2l4num(VM_MAX_USER_ADDRESS); l4i++) {
-		pt_entry_t pdp = (pt_entry_t) p->l4base[l4i];
-		if (!(pdp & INTEL_PTE_VALID))
-			continue;
-		pt_entry_t *pdpbase = (pt_entry_t*) ptetokv(pdp);
-		for (int l3i = 0; l3i < NPTES; l3i++)
-#else /* __x86_64__ */
 		pt_entry_t *pdpbase = p->pdpbase;
 		for (int l3i = 0; l3i < lin2pdpnum(VM_MAX_USER_ADDRESS); l3i++)
-#endif /* __x86_64__ */
 		{
 			pt_entry_t pde = (pt_entry_t ) pdpbase[l3i];
 			if (!(pde & INTEL_PTE_VALID))
@@ -2042,10 +1925,6 @@ void pmap_collect(pmap_t p)
 #if PAE
 			// TODO check l2
 		}
-#ifdef __x86_64__
-			// TODO check l3
-	}
-#endif /* __x86_64__ */
 #endif /* PAE */
 
 	PMAP_UPDATE_TLBS(p, VM_MIN_USER_ADDRESS, VM_MAX_USER_ADDRESS);
@@ -2062,12 +1941,6 @@ void pmap_collect(pmap_t p)
  *		Binds the given physical map to the given
  *		processor, and returns a hardware map description.
  */
-#if	0
-void pmap_activate(pmap_t my_pmap, thread_t th, int my_cpu)
-{
-	PMAP_ACTIVATE(my_pmap, th, my_cpu);
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	pmap_deactivate
@@ -2076,63 +1949,22 @@ void pmap_activate(pmap_t my_pmap, thread_t th, int my_cpu)
  *		in use on the specified processor.  (This is a macro
  *		in pmap.h)
  */
-#if	0
-void pmap_deactivate(pmap_t pmap, thread_t th, int which_cpu)
-{
-	PMAP_DEACTIVATE(pmap, th, which_cpu);
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	pmap_kernel
  *	Function:
  *		Returns the physical map handle for the kernel.
  */
-#if	0
-pmap_t pmap_kernel()
-{
-    	return (kernel_pmap);
-}
-#endif	/* 0 */
 
 /*
  *	pmap_zero_page zeros the specified (machine independent) page.
  *	See machine/phys.c or machine/phys.s for implementation.
  */
-#if	0
-pmap_zero_page(vm_offset_t phys)
-{
-	int	i;
-
-	assert(phys != vm_page_fictitious_addr);
-	i = PAGE_SIZE / INTEL_PGBYTES;
-	phys = intel_pfn(phys);
-
-	while (i--)
-		zero_phys(phys++);
-}
-#endif	/* 0 */
 
 /*
  *	pmap_copy_page copies the specified (machine independent) page.
  *	See machine/phys.c or machine/phys.s for implementation.
  */
-#if	0
-pmap_copy_page(vm_offset_t src, vm_offset_t dst)
-{
-	int	i;
-
-	assert(src != vm_page_fictitious_addr);
-	assert(dst != vm_page_fictitious_addr);
-	i = PAGE_SIZE / INTEL_PGBYTES;
-
-	while (i--) {
-		copy_phys(intel_pfn(src), intel_pfn(dst));
-		src += INTEL_PGBYTES;
-		dst += INTEL_PGBYTES;
-	}
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	pmap_pageable
@@ -2572,7 +2404,6 @@ void pmap_update_interrupt(void)
 }
 #endif	/* NCPUS > 1 */
 
-#if defined(__i386__) || defined (__x86_64__)
 /* Unmap page 0 to trap NULL references.  */
 void
 pmap_unmap_page_zero (void)
@@ -2587,7 +2418,6 @@ pmap_unmap_page_zero (void)
   *pte = 0;
   INVALIDATE_TLB(kernel_pmap, 0, PAGE_SIZE);
 }
-#endif /* __i386__ */
 
 void
 pmap_make_temporary_mapping(void)
@@ -2614,11 +2444,7 @@ void
 pmap_set_page_dir(void)
 {
 #if PAE
-#ifdef __x86_64__
-	set_cr3((unsigned long)_kvtophys(kernel_pmap->l4base));
-#else
 	set_cr3((unsigned long)_kvtophys(kernel_pmap->pdpbase));
-#endif
 	if (!CPU_HAS_FEATURE(CPU_FEATURE_PAE))
 		panic("CPU doesn't have support for PAE.");
 	set_cr4(get_cr4() | CR4_PAE);

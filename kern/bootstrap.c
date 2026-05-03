@@ -108,25 +108,8 @@ void bootstrap_create(void)
 {
   int compat;
   unsigned n = 0;
-#ifdef __x86_64__
-  struct multiboot_raw_module *bmods32 = ((struct multiboot_raw_module *)
-                                          phystokv(boot_info.mods_addr));
-  struct multiboot_module *bmods=NULL;
-  if (bmods32)
-    {
-      int i;
-      bmods = alloca(boot_info.mods_count * sizeof(*bmods));
-      for (i=0; i<boot_info.mods_count; i++)
-        {
-          bmods[i].mod_start = bmods32[i].mod_start;
-          bmods[i].mod_end = bmods32[i].mod_end;
-          bmods[i].string = bmods32[i].string;
-        }
-    }
-#else
   struct multiboot_module *bmods = ((struct multiboot_module *)
 				    phystokv(boot_info.mods_addr));
-#endif
   if (!(boot_info.flags & MULTIBOOT_MODS)
       || (boot_info.mods_count == 0))
     panic ("No bootstrap code loaded with the kernel!");

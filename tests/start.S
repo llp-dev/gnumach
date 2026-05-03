@@ -22,9 +22,5 @@ _start:
         pushl   %esp
         call    c_start
 #endif /* __i386__ */
-#ifdef __x86_64__
-        movq    %rsp,%rdi
-        callq   c_start
-#endif /* __x86_64__ */
 
 	.section .note.GNU-stack,"",%progbits

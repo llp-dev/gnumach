@@ -80,12 +80,7 @@ $(eval $(call generate_mig_client,mach,mach_port))
 # memory_object{_default}.defs?
 # notify.defs?
 $(eval $(call generate_mig_server,mach,task_notify))
-if HOST_ix86
 $(eval $(call generate_mig_client,mach/i386,mach_i386))
-endif
-if HOST_x86_64
-$(eval $(call generate_mig_client,mach/x86_64,mach_i386))
-endif
 
 # NOTE: keep in sync with the rules above
 MIG_GEN_CC = \
@@ -177,14 +172,8 @@ GNUMACH_ARGS = console=com0
 QEMU_OPTS = -m 2047 -nographic -no-reboot -boot d
 QEMU_GDB_PORT ?= 1234
 
-if HOST_ix86
 QEMU_BIN = qemu-system-i386
 QEMU_OPTS += -cpu pentium3-v1
-endif
-if HOST_x86_64
-QEMU_BIN = qemu-system-x86_64
-QEMU_OPTS += -cpu core2duo-v1
-endif
 if enable_smp
 QEMU_OPTS += -smp 2
 endif

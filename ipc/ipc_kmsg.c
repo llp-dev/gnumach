@@ -1350,11 +1350,9 @@ ipc_kmsg_copyin_body(
 
 		if ((is_port && !is_inline && (size != PORT_NAME_T_SIZE_IN_BITS)) ||
 		    (is_port && is_inline && (size != PORT_T_SIZE_IN_BITS)) ||
-#ifndef __LP64__
 		    (longform && ((type->msgtl_header.msgt_name != 0) ||
 				  (type->msgtl_header.msgt_size != 0) ||
 				  (type->msgtl_header.msgt_number != 0))) ||
-#endif
 		    (((mach_msg_type_t*)type)->msgt_unused != 0) ||
 		    (dealloc && is_inline)) {
 			ipc_kmsg_clean_partial(kmsg, taddr, FALSE, 0);

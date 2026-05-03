@@ -212,13 +212,8 @@ typedef struct elf64_sym {
     Elf64_Xword	st_size;
 } Elf64_Sym;
 
-#ifdef __LP64__
-#define Elf_Sym Elf64_Sym
-#define Elf_Shdr Elf64_Shdr
-#else
 #define Elf_Sym Elf32_Sym
 #define Elf_Shdr Elf32_Shdr
-#endif
 
 /* symbol type and binding attributes - page 4-26 */
 
@@ -350,13 +345,8 @@ typedef struct {
 #define DT_TEXTREL	22
 #define DT_JMPREL	23
 
-#if defined(__LP64__) && ! defined(USER32)
-typedef Elf64_Ehdr Elf_Ehdr;
-typedef Elf64_Phdr Elf_Phdr;
-#else
 typedef Elf32_Ehdr Elf_Ehdr;
 typedef Elf32_Phdr Elf_Phdr;
-#endif
 
 /*
  *	Bootstrap doesn't need machine dependent extensions.

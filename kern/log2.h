@@ -23,11 +23,7 @@
 
 #include <kern/assert.h>
 
-#ifdef __LP64__
-#define LONG_BIT 64
-#else /* __LP64__ */
 #define LONG_BIT 32
-#endif /* __LP64__ */
 
 static inline unsigned int
 ilog2(unsigned long x)

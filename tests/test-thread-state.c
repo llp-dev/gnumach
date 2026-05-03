@@ -22,12 +22,8 @@
 #include <mach.user.h>
 #include <mach_port.user.h>
 
-#if defined(__x86_64__) || defined(__i386__)
 #define THREAD_STATE_FLAVOR	i386_THREAD_STATE
 #define THREAD_STATE_COUNT	i386_THREAD_STATE_COUNT
-#else
-#error "Don't know which state to use on this platform"
-#endif
 
 /*
  *	We'll make the thread itself run this function when it faults.
@@ -80,11 +76,7 @@ kern_return_t catch_exception_raise(
 {
 	kern_return_t			kr;
 	vm_offset_t			off;
-#if defined(__x86_64__) || defined(__i386__)
 	struct i386_thread_state	state;
-#else
-#error "Don't know which state to use on this platform"
-#endif
 	mach_msg_type_number_t		state_count = THREAD_STATE_COUNT;
 
 
@@ -104,21 +96,6 @@ kern_return_t catch_exception_raise(
 	ASSERT_RET(kr, "thread_get_state get failed");
 	ASSERT(state_count == THREAD_STATE_COUNT, "bad state_count");
 
-#if defined(__x86_64__)
-	/*
-	 *	Place a copy of the state on the thread's stack.
-	 */
-	off = ((state.ursp - 128 - sizeof(state)) & ~15UL) - 8;
-	memcpy((void *) off, &state, sizeof(state));
-
-	/*
-	 *	Make it call fault_handler(subcode, off).
-	 */
-	state.ursp = off;
-	state.rip = (vm_offset_t) fault_handler;
-	state.rdi = (vm_offset_t) subcode;
-	state.rsi = off;
-#elif defined(__i386__)
 	/*
 	 *	Place a copy of the state on the thread's stack.
 	 */
@@ -132,9 +109,6 @@ kern_return_t catch_exception_raise(
 	*(vm_offset_t *) (off - 8) = (vm_offset_t) subcode;
 	state.uesp = off - 12;
 	state.eip = (vm_offset_t) fault_handler;
-#else
-#error "Don't know how to manipulate state to use on this platform"
-#endif
 
 	kr = thread_set_state(thread, THREAD_STATE_FLAVOR,
 			      (thread_state_t) &state, state_count);

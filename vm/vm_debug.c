@@ -53,7 +53,6 @@
 #include <ipc/ipc_port.h>
 
 
-#if MACH_VM_DEBUG
 
 /*
  *	Routine:	vm_object_real_name
@@ -468,7 +467,6 @@ mach_vm_object_pages_phys(
 	return _mach_vm_object_pages(object, (void**) pagesp, countp, 1);
 }
 
-#endif	/* MACH_VM_DEBUG */
 
 /*
  *	Routine:	host_virtual_physical_table_info

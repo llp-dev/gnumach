@@ -210,7 +210,6 @@ void clock_interrupt(
 	counter(c_threads_total += c_threads_current);
 	counter(c_stacks_total += c_stacks_current);
 
-#if	STAT_TIME
 	/*
 	 *	Increment the thread time, if using
 	 *	statistical timing.
@@ -223,7 +222,6 @@ void clock_interrupt(
 	    if (thread)
 		timer_bump(&thread->system_timer, usec);
 	}
-#endif	/* STAT_TIME */
 
 	/*
 	 *	Increment the CPU time statistics.

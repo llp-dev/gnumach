@@ -39,24 +39,12 @@ AC_DEFINE_UNQUOTED([NLPR], [$nlpr], [NLPR])
   AM_CONDITIONAL([enable_pae], [false])
 [fi]
 
-# IPC debugging interface.
-AC_DEFINE([MACH_DEBUG], [1], [MACH_DEBUG])
-
-# Fixed priority threads.
-AC_DEFINE([MACH_FIXPRI], [1], [MACH_FIXPRI])
-
 # Mach host (cpu resource alloc.).
 [if [ $mach_ncpus -gt 1 ]; then]
   AC_DEFINE([MACH_HOST], [1], [MACH_HOST])
 [else]
   AC_DEFINE([MACH_HOST], [0], [MACH_HOST])
 [fi]
-
-# IPC debugging calls.
-AC_DEFINE([MACH_IPC_DEBUG], [1], [MACH_IPC_DEBUG])
-
-# Paged-out page map hints.
-AC_DEFINE([MACH_PAGEMAP], [1], [MACH_PAGEMAP])
 
 # Do pc sample histogram.
 [if [ $mach_ncpus -gt 1 ]; then]
@@ -74,12 +62,6 @@ AC_ARG_ENABLE([kernsample],
 [else]
   AC_DEFINE([MACH_KERNSAMPLE], [0], [MACH_KERNSAMPLE])
 [fi]
-
-# VM debugging calls.
-AC_DEFINE([MACH_VM_DEBUG], [1], [MACH_VM_DEBUG])
-
-# Use statistical timing.
-AC_DEFINE([STAT_TIME], [1], [STAT_TIME])
 
 #
 # Options.

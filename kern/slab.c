@@ -87,9 +87,7 @@
 #include <vm/vm_types.h>
 #include <sys/types.h>
 
-#ifdef MACH_DEBUG
 #include <mach_debug/slab_info.h>
-#endif
 
 /*
  * Minimum required alignment.
@@ -1478,7 +1476,6 @@ void slab_info(void)
     _slab_info(printf);
 }
 
-#if MACH_DEBUG
 kern_return_t host_slab_info(host_t host, cache_info_array_t *infop,
                              unsigned int *infoCntp)
 {
@@ -1570,4 +1567,3 @@ out:
 
     return kr;
 }
-#endif /* MACH_DEBUG */

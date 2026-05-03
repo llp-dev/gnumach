@@ -83,12 +83,10 @@ def_simple_lock_data(static,	reaper_lock)
 /* private */
 struct thread	thread_template;
 
-#if	MACH_DEBUG
 #define	STACK_MARKER	0xdeadbeefU
 boolean_t		stack_check_usage = FALSE;
 def_simple_lock_data(static,	stack_usage_lock)
 vm_size_t		stack_max_usage = 0;
-#endif	/* MACH_DEBUG */
 
 /*
  *	Machine-dependent code must define:
@@ -203,9 +201,7 @@ kern_return_t stack_alloc(
 	if (stack == 0) {
 		stack = kmem_cache_alloc(&thread_stack_cache);
 		assert(stack != 0);
-#if	MACH_DEBUG
 		stack_init(stack);
-#endif	/* MACH_DEBUG */
 	}
 
 	stack_attach(thread, stack, resume);
@@ -260,9 +256,7 @@ void stack_collect(void)
 		stack_unlock();
 		(void) splx(s);
 
-#if	MACH_DEBUG
 		stack_finalize(stack);
-#endif	/* MACH_DEBUG */
 		kmem_cache_free(&thread_stack_cache, stack);
 
 		s = splsched();
@@ -337,10 +331,8 @@ void thread_init(void)
 /*	thread_template.priority (later) */
 	thread_template.max_priority = BASEPRI_USER;
 /*	thread_template.sched_pri (later - compute_priority) */
-#if	MACH_FIXPRI
 	thread_template.sched_data = 0;
 	thread_template.policy = POLICY_TIMESHARE;
-#endif	/* MACH_FIXPRI */
 	thread_template.depress_priority = -1;
 	thread_template.cpu_usage = 0;
 	thread_template.sched_usage = 0;
@@ -388,9 +380,7 @@ void thread_init(void)
 	simple_lock_init(&stack_lock_data);
 #endif	/* MACHINE_STACK */
 
-#if	MACH_DEBUG
 	simple_lock_init(&stack_usage_lock);
-#endif	/* MACH_DEBUG */
 
 	/*
 	 *	Initialize any machine-dependent
@@ -1596,17 +1586,12 @@ kern_return_t thread_info(
 	    s = splsched();
 	    thread_lock(thread);
 
-#if	MACH_FIXPRI
 	    sched_info->policy = thread->policy;
 	    if (thread->policy == POLICY_FIXEDPRI)
 		sched_info->data = (thread->sched_data * tick)/1000;
 	    else
 		sched_info->data = 0;
 
-#else	/* MACH_FIXPRI */
-	    sched_info->policy = POLICY_TIMESHARE;
-	    sched_info->data = 0;
-#endif	/* MACH_FIXPRI */
 
 	    sched_info->base_priority = thread->priority;
 	    sched_info->max_priority = thread->max_priority;
@@ -1914,12 +1899,10 @@ Restart:
 	/*
 	 *	Reset policy and priorities if needed.
 	 */
-#if	MACH_FIXPRI
 	if ((thread->policy & new_pset->policies) == 0) {
 	    thread->policy = POLICY_TIMESHARE;
 	    recompute_pri = TRUE;
 	}
-#endif	/* MACH_FIXPRI */
 
 	if (thread->max_priority < new_pset->max_priority) {
 	    thread->max_priority = new_pset->max_priority;
@@ -2154,16 +2137,13 @@ thread_policy(
 	int		policy,
 	int		data)
 {
-#if	MACH_FIXPRI
 	kern_return_t	ret = KERN_SUCCESS;
 	int		temp;
 	spl_t		s;
-#endif	/* MACH_FIXPRI */
 
 	if ((thread == THREAD_NULL) || invalid_policy(policy))
 		return KERN_INVALID_ARGUMENT;
 
-#if	MACH_FIXPRI
 	s = splsched();
 	thread_lock(thread);
 
@@ -2208,12 +2188,6 @@ thread_policy(
 	(void) splx(s);
 
 	return ret;
-#else	/* MACH_FIXPRI */
-	if (policy == POLICY_TIMESHARE)
-		return KERN_SUCCESS;
-	else
-		return KERN_FAILURE;
-#endif	/* MACH_FIXPRI */
 }
 
 /*
@@ -2354,7 +2328,6 @@ void consider_thread_collect(void)
 	}
 }
 
-#if	MACH_DEBUG
 
 static vm_size_t stack_usage(vm_offset_t stack)
 {
@@ -2613,7 +2586,6 @@ thread_stats(void)
 	printf("%d total threads.\n", total);
 	printf("%d using rpc_reply.\n", rpcreply);
 }
-#endif	/* MACH_DEBUG */
 
 /*
  *	thread_set_name

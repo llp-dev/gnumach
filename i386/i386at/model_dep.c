@@ -101,9 +101,6 @@ extern uint32_t apboot_jmp_offset;
 /* If set, reboot the system on ctrl-alt-delete.  */
 boolean_t	rebootflag = FALSE;	/* exported to kdintr */
 
-#ifdef LINUX_DEV
-extern void linux_init(void);
-#endif
 
 /*
  * Find devices.  The system is alive.
@@ -146,12 +143,6 @@ void machine_init(void)
 	 */
 	cninit();
 
-#ifdef LINUX_DEV
-	/*
-	 * Initialize Linux drivers.
-	 */
-	linux_init();
-#endif
 	/*
 	 * Find the devices
 	 */

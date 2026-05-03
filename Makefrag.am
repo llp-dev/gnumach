@@ -519,12 +519,6 @@ exec_msgidsdir = $(datadir)/msgids
 exec_msgids_DATA = gnumach.msgids
 
 #
-# Specific code.
-#
-
-# Linux device drivers and the glue code.
-include linux/Makefrag.am
-#
 # Architecture specific parts.
 #
 

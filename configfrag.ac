@@ -55,11 +55,6 @@ AC_DEFINE([MACH_FIXPRI], [1], [MACH_FIXPRI])
 # IPC debugging calls.
 AC_DEFINE([MACH_IPC_DEBUG], [1], [MACH_IPC_DEBUG])
 
-# Does the architecture provide machine-specific interfaces?
-mach_machine_routines=${mach_machine_routines-0}
-AC_DEFINE_UNQUOTED([MACH_MACHINE_ROUTINES], [$mach_machine_routines],
-  [MACH_MACHINE_ROUTINES])
-
 # Paged-out page map hints.
 AC_DEFINE([MACH_PAGEMAP], [1], [MACH_PAGEMAP])
 
@@ -82,9 +77,6 @@ AC_ARG_ENABLE([kernsample],
 
 # VM debugging calls.
 AC_DEFINE([MACH_VM_DEBUG], [1], [MACH_VM_DEBUG])
-
-# Mach-dep power conservation.
-AC_DEFINE([POWER_SAVE], [1], [POWER_SAVE])
 
 # Use statistical timing.
 AC_DEFINE([STAT_TIME], [1], [STAT_TIME])

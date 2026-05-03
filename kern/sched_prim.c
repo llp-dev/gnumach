@@ -1631,9 +1631,7 @@ static void __attribute__((noreturn)) idle_thread_continue(void)
 			 * machine_idle is a machine dependent function,
 			 * to conserve power.
 			 */
-#if	POWER_SAVE
 			machine_idle(mycpu);
-#endif /* POWER_SAVE */
 		}
 
 #ifdef	MARK_CPU_ACTIVE

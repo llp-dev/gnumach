@@ -56,18 +56,7 @@
 #include <i386/trap.h>
 #include "cpu_number.h"
 
-#if 0
-#include <i386/ipl.h>
-#define ASSERT_IPL(L) \
-MACRO_BEGIN \
-      if (curr_ipl[cpu_number()] != L) { \
-	      printf("IPL is %d, expected %d\n", curr_ipl[cpu_number()], L); \
-	      panic("fpu: wrong ipl"); \
-      } \
-MACRO_END
-#else
 #define ASSERT_IPL(L)
-#endif
 
 _Static_assert(sizeof(struct i386_xfp_xstate_header) == 8*8,
 	       "struct i386_xfp_xstate_header size");
@@ -930,7 +919,6 @@ ASSERT_IPL(SPL0);
 	    memcpy(ifps, fp_default_state, offsetof(struct i386_fpsave_state, xfp_save_state) + fp_xsave_size);
 	    pcb->ims.ifps = ifps;
 	    fpinit(thread);
-#if 1
 /* 
  * I'm not sure this is needed. Does the fpu regenerate the interrupt in
  * frstor or not? Without this code we may miss some exceptions, with it
@@ -952,7 +940,6 @@ ASSERT_IPL(SPL0);
 			           thread->pcb->ims.ifps->xfp_save_state.fp_status :
 			           thread->pcb->ims.ifps->fp_save_state.fp_status);
 		/*NOTREACHED*/
-#endif
 	} else if (! ifps->fp_valid) {
 		printf("fp_load: invalid FPU state!\n");
 		fninit ();
@@ -962,7 +949,6 @@ ASSERT_IPL(SPL0);
 	ifps->fp_valid = FALSE;		/* in FPU */
 }
 
-#if	defined(AT386) || defined(ATX86_64)
 /*
  *	Handle a coprocessor error interrupt on the AT386.
  *	This comes in on line 5 of the slave PIC at SPL1.
@@ -1003,4 +989,3 @@ ASSERT_IPL(SPL1);
 	ast_on(cpu_number(), AST_I386_FP);
 	splx(s);
 }
-#endif	/* AT386 */

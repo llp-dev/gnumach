@@ -48,7 +48,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #ifndef	_I386_PIT_H_
 #define	_I386_PIT_H_
 
-#if	defined(AT386) || defined(ATX86_64)
 /* Definitions for 8254 Programmable Interrupt Timer ports on AT 386 */
 #define PITCTR0_PORT	0x40		/* counter 0 port */
 #define PITCTR1_PORT	0x41		/* counter 1 port */
@@ -59,7 +58,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #define PITAUX_GATE2	0x01		/* aux port, PIT gate 2 input */
 #define PITAUX_OUT2	0x02		/* aux port, PIT clock out 2 enable */
 #define PITAUX_VAL	0x20		/* aux port, output */
-#endif	/* defined(AT386) */
 
 /* Following are used for Timer 0 */
 #define PIT_C0          0x00            /* select counter 0 */
@@ -85,9 +83,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  * Clock speed for the timer in hz divided by the constant HZ
  * (defined in param.h)
  */
-#if	defined(AT386) || defined(ATX86_64)
 #define CLKNUM		1193182
-#endif	/* AT386 */
 
 extern void clkstart(void);
 extern void pit_prepare_sleep(int hz);

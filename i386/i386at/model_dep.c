@@ -78,9 +78,6 @@
 #include <i386at/model_dep.h>
 #include <machine/irq.h>
 
-#if	ENABLE_IMMEDIATE_CONSOLE
-#include "immc.h"
-#endif	/* ENABLE_IMMEDIATE_CONSOLE */
 
 #define RESERVED_BIOS 0x10000
 
@@ -416,9 +413,6 @@ i386at_init(void)
  */
 void c_boot_entry(vm_offset_t bi)
 {
-#if	ENABLE_IMMEDIATE_CONSOLE
-	romputc = immc_romputc;
-#endif	/* ENABLE_IMMEDIATE_CONSOLE */
 
 	/* Stash the boot_image_info pointer.  */
 	boot_info = *(typeof(boot_info)*)phystokv(bi);

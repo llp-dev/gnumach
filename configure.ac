@@ -54,30 +54,15 @@ m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([no])],
 
 AC_CANONICAL_HOST
 
-AC_ARG_ENABLE([platform],
-  AS_HELP_STRING([--enable-platform=PLATFORM], [specify the platform to build a
-    kernel for.  Defaults to `at' for `i?86'.]),
-  [host_platform=$enable_platform],
-  [host_platform=default])
-[# Supported configurations.
-case $host_platform:$host_cpu in
-  default:i?86)
-    host_platform=at;;
-  at:i?86)
-    :;;
-  *)]
-    AC_MSG_ERROR([unsupported combination of cpu type `$host_cpu' and platform
-      `$host_platform'.])[;;
-esac]
-AC_SUBST([host_platform])
-
-[# This is used in a few places.
+[# Supported configurations: i?86 only.
 case $host_cpu in
   i?86)
-    systype=i386;;
-  *)
-    systype=$host_cpu;;
+    :;;
+  *)]
+    AC_MSG_ERROR([unsupported cpu type `$host_cpu'.])[;;
 esac]
+
+systype=i386
 AC_SUBST([systype])
 
 #

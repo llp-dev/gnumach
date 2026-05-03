@@ -99,9 +99,6 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <device/cons.h>
 #include <util/atoi.h>
 
-#if 0
-#define BROKEN_KEYBOARD_RESET
-#endif
 
 struct tty       kd_tty;
 extern boolean_t rebootflag;
@@ -1071,19 +1068,6 @@ kdinit(void)
 	unmask_irq(KBD_IRQ);
 	kd_initialized = TRUE;
 
-#if	ENABLE_IMMEDIATE_CONSOLE
-	/* Now that we're set up, we no longer need or want the
-           immediate console.  */
-	{
-		extern boolean_t immediate_console_enable;
-		immediate_console_enable = FALSE;
-	}
-
-	/* The immediate console printed stuff at the bottom of the
-	   screen rather than at the cursor position, so that's where
-	   we should start.  */
-	kd_setpos(ONE_PAGE - ONE_LINE); printf("\n");
-#endif /* ENABLE_IMMEDIATE_CONSOLE */
 
 	cnsetleds(kd_state = KS_NORMAL);
 					/* clear the LEDs AFTER we
@@ -2491,19 +2475,6 @@ kd_xga_init(void)
 {
 	unsigned char	start, stop;
 
-#if 0
-	unsigned char	screen;
-
-	/* XXX: this conflicts with read/writing the RTC */
-
-	outb(CMOS_ADDR, CMOS_EB);
-	screen = inb(CMOS_DATA) & CM_SCRMSK;
-	switch(screen) {
-	default:
-		printf("kd: unknown screen type, defaulting to EGA\n");
-		/* FALLTHROUGH */
-	case CM_EGA_VGA:
-#endif
 		/*
 		 * Here we'll want to query to bios on the card
 		 * itself, because then we can figure out what
@@ -2527,32 +2498,6 @@ kd_xga_init(void)
 		    for (i = 0; i < 200; i++)
 			addr[i] = 0x00;
 		}
-#if 0
-		break;
-	/* XXX: some buggy BIOSes report these...  */
-	case CM_CGA_40:
-		vid_start = (u_char *)phystokv(CGA_START);
-		kd_index_reg = CGA_IDX_REG;
-		kd_io_reg = CGA_IO_REG;
-		kd_lines = 25;
-		kd_cols = 40;
-		break;
-	case CM_CGA_80:
-		vid_start = (u_char *)phystokv(CGA_START);
-		kd_index_reg = CGA_IDX_REG;
-		kd_io_reg = CGA_IO_REG;
-		kd_lines = 25;
-		kd_cols = 80;
-		break;
-	case CM_MONO_80:
-		vid_start = (u_char *)phystokv(MONO_START);
-		kd_index_reg = MONO_IDX_REG;
-		kd_io_reg = MONO_IO_REG;
-		kd_lines = 25;
-		kd_cols = 80;
-		break;
-	}
-#endif
 
 	outb(kd_index_reg, C_START);
 	start = inb(kd_io_reg);

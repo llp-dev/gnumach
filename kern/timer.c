@@ -160,9 +160,6 @@ timer_read(
 	/*
 	 *	Normalize the result
 	 */
-#ifdef	TIMER_ADJUST
-	TIMER_ADJUST(&temp);
-#endif	/* TIMER_ADJUST */
 	TIMER_TO_TIME_VALUE64(tv, &temp);
 }
 
@@ -212,9 +209,6 @@ nonblocking_timer_read(
 	/*
 	 *	Normalize the result
 	 */
-#ifdef	TIMER_ADJUST
-	TIMER_ADJUST(&temp);
-#endif	/* TIMER_ADJUST */
 	TIMER_TO_TIME_VALUE64(tv, &temp);
 }
 

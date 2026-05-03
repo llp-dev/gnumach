@@ -476,37 +476,6 @@ pmap_pte(const pmap_t pmap, vm_offset_t addr)
 	return(&ptp[ptenum(addr)]);
 }
 
-#define DEBUG_PTE_PAGE	0
-
-#if	DEBUG_PTE_PAGE
-void ptep_check(ptep_t ptep)
-{
-	pt_entry_t		*pte, *epte;
-	int			ctu, ctw;
-
-	/* check the use and wired counts */
-	if (ptep == PTE_PAGE_NULL)
-		return;
-	pte = pmap_pte(ptep->pmap, ptep->va);
-	epte = pte + INTEL_PGBYTES/sizeof(pt_entry_t);
-	ctu = 0;
-	ctw = 0;
-	while (pte < epte) {
-		if (pte->pfn != 0) {
-			ctu++;
-			if (pte->wired)
-				ctw++;
-		}
-		pte += ptes_per_vm_page;
-	}
-
-	if (ctu != ptep->use_count || ctw != ptep->wired_count) {
-		printf("use %d wired %d - actual use %d wired %d\n",
-		    	ptep->use_count, ptep->wired_count, ctu, ctw);
-		panic("pte count");
-	}
-}
-#endif	/* DEBUG_PTE_PAGE */
 
 /*
  *	Back-door routine for mapping kernel VM at initialization.
@@ -1039,10 +1008,6 @@ void pmap_remove_range(
 	if (pmap == kernel_pmap && (va < kernel_virtual_start || va + (epte-spte)*PAGE_SIZE > kernel_virtual_end))
 		panic("pmap_remove_range(%lx-%lx) falls in physical memory area!\n", (unsigned long) va, (unsigned long) va + (epte-spte)*PAGE_SIZE);
 
-#if	DEBUG_PTE_PAGE
-	if (pmap != kernel_pmap)
-		ptep_check(get_pte_page(spte));
-#endif	/* DEBUG_PTE_PAGE */
 	num_removed = 0;
 	num_unwired = 0;
 

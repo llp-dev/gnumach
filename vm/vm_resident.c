@@ -216,7 +216,6 @@ void vm_page_bootstrap(
 	*endp = virtual_space_end;
 }
 
-#ifndef	MACHINE_PAGES
 /*
  *	We implement pmap_steal_memory with the help
  *	of two simpler functions, pmap_virtual_space and vm_page_bootalloc.
@@ -277,7 +276,6 @@ vm_offset_t pmap_steal_memory(
 
 	return addr;
 }
-#endif	/* MACHINE_PAGES */
 
 /*
  *	Routine:	vm_page_module_init

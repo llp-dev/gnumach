@@ -853,9 +853,7 @@ do_modifier(
 			state |= KS_ALTED;
 		kd_extended = FALSE;
 		break;
-#ifndef	ORC
 	case (K_CLCKSC):
-#endif	/* ORC */
 	case (K_CTLSC):
 		if (up)
 			state &= ~KS_CTLED;
@@ -863,12 +861,6 @@ do_modifier(
 			state |= KS_CTLED;
 		kd_extended = FALSE;
 		break;
-#ifdef	ORC
-	case (K_CLCKSC):
-		if (!up)
-			state ^= KS_CLKED;
-		break;
-#endif	/* ORC */
 	case (K_NLCKSC):
 		if (!up)
 			state ^= KS_NLKED;

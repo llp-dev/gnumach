@@ -68,11 +68,8 @@ extern vm_offset_t	pmap_steal_memory(vm_size_t);
 /* Initialization, after kernel runs in virtual memory.  */
 extern void		pmap_init(void);
 
-#ifndef	MACHINE_PAGES
 /*
- *	If machine/pmap.h defines MACHINE_PAGES, it must implement
- *	the above functions.  The pmap module has complete control.
- *	Otherwise, it must implement
+ *	The pmap module must implement
  *		pmap_virtual_space
  *		pmap_init
  *	and vm/vm_resident.c implements pmap_steal_memory using
@@ -81,7 +78,6 @@ extern void		pmap_init(void);
 
 /* During VM initialization, report virtual space available for the kernel.  */
 extern void		pmap_virtual_space(vm_offset_t *, vm_offset_t *);
-#endif	/* MACHINE_PAGES */
 
 /*
  *	Routines to manage the physical map data structure.

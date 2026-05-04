@@ -117,59 +117,11 @@ unsafe fn invalid_port_to_name(port: *mut ipc_object) -> mach_port_name_t {
     }
 }
 
-/// Lock no-ops with NCPUS == 1.
-#[inline]
-unsafe fn ip_lock_noop(_p: crate::mach_types::ipc_port_t) {}
-#[inline]
-unsafe fn ip_unlock_noop(_p: crate::mach_types::ipc_port_t) {}
-#[inline]
-unsafe fn io_lock(_io: *mut ipc_object) {}
-#[inline]
-unsafe fn io_unlock(_io: *mut ipc_object) {}
-#[inline]
-unsafe fn io_active(io: *mut ipc_object) -> bool {
-    ((*io).io_bits as i32) < 0
-}
-#[inline]
-unsafe fn io_release(io: *mut ipc_object) {
-    (*io).io_references -= 1;
-}
-#[inline]
-unsafe fn io_check_unlock(io: *mut ipc_object) {
-    let refs = (*io).io_references;
-    /* io_unlock(io) — no-op */
-    if refs == 0 {
-        let otype = ((*io).io_bits & crate::mach_types::IO_BITS_OTYPE) >> 16;
-        crate::extern_c::kmem_cache_free(
-            addr_of_mut!(crate::ipc_object::ipc_object_caches[otype as usize]),
-            io as crate::mach_types::vm_offset_t,
-        );
-    }
-}
-#[inline]
-unsafe fn ip_active(p: crate::mach_types::ipc_port_t) -> bool {
-    ((*p).ip_target.ipt_object.io_bits as i32) < 0
-}
-#[inline]
-unsafe fn ip_release(p: crate::mach_types::ipc_port_t) {
-    (*p).ip_target.ipt_object.io_references -= 1;
-}
-#[inline]
-unsafe fn is_write_lock(space: ipc_space_t) {
-    crate::extern_c::lock_write(addr_of_mut!((*space).is_lock_data));
-}
-#[inline]
-unsafe fn is_write_unlock(space: ipc_space_t) {
-    crate::extern_c::lock_done(addr_of_mut!((*space).is_lock_data));
-}
-#[inline]
-unsafe fn is_read_lock(space: ipc_space_t) {
-    crate::extern_c::lock_read(addr_of_mut!((*space).is_lock_data));
-}
-#[inline]
-unsafe fn is_read_unlock(space: ipc_space_t) {
-    crate::extern_c::lock_done(addr_of_mut!((*space).is_lock_data));
-}
+use crate::locks::{
+    io_active, io_check_unlock, io_lock, io_release, io_unlock, ip_active,
+    ip_lock as ip_lock_noop, ip_release, ip_unlock as ip_unlock_noop,
+    is_read_lock, is_read_unlock, is_write_lock, is_write_unlock,
+};
 
 /// `KEY(X) = ((X - VM_MIN_KERNEL_ADDRESS) >> 3)` from `ipc_space.h`.
 #[inline]

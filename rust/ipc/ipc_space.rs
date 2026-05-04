@@ -65,15 +65,7 @@ unsafe fn is_lock_init(space: ipc_space_t) {
     lock_init(addr_of_mut!((*space).is_lock_data), 1 /* TRUE */);
 }
 
-#[inline]
-unsafe fn is_write_lock(space: ipc_space_t) {
-    crate::extern_c::lock_write(addr_of_mut!((*space).is_lock_data));
-}
-
-#[inline]
-unsafe fn is_write_unlock(space: ipc_space_t) {
-    crate::extern_c::lock_done(addr_of_mut!((*space).is_lock_data));
-}
+use crate::locks::{is_write_lock, is_write_unlock};
 
 /// `rdxtree_init(tree)` → height = 0, root = NULL.  Both fields combined are
 /// 8 bytes (matches our opaque mirror), so zero the storage.

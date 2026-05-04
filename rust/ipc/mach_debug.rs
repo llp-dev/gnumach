@@ -20,21 +20,11 @@ use crate::mach_types::{
     MACH_PORT_RIGHT_RECEIVE, MACH_PORT_TYPE_SEND_RECEIVE, IO_BITS_KOTYPE,
 };
 
-#[inline]
-unsafe fn ip_lock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn ip_unlock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn ip_active(port: ipc_port_t) -> bool {
-    ((*port).ip_target.ipt_object.io_bits as i32) < 0
-}
+use crate::locks::{ip_active, ip_lock, ip_unlock, is_read_unlock};
+
 #[inline]
 unsafe fn ip_kotype(port: ipc_port_t) -> u32 {
     (*port).ip_target.ipt_object.io_bits & IO_BITS_KOTYPE
-}
-#[inline]
-unsafe fn is_read_unlock(space: ipc_space_t) {
-    crate::extern_c::lock_done(addr_of_mut!((*space).is_lock_data));
 }
 
 /// `ipc_port_translate_receive(space, name, &port)` macro:

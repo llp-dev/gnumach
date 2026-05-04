@@ -50,64 +50,15 @@ use crate::mach_types::{
 //  Inline expansions of the lock / refcount macros (NCPUS == 1: lock no-ops).
 // ---------------------------------------------------------------------------
 
-#[inline]
-unsafe fn io_active(io: *mut ipc_object) -> bool {
-    ((*io).io_bits as i32) < 0
-}
+use crate::locks::{
+    io_active, io_lock, io_unlock, ip_active, ip_check_unlock, ip_lock,
+    ip_reference, ip_release, ip_unlock, ips_active, ips_lock, ips_unlock,
+    is_write_lock, is_write_unlock,
+};
+
 #[inline]
 unsafe fn io_otype(io: *mut ipc_object) -> u32 {
     ((*io).io_bits & IO_BITS_OTYPE) >> 16
-}
-
-#[inline]
-unsafe fn io_lock(_io: *mut ipc_object) {}
-#[inline]
-unsafe fn io_unlock(_io: *mut ipc_object) {}
-#[inline]
-unsafe fn ip_lock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn ip_unlock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn ips_lock(_pset: ipc_pset_t) {}
-#[inline]
-unsafe fn ips_unlock(_pset: ipc_pset_t) {}
-
-#[inline]
-unsafe fn ip_active(port: ipc_port_t) -> bool {
-    io_active(addr_of_mut!((*port).ip_target.ipt_object))
-}
-#[inline]
-unsafe fn ips_active(pset: ipc_pset_t) -> bool {
-    io_active(addr_of_mut!((*pset).ips_target.ipt_object))
-}
-#[inline]
-unsafe fn ip_reference(port: ipc_port_t) {
-    (*port).ip_target.ipt_object.io_references += 1;
-}
-#[inline]
-unsafe fn ip_release(port: ipc_port_t) {
-    (*port).ip_target.ipt_object.io_references -= 1;
-}
-#[inline]
-unsafe fn ip_check_unlock(port: ipc_port_t) {
-    let io = addr_of_mut!((*port).ip_target.ipt_object);
-    let refs = (*io).io_references;
-    if refs == 0 {
-        let otype = io_otype(io);
-        kmem_cache_free(
-            addr_of_mut!(ipc_object_caches[otype as usize]),
-            io as vm_offset_t,
-        );
-    }
-}
-
-#[inline]
-unsafe fn is_write_lock(space: ipc_space_t) {
-    lock_write(addr_of_mut!((*space).is_lock_data));
-}
-#[inline]
-unsafe fn is_write_unlock(space: ipc_space_t) {
-    lock_done(addr_of_mut!((*space).is_lock_data));
 }
 
 #[inline]

@@ -38,78 +38,15 @@ use crate::mach_types::{
 //  Macros expanded inline (1:1 with the C originals)
 // ---------------------------------------------------------------------------
 
-#[inline]
-unsafe fn io_active(io: *mut ipc_object) -> bool {
-    ((*io).io_bits as i32) < 0
-}
-#[inline]
-unsafe fn io_otype(io: *mut ipc_object) -> u32 {
-    ((*io).io_bits & IO_BITS_OTYPE) >> 16
-}
-#[inline]
-unsafe fn io_reference(io: *mut ipc_object) {
-    (*io).io_references += 1;
-}
+use crate::locks::{
+    imq_lock, imq_lock_init, imq_unlock, io_active, io_reference, io_unlock,
+    ip_active, ip_check_unlock, ip_lock, ip_release, ip_unlock, ips_active,
+    ips_lock, ips_unlock, is_read_lock, is_read_unlock,
+};
 
-/* All io_lock / imq_lock etc. are no-ops with NCPUS == 1. */
-#[inline]
-unsafe fn io_unlock(_io: *mut ipc_object) {}
-#[inline]
-unsafe fn imq_lock_init(_mq: *mut ipc_mqueue) {}
-#[inline]
-unsafe fn imq_lock(_mq: *mut ipc_mqueue) {}
-#[inline]
-unsafe fn imq_unlock(_mq: *mut ipc_mqueue) {}
-#[inline]
-unsafe fn ip_lock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn ip_unlock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn is_read_lock(_space: ipc_space_t) {}
-#[inline]
-unsafe fn is_read_unlock(_space: ipc_space_t) {}
-#[inline]
-unsafe fn ips_lock(_pset: ipc_pset_t) {}
-#[inline]
-unsafe fn ips_unlock(_pset: ipc_pset_t) {}
-
-#[inline]
-unsafe fn ip_active(port: ipc_port_t) -> bool {
-    io_active(addr_of_mut!((*port).ip_target.ipt_object))
-}
-#[inline]
-unsafe fn ips_active(pset: ipc_pset_t) -> bool {
-    io_active(addr_of_mut!((*pset).ips_target.ipt_object))
-}
-#[inline]
-unsafe fn ip_release(port: ipc_port_t) {
-    let io = addr_of_mut!((*port).ip_target.ipt_object);
-    (*io).io_references -= 1;
-}
-#[inline]
-unsafe fn ip_check_unlock(port: ipc_port_t) {
-    let io = addr_of_mut!((*port).ip_target.ipt_object);
-    let refs = (*io).io_references;
-    /* io_unlock no-op */
-    if refs == 0 {
-        let otype = io_otype(io);
-        crate::extern_c::kmem_cache_free(
-            addr_of_mut!(crate::ipc_object::ipc_object_caches[otype as usize]),
-            io as crate::mach_types::vm_offset_t,
-        );
-    }
-}
 #[inline]
 unsafe fn ips_check_unlock(pset: ipc_pset_t) {
-    let io = addr_of_mut!((*pset).ips_target.ipt_object);
-    let refs = (*io).io_references;
-    if refs == 0 {
-        let otype = io_otype(io);
-        crate::extern_c::kmem_cache_free(
-            addr_of_mut!(crate::ipc_object::ipc_object_caches[otype as usize]),
-            io as crate::mach_types::vm_offset_t,
-        );
-    }
+    crate::locks::io_check_unlock(addr_of_mut!((*pset).ips_target.ipt_object));
 }
 
 /// `ipc_kmsg_queue_init(q)` — C macro: `(q)->ikmq_base = IKM_NULL;`.

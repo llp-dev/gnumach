@@ -187,3 +187,28 @@ _Static_assert(sizeof(((struct task *)0)->name) == 32,
 /* struct percpu — needed for current_thread() lookup. */
 _Static_assert(__builtin_offsetof(struct percpu, active_thread) == 600,
 	"rust/ipc/mach_types.rs::percpu.active_thread offset drift");
+
+/* mach_msg_header_t / mach_msg_user_header_t — message header.  Walked by
+   the IPC port via raw byte offsets; size must match Rust mirror. */
+_Static_assert(sizeof(mach_msg_header_t) == 24,
+	"rust/ipc/mach_types.rs::mach_msg_header_t size drift");
+_Static_assert(sizeof(mach_msg_user_header_t) == 24,
+	"rust/ipc/mach_types.rs::mach_msg_user_header size drift");
+
+/* mach_msg_type_t / mach_msg_type_long_t — descriptors walked by the body
+   walker in rust/ipc/ipc_kmsg.rs (ipc_kmsg_copyin_body / copyout_body).
+   Wrong size = wrong stride = data corruption. */
+_Static_assert(sizeof(mach_msg_type_t) == 4,
+	"rust/ipc/mach_types.rs::mach_msg_type_t size drift");
+_Static_assert(sizeof(mach_msg_type_long_t) == 12,
+	"rust/ipc/mach_types.rs::mach_msg_type_long_t size drift");
+
+/* struct ipc_port_request — embedded in struct ipc_port via ip_dnrequests
+   and walked by the dnrequest helpers. */
+_Static_assert(sizeof(struct ipc_port_request) == 8,
+	"rust/ipc/mach_types.rs::ipc_port_request size drift");
+
+/* struct rdxtree_iter — used by rdxtree walks in rust/ipc/ipc_space.rs and
+   rust/ipc/mach_debug.rs. */
+_Static_assert(sizeof(struct rdxtree_iter) == 8,
+	"rust/ipc/mach_types.rs::rdxtree_iter size drift");

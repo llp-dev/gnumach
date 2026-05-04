@@ -23,20 +23,10 @@ use crate::mach_types::{
 //  Macros expanded inline
 // ---------------------------------------------------------------------------
 
-#[inline]
-unsafe fn io_active(io: *mut ipc_object) -> bool {
-    ((*io).io_bits as i32) < 0
-}
-
-#[inline]
-unsafe fn ips_active(pset: ipc_pset_t) -> bool {
-    io_active(addr_of_mut!((*pset).ips_target.ipt_object))
-}
-
-#[inline]
-unsafe fn ip_active(port: ipc_port_t) -> bool {
-    io_active(addr_of_mut!((*port).ip_target.ipt_object))
-}
+use crate::locks::{
+    imq_lock, imq_unlock, io_active, ip_active, ip_lock, ip_unlock,
+    ips_active, ips_lock, ips_unlock, is_read_unlock,
+};
 
 #[inline]
 unsafe fn ips_reference(pset: ipc_pset_t) {
@@ -48,37 +38,10 @@ unsafe fn ips_release(pset: ipc_pset_t) {
     (*pset).ips_target.ipt_object.io_references -= 1;
 }
 
-/// `io_check_unlock(io)`: read refs, unlock, free if zero.  With NCPUS=1
-/// `io_unlock` is a no-op; `io_free(otype, io)` becomes `kmem_cache_free`.
+/// `ips_check_unlock(pset)` — pset variant of `io_check_unlock`.
 #[inline]
 unsafe fn ips_check_unlock(pset: ipc_pset_t) {
-    let io: *mut ipc_object = addr_of_mut!((*pset).ips_target.ipt_object);
-    let refs = (*io).io_references;
-    /* io_unlock(io) — simple_unlock no-op with NCPUS == 1 */
-    if refs == 0 {
-        let otype: ipc_object_bits_t = ((*io).io_bits & IO_BITS_OTYPE) >> 16;
-        let cache = addr_of_mut!(ipc_object_caches[otype as usize]);
-        kmem_cache_free(cache, io as vm_offset_t);
-    }
-}
-
-/// All simple_lock / simple_unlock primitives are no-ops with NCPUS == 1.
-#[inline]
-unsafe fn ip_lock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn ip_unlock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn ips_lock(_pset: ipc_pset_t) {}
-#[inline]
-unsafe fn ips_unlock(_pset: ipc_pset_t) {}
-#[inline]
-unsafe fn imq_lock(_mq: *mut crate::mach_types::ipc_mqueue) {}
-#[inline]
-unsafe fn imq_unlock(_mq: *mut crate::mach_types::ipc_mqueue) {}
-
-#[inline]
-unsafe fn is_read_unlock(space: ipc_space_t) {
-    lock_done(addr_of_mut!((*space).is_lock_data));
+    crate::locks::io_check_unlock(addr_of_mut!((*pset).ips_target.ipt_object));
 }
 
 // ---------------------------------------------------------------------------

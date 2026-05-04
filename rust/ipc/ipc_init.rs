@@ -5,10 +5,10 @@
 use core::ptr::addr_of_mut;
 
 use crate::extern_c::{
-    ipc_host_init, ipc_marequest_init,
-    kernel_map, kmem_cache_init, kmem_submap, Assert,
+    ipc_host_init, kernel_map, kmem_cache_init, kmem_submap, Assert,
 };
 use crate::ipc_entry::ipc_entry_cache;
+use crate::ipc_marequest::ipc_marequest_init;
 use crate::ipc_notify::ipc_notify_init;
 use crate::ipc_object::ipc_object_caches;
 use crate::ipc_port::ipc_port_timestamp_data;

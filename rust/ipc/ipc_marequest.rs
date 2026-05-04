@@ -75,17 +75,7 @@ unsafe fn imarb_lock(_b: ipc_marequest_bucket_t) {}
 #[inline]
 unsafe fn imarb_unlock(_b: ipc_marequest_bucket_t) {}
 
-/// is_write_lock(space) → lock_write(&space->is_lock_data)
-#[inline]
-unsafe fn is_write_lock(space: ipc_space_t) {
-    lock_write(addr_of_mut!((*space).is_lock_data));
-}
-
-/// is_write_unlock(space) → lock_done(&space->is_lock_data)
-#[inline]
-unsafe fn is_write_unlock(space: ipc_space_t) {
-    lock_done(addr_of_mut!((*space).is_lock_data));
-}
+use crate::locks::{is_write_lock, is_write_unlock};
 
 /// is_reference(space) → ipc_space_reference_macro(space).
 /// With NCPUS=1 simple_lock/unlock are no-ops.
@@ -120,10 +110,7 @@ unsafe fn is_release(space: ipc_space_t) {
     }
 }
 
-#[inline]
-unsafe fn ip_unlock(_port: *mut ipc_port) {
-    /* io_unlock(&port->ip_object) → simple_unlock(...): no-op with NCPUS==1. */
-}
+use crate::locks::ip_unlock;
 
 /// Mirror of the static inline `ipc_entry_lookup` from `ipc/ipc_space.h`.
 #[inline]

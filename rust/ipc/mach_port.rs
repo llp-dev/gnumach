@@ -81,60 +81,24 @@ fn mach_port_name_valid(name: mach_port_name_t) -> bool {
     name != 0 && name != !0u32
 }
 
-#[inline]
-unsafe fn ip_lock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn ip_unlock(_port: ipc_port_t) {}
-#[inline]
-unsafe fn ips_lock(_pset: ipc_pset_t) {}
-#[inline]
-unsafe fn ips_unlock(_pset: ipc_pset_t) {}
-#[inline]
-unsafe fn imq_lock(_mq: *mut crate::mach_types::ipc_mqueue) {}
-#[inline]
-unsafe fn imq_unlock(_mq: *mut crate::mach_types::ipc_mqueue) {}
-#[inline]
-unsafe fn ip_active(port: ipc_port_t) -> bool {
-    ((*port).ip_target.ipt_object.io_bits as i32) < 0
-}
-#[inline]
-unsafe fn ips_active(pset: ipc_pset_t) -> bool {
-    ((*pset).ips_target.ipt_object.io_bits as i32) < 0
-}
+use crate::locks::{
+    imq_lock, imq_unlock, ip_active, ip_lock, ip_unlock, ips_active, ips_lock,
+    ips_unlock, is_read_lock, is_read_unlock, is_write_unlock,
+};
+
 #[inline]
 unsafe fn ip_kotype(port: ipc_port_t) -> u32 {
     (*port).ip_target.ipt_object.io_bits & IO_BITS_KOTYPE
 }
-#[inline]
-unsafe fn is_read_unlock(space: ipc_space_t) {
-    lock_done(addr_of_mut!((*space).is_lock_data));
-}
-#[inline]
-unsafe fn is_write_unlock(space: ipc_space_t) {
-    lock_done(addr_of_mut!((*space).is_lock_data));
-}
+
 #[inline]
 unsafe fn ips_check_unlock(pset: ipc_pset_t) {
-    let io = addr_of_mut!((*pset).ips_target.ipt_object);
-    if (*io).io_references == 0 {
-        let otype = ((*io).io_bits & crate::mach_types::IO_BITS_OTYPE) >> 16;
-        crate::extern_c::kmem_cache_free(
-            addr_of_mut!(crate::ipc_object::ipc_object_caches[otype as usize]),
-            io as vm_offset_t,
-        );
-    }
+    crate::locks::io_check_unlock(addr_of_mut!((*pset).ips_target.ipt_object));
 }
 
 #[inline]
 fn ie_bits_type(bits: u32) -> u32 {
     bits & IE_BITS_TYPE_MASK
-}
-
-/// `is_read_lock(space)` → write-lock with NCPUS == 1 (read==write under
-/// `lock_t`).
-#[inline]
-unsafe fn is_read_lock(space: ipc_space_t) {
-    crate::extern_c::lock_read(addr_of_mut!((*space).is_lock_data));
 }
 
 /// `IP_TIMESTAMP_ORDER(one, two)` — true if `one` happened before `two`.

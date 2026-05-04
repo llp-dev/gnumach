@@ -57,6 +57,7 @@ mod ipc_space;
 mod ipc_table;
 mod ipc_target;
 mod ipc_thread;
+mod locks;
 mod mach_debug;
 mod mach_msg;
 mod mach_port;

@@ -49,10 +49,11 @@ pub static mut ipc_port_timestamp_data: ipc_port_timestamp_t = 0;
 //  Macros expanded inline (1:1 with the C originals)
 // ---------------------------------------------------------------------------
 
-#[inline]
-unsafe fn io_active(io: *mut ipc_object) -> bool {
-    ((*io).io_bits as i32) < 0
-}
+use crate::locks::{
+    io_active, io_check_unlock, io_lock, io_lock_init, io_lock_try, io_reference,
+    io_release, io_unlock, ip_active, ip_check_unlock, ip_lock, ip_lock_init,
+    ip_lock_try, ip_reference, ip_release, ip_unlock,
+};
 
 #[inline]
 unsafe fn io_otype(io: *mut ipc_object) -> u32 {
@@ -82,71 +83,6 @@ unsafe fn io_free(otype: u32, io: *mut ipc_object) {
         addr_of_mut!(ipc_object_caches[otype as usize]),
         io as vm_offset_t,
     );
-}
-
-#[inline]
-unsafe fn io_reference(io: *mut ipc_object) {
-    (*io).io_references += 1;
-}
-
-#[inline]
-unsafe fn io_release(io: *mut ipc_object) {
-    (*io).io_references -= 1;
-}
-
-#[inline]
-unsafe fn io_check_unlock(io: *mut ipc_object) {
-    let refs = (*io).io_references;
-    /* io_unlock(io) — no-op with NCPUS == 1 */
-    if refs == 0 {
-        io_free(io_otype(io), io);
-    }
-}
-
-/* All io_lock / io_unlock primitives are no-ops with NCPUS == 1. */
-#[inline]
-unsafe fn io_lock(_io: *mut ipc_object) {}
-#[inline]
-unsafe fn io_unlock(_io: *mut ipc_object) {}
-#[inline]
-unsafe fn io_lock_init(_io: *mut ipc_object) {}
-/// `simple_lock_try` always succeeds (returns TRUE) with NCPUS == 1.
-#[inline]
-unsafe fn io_lock_try(_io: *mut ipc_object) -> bool {
-    true
-}
-
-#[inline]
-unsafe fn ip_lock(port: *mut ipc_port) {
-    io_lock(addr_of_mut!((*port).ip_target.ipt_object));
-}
-#[inline]
-unsafe fn ip_unlock(port: *mut ipc_port) {
-    io_unlock(addr_of_mut!((*port).ip_target.ipt_object));
-}
-#[inline]
-unsafe fn ip_lock_init(port: *mut ipc_port) {
-    io_lock_init(addr_of_mut!((*port).ip_target.ipt_object));
-}
-#[inline]
-unsafe fn ip_lock_try(port: *mut ipc_port) -> bool {
-    io_lock_try(addr_of_mut!((*port).ip_target.ipt_object))
-}
-#[inline]
-unsafe fn ip_active(port: *mut ipc_port) -> bool {
-    io_active(addr_of_mut!((*port).ip_target.ipt_object))
-}
-#[inline]
-unsafe fn ip_reference(port: *mut ipc_port) {
-    io_reference(addr_of_mut!((*port).ip_target.ipt_object));
-}
-#[inline]
-unsafe fn ip_release(port: *mut ipc_port) {
-    io_release(addr_of_mut!((*port).ip_target.ipt_object));
-}
-#[inline]
-unsafe fn ip_check_unlock(port: *mut ipc_port) {
-    io_check_unlock(addr_of_mut!((*port).ip_target.ipt_object));
 }
 #[inline]
 unsafe fn ip_kotype(port: *mut ipc_port) -> u32 {
@@ -195,22 +131,14 @@ unsafe fn ipc_port_multiple_unlock() {}
 unsafe fn ipc_port_timestamp_lock() {}
 #[inline]
 unsafe fn ipc_port_timestamp_unlock() {}
-#[inline]
-unsafe fn ips_lock(_pset: ipc_pset_t) {}
-#[inline]
-unsafe fn ips_unlock(_pset: ipc_pset_t) {}
-#[inline]
-unsafe fn ips_active(pset: ipc_pset_t) -> bool {
-    io_active(addr_of_mut!((*pset).ips_target.ipt_object))
-}
+use crate::locks::{
+    imq_lock, imq_unlock, ips_active, ips_lock, ips_unlock,
+};
+
 #[inline]
 unsafe fn ips_check_unlock(pset: ipc_pset_t) {
     io_check_unlock(addr_of_mut!((*pset).ips_target.ipt_object));
 }
-#[inline]
-unsafe fn imq_lock(_mq: *mut crate::mach_types::ipc_mqueue) {}
-#[inline]
-unsafe fn imq_unlock(_mq: *mut crate::mach_types::ipc_mqueue) {}
 
 #[inline]
 unsafe fn ie_bits_type(bits: u32) -> u32 {

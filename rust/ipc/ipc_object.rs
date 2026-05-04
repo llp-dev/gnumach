@@ -50,10 +50,11 @@ pub static mut ipc_object_caches: [kmem_cache; IOT_NUMBER] = [
 //  Macros expanded inline
 // ---------------------------------------------------------------------------
 
-#[inline]
-unsafe fn io_active(io: *mut ipc_object) -> bool {
-    ((*io).io_bits as i32) < 0
-}
+use crate::locks::{
+    io_active, io_check_unlock, io_lock, io_lock_init, io_reference,
+    io_release, io_unlock, ip_active, ip_lock, ip_reference, ip_unlock,
+    is_read_unlock, is_write_lock, is_write_unlock,
+};
 
 #[inline]
 unsafe fn io_otype(io: *mut ipc_object) -> u32 {
@@ -78,64 +79,6 @@ unsafe fn io_free(otype: u32, io: *mut ipc_object) {
         addr_of_mut!(ipc_object_caches[otype as usize]),
         io as vm_offset_t,
     );
-}
-
-/// All io_lock / io_unlock primitives are no-ops with NCPUS == 1.
-#[inline]
-unsafe fn io_lock(_io: *mut ipc_object) {}
-#[inline]
-unsafe fn io_unlock(_io: *mut ipc_object) {}
-#[inline]
-unsafe fn io_lock_init(_io: *mut ipc_object) {}
-
-#[inline]
-unsafe fn io_reference(io: *mut ipc_object) {
-    (*io).io_references += 1;
-}
-
-#[inline]
-unsafe fn io_release(io: *mut ipc_object) {
-    (*io).io_references -= 1;
-}
-
-/// `io_check_unlock(io)` — read refs, unlock, free if zero.
-#[inline]
-unsafe fn io_check_unlock(io: *mut ipc_object) {
-    let refs = (*io).io_references;
-    /* io_unlock(io) — no-op */
-    if refs == 0 {
-        io_free(io_otype(io), io);
-    }
-}
-
-#[inline]
-unsafe fn ip_lock(port: *mut ipc_port) {
-    io_lock(addr_of_mut!((*port).ip_target.ipt_object));
-}
-#[inline]
-unsafe fn ip_unlock(port: *mut ipc_port) {
-    io_unlock(addr_of_mut!((*port).ip_target.ipt_object));
-}
-#[inline]
-unsafe fn ip_active(port: *mut ipc_port) -> bool {
-    io_active(addr_of_mut!((*port).ip_target.ipt_object))
-}
-#[inline]
-unsafe fn ip_reference(port: *mut ipc_port) {
-    io_reference(addr_of_mut!((*port).ip_target.ipt_object));
-}
-
-#[inline]
-unsafe fn is_write_lock(space: ipc_space_t) {
-    lock_write(addr_of_mut!((*space).is_lock_data));
-}
-#[inline]
-unsafe fn is_write_unlock(space: ipc_space_t) {
-    lock_done(addr_of_mut!((*space).is_lock_data));
-}
-#[inline]
-unsafe fn is_read_unlock(space: ipc_space_t) {
-    lock_done(addr_of_mut!((*space).is_lock_data));
 }
 
 #[inline]

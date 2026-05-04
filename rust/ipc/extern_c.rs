@@ -1,4 +1,46 @@
-//! `extern "C"` declarations of kernel C symbols the Rust side calls.
+//! `extern "C"` declarations of kernel C symbols the Rust IPC port calls.
+//!
+//! Every `pub fn` / `pub static` here resolves to a definition that lives
+//! outside `rust/ipc/` (i.e. in the rest of the kernel C code).  Symbols
+//! that were once in C and are now Rust live in their owning module
+//! (`crate::<module>::<sym>`); this file should NOT redeclare them.
+//!
+//! The surviving boundary is grouped by category:
+//!
+//! - **Memory** — `kalloc`/`kfree`, `kmem_cache_*`, `kernel_map`,
+//!   `kmem_alloc_pageable`, `kmem_free`, `kmem_submap`.  Owners:
+//!   `kern/kalloc.{c,h}`, `kern/slab.{c,h}`, `vm/vm_kern.c`.
+//!
+//! - **Locks** — `lock_init`, `lock_read`, `lock_write`, `lock_done`.  Real
+//!   functions even at NCPUS == 1 (they manipulate r/w-lock state).
+//!   Owner: `kern/lock.c`.
+//!
+//! - **Radix tree** (`rdxtree_*`) — used by IPC space `is_map`/`is_reverse_map`.
+//!   Owner: `kern/rdxtree.c`.
+//!
+//! - **Threads & continuations** — `thread_block`, `thread_handoff`,
+//!   `thread_go`, `thread_will_wait{,_with_timeout}`,
+//!   `thread_syscall_return`, `thread_set_syscall_return`,
+//!   `thread_exception_return`.  Owners: `kern/sched_prim.c`,
+//!   `kern/thread.c`.
+//!
+//! - **Per-CPU data** — `percpu_array`.  Owner: `i386/i386/percpu.c`.
+//!
+//! - **VM copy / map** — `vm_allocate`, `vm_deallocate`, `vm_map_copy*`,
+//!   `vm_map_pageable`, `copyin`, `copyout`, `copyinmsg`, `copyoutmsg`,
+//!   `copyinmap`, `copyoutmap`.  Owners: `vm/vm_user.c`, `vm/vm_map.c`,
+//!   `i386/i386/copy_user.{c,h}`.
+//!
+//! - **Kobject framework** — `ipc_kobject_server`, `ipc_kobject_destroy`,
+//!   `ipc_kobject_set_locked`.  Owner: `kern/ipc_kobject.c`.
+//!
+//! - **Boot init** — `ipc_host_init`.  Owner: `kern/ipc_host.c`.
+//!
+//! - **Exception handler** — `exception_raise_continue`,
+//!   `exception_raise_continue_fast`.  Owner: `kern/exception.c`.
+//!
+//! - **Debug** — `printf`, `printf_once`, `Assert`, `SoftDebugger`.  Owners:
+//!   `kern/printf.c`, `kern/debug.c`.
 
 use core::ffi::{c_char, c_int};
 
@@ -14,6 +56,10 @@ use crate::mach_types::{
 pub type kmem_cache_ctor_t =
     Option<unsafe extern "C" fn(*mut core::ffi::c_void)>;
 
+/* `simple_lock_data_t` is a zero-sized struct (NCPUS == 1 / MACH_SLOCKS == 0)
+ * which Rust flags as not-FFI-safe per the strict C rules.  gcc and the
+ * gnumach kernel build accept it as a zero-sized type, so silence the lint. */
+#[allow(improper_ctypes)]
 extern "C" {
     /// `kern/kalloc.h`: `vm_offset_t kalloc(vm_size_t);`
     pub fn kalloc(size: vm_size_t) -> vm_offset_t;
@@ -42,9 +88,6 @@ extern "C" {
         s: *const u8,
     ) -> !;
 
-
-    // Other init routines that remain in C for now.
-    pub fn ipc_marequest_init();
 
     // VM.
     pub static mut kernel_map: vm_map_t;
@@ -125,6 +168,30 @@ extern "C" {
 
     /// `kern/sched_prim.h`: `void thread_block(continuation_t);`
     pub fn thread_block(continuation: crate::mach_types::continuation_t);
+
+    /// `kern/sched_prim.h`:
+    /// `boolean_t thread_handoff(thread_t old, continuation_t cont, thread_t new);`
+    /// Returns TRUE if the handoff succeeded (current_thread() now == new),
+    /// FALSE otherwise.
+    pub fn thread_handoff(
+        old_thread: crate::mach_types::ipc_thread_t,
+        continuation: crate::mach_types::continuation_t,
+        new_thread: crate::mach_types::ipc_thread_t,
+    ) -> crate::mach_types::boolean_t;
+
+    /// `kern/exception.h`: `void exception_raise_continue(void) __no_return`.
+    /// Continuation function pointer used by mach_msg_trap fast path to
+    /// detect that the receiver is in the optimized exception-handling path.
+    pub fn exception_raise_continue() -> !;
+
+    /// `kern/exception.h`:
+    /// `void exception_raise_continue_fast(ipc_port_t dest, ipc_kmsg_t kmsg) __no_return`.
+    /// Tail-called from mach_msg_trap when handing off a reply to an
+    /// exception-handling thread.
+    pub fn exception_raise_continue_fast(
+        dest: crate::mach_types::ipc_port_t,
+        kmsg: *mut crate::mach_types::ipc_kmsg_full,
+    ) -> !;
 
     /// `kern/ipc_kobject.h`:
     /// `ipc_kmsg_t ipc_kobject_server(ipc_kmsg_t);`

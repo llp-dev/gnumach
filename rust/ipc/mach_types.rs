@@ -94,6 +94,7 @@ pub struct mach_msg_user_header {
     pub msgh_seqno: mach_port_seqno_t,
     pub msgh_id: mach_msg_id_t,
 }
+const _: () = assert!(size_of::<mach_msg_user_header>() == 24);
 
 // `struct ipc_space`, `struct ipc_entry`, `struct ipc_port`, `struct ipc_pset`
 // are full mirrors defined later in this file (they need other types
@@ -311,6 +312,7 @@ pub union ipc_port_request_notify {
     pub port: *mut ipc_port,
     pub index: ipc_port_request_index_t,
 }
+const _: () = assert!(size_of::<ipc_port_request_notify>() == 4);
 
 /// `ipc/ipc_port.h`: union `name` field of `ipc_port_request`.
 #[repr(C)]
@@ -318,6 +320,7 @@ pub union ipc_port_request_name {
     pub name: mach_port_name_t,
     pub size: *mut ipc_table_size,
 }
+const _: () = assert!(size_of::<ipc_port_request_name>() == 4);
 
 /// `ipc/ipc_port.h`: `struct ipc_port_request`.
 #[repr(C)]
@@ -759,6 +762,7 @@ pub struct rdxtree_iter {
     pub node: *mut core::ffi::c_void,
     pub key: rdxtree_key_t,
 }
+const _: () = assert!(size_of::<rdxtree_iter>() == 8);
 const _: () = assert!(size_of::<rdxtree>() == 8);
 
 pub type rdxtree_key_t = u32; /* RDXTREE_KEY_32 is set in CFLAGS */
@@ -775,6 +779,7 @@ pub union ipc_entry_index_u {
     pub next_free: *mut ipc_entry,
     pub request: u32,
 }
+const _: () = assert!(size_of::<ipc_entry_index_u>() == 4);
 
 #[repr(C)]
 pub struct ipc_entry {
@@ -815,6 +820,9 @@ pub struct ipc_space {
 const _: () = assert!(size_of::<ipc_space>() == 44);
 
 pub const IS_NULL: ipc_space_t = core::ptr::null_mut();
+
+/// `IO_NULL = NULL` for `ipc_object_t`.
+pub const IO_NULL: *mut ipc_object = core::ptr::null_mut();
 
 /// `IP_NULL = (ipc_port_t) IO_NULL = NULL`.
 pub const IP_NULL: ipc_port_t = core::ptr::null_mut();
@@ -1151,6 +1159,7 @@ pub union ipc_port_data {
     pub destination: *mut ipc_port,
     pub timestamp: ipc_port_timestamp_t,
 }
+const _: () = assert!(size_of::<ipc_port_data>() == 4);
 
 #[repr(C)]
 pub struct ipc_port {

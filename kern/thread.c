@@ -45,7 +45,6 @@
 #include <kern/ast.h>
 #include <kern/counters.h>
 #include <kern/debug.h>
-#include <kern/eventcount.h>
 #include <kern/gnumach.server.h>
 #include <kern/ipc_mig.h>
 #include <kern/ipc_tt.h>
@@ -501,13 +500,6 @@ kern_return_t thread_create(
 	 *	switch code will set it before it can be used.
 	 */
 
-#if	MACH_PCSAMPLE
-	new_thread->pc_sample.seqno = 0;
-	new_thread->pc_sample.sampletypes = 0;
-#endif	/* MACH_PCSAMPLE */
-
-	new_thread->pc_sample.buffer = 0;
-
 	/* Inherit the task name as the thread name. */
 	memcpy (new_thread->name, parent_task->name, THREAD_NAME_SIZE);
 
@@ -673,10 +665,6 @@ void thread_deallocate(
 		(void) splx(s);
 		thread_deallocate_stack++;
 	}
-	/*
-	 * Rattle the event count machinery (gag)
-	 */
-	evc_notify_abort(thread);
 
 	pcb_terminate(thread);
 	kmem_cache_free(&thread_cache, (vm_offset_t) thread);
@@ -1600,13 +1588,6 @@ kern_return_t	thread_abort(
 	if (thread == THREAD_NULL || thread == current_thread()) {
 		return KERN_INVALID_ARGUMENT;
 	}
-
-	/*
-	 *
-	 *	clear it of an event wait
-	 */
-
-	evc_notify_abort(thread);
 
 	/*
 	 *	Try to force the thread to a clean point

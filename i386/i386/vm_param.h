@@ -97,14 +97,9 @@
 #define VM_PAGE_DIRECTMAP_LIMIT (VM_MAX_KERNEL_ADDRESS \
 				 - VM_MIN_KERNEL_ADDRESS \
 				 - VM_KERNEL_MAP_SIZE + 1)
-#ifdef PAE
 #define VM_PAGE_MAX_SEGS 4
 #define VM_PAGE_DMA32_LIMIT     DECL_CONST(0x100000000, UL)
 #define VM_PAGE_HIGHMEM_LIMIT   DECL_CONST(0x10000000000000, ULL)
-#else /* PAE */
-#define VM_PAGE_MAX_SEGS 3
-#define VM_PAGE_HIGHMEM_LIMIT   DECL_CONST(0xfffff000, UL)
-#endif /* PAE */
 
 /*
  * Physical segment indexes.

@@ -176,18 +176,7 @@ MACRO_END
  *	It frees kmsgs of all varieties.
  */
 
-#define	IKM_SIZE_NORMA		0
-#define	IKM_SIZE_NETWORK	-1
-
-#define	ikm_free(kmsg)							\
-MACRO_BEGIN								\
-	vm_size_t _size = (kmsg)->ikm_size;				\
-									\
-	if ((integer_t)_size > 0)					\
-		kfree((vm_offset_t) (kmsg), _size);			\
-	else								\
-		ipc_kmsg_free(kmsg);					\
-MACRO_END
+#define	ikm_free(kmsg)	kfree((vm_offset_t) (kmsg), (kmsg)->ikm_size)
 
 /*
  *	struct ipc_kmsg_queue is defined in ipc/ipc_kmsg_queue.h

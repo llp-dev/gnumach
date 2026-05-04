@@ -148,36 +148,6 @@ static inline int list_empty(const struct list *list)
 }
 
 /*
- * Return true if list contains exactly one node.
- */
-static inline int list_singular(const struct list *list)
-{
-    return (list != list->next) && (list->next == list->prev);
-}
-
-/*
- * Split list2 by moving its nodes up to (but not including) the given
- * node into list1 (which can be in a stale state).
- *
- * If list2 is empty, or node is list2 or list2->next, nothing is done.
- */
-static inline void list_split(struct list *list1, struct list *list2,
-                              struct list *node)
-{
-    if (list_empty(list2) || (list2->next == node) || list_end(list2, node))
-        return;
-
-    list1->next = list2->next;
-    list1->next->prev = list1;
-
-    list1->prev = node->prev;
-    node->prev->next = list1;
-
-    list2->next = node;
-    node->prev = list2;
-}
-
-/*
  * Append the nodes of list2 at the end of list1.
  *
  * After completion, list2 is stale.
@@ -249,22 +219,6 @@ static inline void list_insert_head(struct list *list, struct list *node)
 static inline void list_insert_tail(struct list *list, struct list *node)
 {
     list_add(list->prev, list, node);
-}
-
-/*
- * Insert a node before another node.
- */
-static inline void list_insert_before(struct list *next, struct list *node)
-{
-    list_add(next->prev, next, node);
-}
-
-/*
- * Insert a node after another node.
- */
-static inline void list_insert_after(struct list *prev, struct list *node)
-{
-    list_add(prev, prev->next, node);
 }
 
 /*

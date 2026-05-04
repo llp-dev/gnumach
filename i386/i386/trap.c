@@ -276,7 +276,6 @@ void kernel_trap(struct i386_saved_state *regs)
 
 /*
  *	Trap from user mode.
- *	Return TRUE if from emulated system call.
  */
 int user_trap(struct i386_saved_state *regs)
 {
@@ -357,18 +356,6 @@ int user_trap(struct i386_saved_state *regs)
 		break;
 
 	    case T_GENERAL_PROTECTION:
-		/* Check for an emulated int80 system call.
-		   NetBSD-current and Linux use trap instead of call gate. */
-		if (thread->task->eml_dispatch) {
-			unsigned char opcode, intno;
-
-			opcode = inst_fetch(regs->eip, regs->cs);
-			intno  = inst_fetch(regs->eip+1, regs->cs);
-			if (opcode == 0xcd && intno == 0x80) {
-				regs->eip += 2;
-				return 1;
-			}
-		}
 		exc = EXC_BAD_INSTRUCTION;
 		code = EXC_I386_GPFLT;
 		subcode = regs->err & 0xffff;
@@ -469,17 +456,4 @@ i386_exception(
 	/*NOTREACHED*/
 }
 
-#if	MACH_PCSAMPLE > 0
-/*
- * return saved state for interrupted user thread
- */
-unsigned
-interrupted_pc(const thread_t t)
-{
-	struct i386_saved_state *iss;
-
- 	iss = USER_REGS(t);
- 	return iss->eip;
-}
-#endif	/* MACH_PCSAMPLE > 0 */
 

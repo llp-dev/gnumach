@@ -43,9 +43,7 @@
 #include <kern/kern_types.h>
 #include <kern/lock.h>
 #include <kern/queue.h>
-#include <kern/pc_sample.h>
 #include <kern/processor.h>
-#include <kern/syscall_emulation.h>
 #include <vm/vm_types.h>
 #include <machine/task.h>
 
@@ -99,11 +97,6 @@ struct task {
 					/* all send rights */
 
 	struct ipc_space *itk_space;
-
-	/* User space system call emulation support */
-	struct 	eml_dispatch	*eml_dispatch;
-
-	sample_control_t pc_sample;
 
 	/* Hardware specific data.  */
 	machine_task_t	machine;

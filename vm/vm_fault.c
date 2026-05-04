@@ -54,9 +54,6 @@
 #include <kern/macros.h>
 #include <kern/slab.h>
 
-#if	MACH_PCSAMPLE
-#include <kern/pc_sample.h>
-#endif
 
 
 
@@ -138,26 +135,7 @@ vm_fault_cleanup(
 }
 
 
-#if	MACH_PCSAMPLE
-/*
- *	Do PC sampling on current thread, assuming
- *	that it is the thread taking this page fault.
- *
- *	Must check for THREAD_NULL, since faults
- *	can occur before threads are running.
- */
-
-#define	vm_stat_sample(flavor) \
-    MACRO_BEGIN \
-      thread_t _thread_ = current_thread(); \
- \
-      if (_thread_ != THREAD_NULL) \
-	  take_pc_sample_macro(_thread_, (flavor), 1, 0); \
-    MACRO_END
-
-#else
 #define	vm_stat_sample(x)
-#endif	/* MACH_PCSAMPLE */
 
 
 

@@ -79,24 +79,8 @@ routine task_create(
 routine task_terminate(
 		target_task	: task_t);
 
-/*
- *	Get user-level handler entry points for all
- *	emulated system calls.
- */
-routine task_get_emulation_vector(
-		task		: task_t;
-	out	vector_start	: int;
-	out	emulation_vector: emulation_vector_t);
-
-/*
- *	Establish user-level handlers for the specified
- *	system calls. Non-emulated system calls are specified
- *	with emulation_vector[i] == EML_ROUTINE_NULL.
- */
-routine task_set_emulation_vector(
-		task		: task_t;
-		vector_start	: int;
-		emulation_vector: emulation_vector_t);
+skip;	/* old task_get_emulation_vector */
+skip;	/* old task_set_emulation_vector */
 
 
 /*
@@ -522,14 +506,7 @@ routine thread_set_special_port(
 
 skip;	/* old xxx_thread_info */
 
-/*
- *	Establish a user-level handler for the specified
- *	system call.
- */
-routine task_set_emulation(
-		target_port	: task_t;
-		routine_entry_pt: vm_address_t;
-		routine_number  : int);
+skip;	/* old task_set_emulation */
 
 /*
  *      Establish restart pc for interrupted atomic sequences.

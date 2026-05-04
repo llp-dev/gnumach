@@ -29,11 +29,7 @@
 #include <i386at/autoconf.h>
 #include <i386/irq.h>
 #include <i386/ipl.h>
-#ifdef APIC
 # include <i386/apic.h>
-#else
-# include <i386/pic.h>
-#endif
 #include <chips/busses.h>
 
 /* initialization typecasts */

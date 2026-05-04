@@ -37,25 +37,12 @@ ncom=2
 # Options.
 #
 
-AC_ARG_ENABLE([apic],
-  AS_HELP_STRING([--enable-apic], [LAPIC/IOAPIC support]))
+AC_DEFINE([APIC], [1], [APIC support])
 
 [if [ $mach_ncpus -gt 1 ]; then]
   AM_CONDITIONAL([enable_smp], [true])
 [else]
   AM_CONDITIONAL([enable_smp], [false])
-[fi]
-
-[if [ $mach_ncpus -gt 1 ]; then]
-  # For SMP we need apic
-  enable_apic=yes
-[fi]
-
-[if [ x"$enable_apic" = xno ]; then]
-  AM_CONDITIONAL([enable_apic], [false])
-[else]
-  AC_DEFINE([APIC], [1], [APIC support])
-  AM_CONDITIONAL([enable_apic], [true])
 [fi]
 
 AC_ARG_WITH([_START_MAP],

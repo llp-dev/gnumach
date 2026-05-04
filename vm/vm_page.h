@@ -362,12 +362,6 @@ extern unsigned int	vm_page_info(
 #define VM_PT_TABLE         2   /* Page is part of the page table */
 #define VM_PT_KERNEL        3   /* Type for generic kernel allocations */
 
-static inline unsigned short
-vm_page_type(const struct vm_page *page)
-{
-    return page->type;
-}
-
 void vm_page_set_type(struct vm_page *page, unsigned int order,
                       unsigned short type);
 

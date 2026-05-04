@@ -355,11 +355,7 @@ _take_trap:
 	pushl	%ebx			/* pass register save area to trap */
 	call	EXT(user_trap)		/* call user trap routine */
 	movl	4(%esp),%esp		/* switch back to PCB stack */
-
-	orl     %eax,%eax               /* emulated syscall? */
-	jz      _return_from_trap       /* no, just return */
-	movl    R_EAX(%ebx),%eax        /* yes, get syscall number */
-	jmp     syscall_entry_3         /* and emulate it */
+	jmp     _return_from_trap
 
 /*
  * Return from trap or system call, checking for ASTs.
@@ -481,7 +477,6 @@ INTERRUPT(12)
 INTERRUPT(13)
 INTERRUPT(14)
 INTERRUPT(15)
-#ifdef APIC
 /* APIC PCI interrupts PIRQ A-H */
 INTERRUPT(16)
 INTERRUPT(17)
@@ -534,15 +529,12 @@ INTERRUPT(60)
 INTERRUPT(61)
 INTERRUPT(62)
 INTERRUPT(63)
-#endif
 #if NCPUS > 1
 INTERRUPT(CALL_AST_CHECK)
 INTERRUPT(CALL_PMAP_UPDATE)
 #endif
-#ifdef APIC
 /* Spurious interrupt, set irq number to vect number */
 INTERRUPT(255)
-#endif
 
 /* XXX handle NMI - at least print a warning like Linux does.  */
 
@@ -690,28 +682,7 @@ syscall_entry_2:
 					/* user regs pointer already set */
 
 /*
- * Check for MACH or emulated system call
- */
-syscall_entry_3:
-	movl	MY(ACTIVE_THREAD),%edx
-					/* point to current thread */
-	movl	TH_TASK(%edx),%edx	/* point to task */
-	movl	TASK_EMUL(%edx),%edx	/* get emulation vector */
-	orl	%edx,%edx		/* if none, */
-	je	syscall_native		/*    do native system call */
-	movl	%eax,%ecx		/* copy system call number */
-	subl	DISP_MIN(%edx),%ecx	/* get displacement into syscall */
-					/* vector table */
-	jl	syscall_native		/* too low - native system call */
-	cmpl	DISP_COUNT(%edx),%ecx	/* check range */
-	jnl	syscall_native		/* too high - native system call */
-	movl	DISP_VECTOR(%edx,%ecx,4),%edx
-					/* get the emulation vector */
-	orl	%edx,%edx		/* emulated system call if not zero */
-	jnz	syscall_emul
-
-/*
- * Native system call.
+ * Native MACH system call.
  */
 syscall_native:
 	negl	%eax			/* get system call number */
@@ -777,44 +748,6 @@ mach_call_range:
 	movl	$(T_INVALID_OPCODE),R_TRAPNO(%ebx)
 					/* set invalid-operation trap */
 	movl	$0,R_ERR(%ebx)		/* clear error code */
-	jmp	_take_trap		/* treat as a trap */
-
-/*
- * User space emulation of system calls.
- * edx - user address to handle syscall
- *
- * User stack will become:
- * uesp->	eflags
- *		eip
- * eax still contains syscall number.
- */
-syscall_emul:
-	movl	$USER_DS,%edi		/* use user data segment for accesses */
-	mov	%di,%fs
-
-/* XXX what about write-protected pages? */
-	movl	R_UESP(%ebx),%edi	/* get user stack pointer */
-	subl	$8,%edi			/* push space for new arguments */
-	movl	R_EFLAGS(%ebx),%eax	/* move flags */
-	RECOVER(syscall_addr)
-	movl	%eax,%fs:0(%edi)	/* to user stack */
-	movl	R_EIP(%ebx),%eax	/* move eip */
-	RECOVER(syscall_addr)
-	movl	%eax,%fs:4(%edi)	/* to user stack */
-	movl	%edi,R_UESP(%ebx)	/* set new user stack pointer */
-	movl	%edx,R_EIP(%ebx)	/* change return address to trap */
-	movl	%ebx,%esp		/* back to PCB stack */
-	jmp	_return_from_trap	/* return to user */
-
-/*
- * Address error - address is in %edi.
- */
-syscall_addr:
-	movl	%edi,R_CR2(%ebx)	/* set fault address */
-	movl	$(T_PAGE_FAULT),R_TRAPNO(%ebx)
-					/* set page-fault trap */
-	movl	$(T_PF_USER),R_ERR(%ebx)
-					/* set error code - read user space */
 	jmp	_take_trap		/* treat as a trap */
 
 
@@ -977,10 +910,6 @@ ENTRY(copyout)
 	movl	$USER_DS,%eax		/* use user data segment for accesses */
 	mov	%ax,%es
 
-#if !PAE
-	cmpl	$3,machine_slot+SUB_TYPE_CPU_TYPE
-	jbe	copyout_retry		/* Use slow version on i386 */
-#endif /* !PAE */
 
 	/*cld*/				/* count up: always this way in GCC code */
 	movl	%edx,%ecx		/* move by longwords first */
@@ -1024,11 +953,6 @@ ENTRY(copyoutmsg)
 	movl	$USER_DS,%eax		/* use user data segment for accesses */
 	mov	%ax,%es
 
-#if !PAE
-	movl	8+S_ARG2,%edx		/* copyout_retry expects count here */
-	cmpl	$3,machine_slot+SUB_TYPE_CPU_TYPE
-	jbe	copyout_retry		/* Use slow version on i386 */
-#endif /* !PAE */
 
 	shrl	$2,%ecx			/* move by longwords */
 	RECOVER(copyoutmsg_fail)
@@ -1048,68 +972,6 @@ copyoutmsg_fail:
 	movl	$1,%eax			/* return 1 for failure */
 	jmp	copyoutmsg_ret		/* pop frame and return */
 
-#if !PAE
-/*
- * Check whether user address space is writable
- * before writing to it - i386 hardware is broken.
- */
-copyout_retry:
-	movl	%cr3,%ecx		/* point to page directory */
-	movl	%edi,%eax		/* get page directory bits */
-	shrl	$(PDESHIFT),%eax	/* from user address */
-	movl	KERNELBASE(%ecx,%eax,PTE_SIZE),%ecx
-					/* get page directory pointer */
-	testl	$(PTE_V),%ecx		/* present? */
-	jz	0f			/* if not, fault is OK */
-	andl	$(PTE_PFN),%ecx		/* isolate page frame address */
-	movl	%edi,%eax		/* get page table bits */
-	shrl	$(PTESHIFT),%eax
-	andl	$(PTEMASK),%eax		/* from user address */
-	leal	KERNELBASE(%ecx,%eax,PTE_SIZE),%ecx
-					/* point to page table entry */
-	movl	(%ecx),%eax		/* get it */
-	testl	$(PTE_V),%eax		/* present? */
-	jz	0f			/* if not, fault is OK */
-	testl	$(PTE_W),%eax		/* writable? */
-	jnz	0f			/* OK if so */
-/*
- * Not writable - must fake a fault.  Turn off access to the page.
- */
-	andl	$(PTE_INVALID),(%ecx)	/* turn off valid bit */
-	movl	%cr3,%eax		/* invalidate TLB */
-	movl	%eax,%cr3
-0:
-
-/*
- * Copy only what fits on the current destination page.
- * Check for write-fault again on the next page.
- */
-	leal	NBPG(%edi),%eax		/* point to */
-	andl	$(-NBPG),%eax		/* start of next page */
-	subl	%edi,%eax		/* get number of bytes to that point */
-	cmpl	%edx,%eax		/* bigger than count? */
-	jle	1f			/* if so, */
-	movl	%edx,%eax		/* use count */
-1:
-
-	/*cld*/				/* count up: always this way in GCC code */
-	movl	%eax,%ecx		/* move by longwords first */
-	shrl	$2,%ecx
-	RECOVER(copyout_fail)
-	RETRY(copyout_retry)
-	rep
-	movsl
-	movl	%eax,%ecx		/* now move remaining bytes */
-	andl	$3,%ecx
-	RECOVER(copyout_fail)
-	RETRY(copyout_retry)
-	rep
-	movsb				/* move */
-	subl	%eax,%edx		/* decrement count */
-	jg	copyout_retry		/* restart on next page if not done */
-	xorl	%eax,%eax		/* return 0 for success */
-	jmp	copyout_ret
-#endif /* !PAE */
 
 /*
  * int inst_fetch(int eip, int cs);

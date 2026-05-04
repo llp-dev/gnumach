@@ -271,8 +271,6 @@ type time_value64_t		= struct {
   int64_t nanoseconds;
 };
 
-type emulation_vector_t		= ^array[] of vm_offset_t;
-
 type rpc_signature_info_t	= array[*:1024] of int;
 
 #if	KERNEL_SERVER

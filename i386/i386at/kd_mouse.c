@@ -67,10 +67,10 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #include <mach/boolean.h>
 #include <sys/types.h>
 #include <kern/printf.h>
+#include <kern/sched_prim.h>
 #include <device/ds_routines.h>
 #include <device/device_types.h>
 #include <device/io_req.h>
-#include <device/subrs.h>
 #include <i386/ipl.h>
 #include <i386/irq.h>
 #include <i386/pio.h>
@@ -447,7 +447,7 @@ mouse_handle_byte(u_char ch)
 	        mousebuf[mousebufindex++] = ch;
 	    if (mouse_char_wanted) {
 		mouse_char_wanted = FALSE;
-		wakeup((vm_offset_t)&mousebuf);
+		thread_wakeup((event_t)&mousebuf);
 	    }
 	    return;
 	}

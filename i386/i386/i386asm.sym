@@ -35,7 +35,6 @@
 
 #include <kern/thread.h>
 #include <kern/task.h>
-#include <kern/syscall_emulation.h>
 #include <i386/thread.h>
 #include <i386/pmap.h>
 #include <i386/vm_param.h>
@@ -65,12 +64,6 @@ offset	thread			th	task
 offset	thread			th	recover
 offset	thread			th	kernel_stack
 offset	thread			th	swap_func
-
-offset	task			task	eml_dispatch	TASK_EMUL
-
-offset	eml_dispatch		eml	disp_min	DISP_MIN
-offset	eml_dispatch		eml	disp_count	DISP_COUNT
-offset	eml_dispatch		eml	disp_vector	DISP_VECTOR
 
 expr	&STACK_IKS(0)->k_ebx				KSS_EBX
 expr	&STACK_IKS(0)->k_esp				KSS_ESP

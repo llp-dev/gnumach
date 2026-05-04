@@ -37,7 +37,6 @@
 #include <mach/message.h>
 #include <kern/syscall_subr.h>
 #include <kern/ipc_mig.h>
-#include <kern/eventcount.h>
 #include <ipc/mach_port.server.h>
 
 
@@ -90,8 +89,8 @@ mach_trap_t	mach_trap_table[] = {
 	MACH_TRAP(kern_invalid, 0),		/* 14 */
 	MACH_TRAP(kern_invalid, 0),		/* 15 */
 	MACH_TRAP(kern_invalid, 0),		/* 16 */
-	MACH_TRAP_STACK(evc_wait, 1),		/* 17 */
-	MACH_TRAP_STACK(evc_wait_clear, 1),	/* 18 */
+	MACH_TRAP(kern_invalid, 0),		/* 17 */
+	MACH_TRAP(kern_invalid, 0),		/* 18 */
 	MACH_TRAP(kern_invalid, 0),		/* 19 */
 	MACH_TRAP(kern_invalid, 0),		/* 20 */
 	MACH_TRAP(kern_invalid, 0),		/* 21 */

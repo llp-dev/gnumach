@@ -117,7 +117,6 @@ void machine_init(void)
 	 */
 	init_fpu();
 
-#if defined(APIC)
 	int err;
 
 	err = acpi_apic_init();
@@ -125,14 +124,11 @@ void machine_init(void)
 		printf("acpi_apic_init failed with %d\n", err);
 		for (;;);
 	}
-#endif
 #if (NCPUS > 1)
 	smp_init();
 #endif
 	init_irqs();
-#if defined(APIC)
 	ioapic_configure();
-#endif
 	clkstart();
 
 	/*
@@ -173,12 +169,10 @@ void machine_init(void)
 	apboot_jmp_offset += apboot_addr;
 #endif
 
-#ifdef APIC
 	/*
 	 * Initialize the HPET
 	 */
 	hpet_init();
-#endif
 }
 
 /* Conserve power on processor CPU.  */
@@ -293,11 +287,7 @@ i386at_init(void)
 	/*
 	 * Initialize the PIC prior to any possible call to an spl.
 	 */
-#ifdef APIC
 	picdisable();
-#else
-	picinit();
-#endif
 
 	/*
 	 * Read memory map and load it into the physical page allocator.
@@ -467,16 +457,11 @@ timemmap(dev_t dev, vm_offset_t off, vm_prot_t prot)
 void
 startrtclock(void)
 {
-#ifdef APIC
 	unmask_irq(timer_pin);
 	calibrate_lapic_timer();
 	if (cpu_number() != 0) {
 		lapic_enable_timer();
 	}
-#else
-	clkstart();
-	unmask_irq(0);
-#endif
 }
 
 void

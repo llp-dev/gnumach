@@ -63,7 +63,6 @@
 
 #include <ipc/ipc_machdep.h>
 
-#include <device/net_io.h>
 
 
 ipc_kmsg_t ipc_kmsg_cache[NCPUS];
@@ -447,19 +446,7 @@ ipc_kmsg_clean_partial(
 void
 ipc_kmsg_free(ipc_kmsg_t kmsg)
 {
-	vm_size_t size = kmsg->ikm_size;
-
-	switch (size) {
-
-	    case IKM_SIZE_NETWORK:
-		/* return it to the network code */
-		net_kmsg_put(kmsg);
-		break;
-
-	    default:
-		kfree((vm_offset_t) kmsg, size);
-		break;
-	}
+	kfree((vm_offset_t) kmsg, kmsg->ikm_size);
 }
 
 /*

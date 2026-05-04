@@ -80,26 +80,10 @@ static inline void rbtree_node_init(struct rbtree_node *node)
 }
 
 /*
- * Return true if node is in no tree.
- */
-static inline int rbtree_node_unlinked(const struct rbtree_node *node)
-{
-    return rbtree_parent(node) == node;
-}
-
-/*
  * Macro that evaluates to the address of the structure containing the
  * given node based on the given type and member.
  */
 #define rbtree_entry(node, type, member) structof(node, type, member)
-
-/*
- * Return true if tree is empty.
- */
-static inline int rbtree_empty(const struct rbtree *tree)
-{
-    return tree->root == NULL;
-}
 
 /*
  * Look up a node in a tree.

@@ -52,7 +52,6 @@ void kernel_trap(struct i386_saved_state *regs);
 
 /*
  *	Trap from user mode.
- *	Return TRUE if from emulated system call.
  */
 int user_trap(struct i386_saved_state *regs);
 

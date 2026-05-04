@@ -146,16 +146,6 @@ apic_get_cpu_apic_id(int kernel_id)
 }
 
 
-/*
- * apic_get_cpu_kernel_id: returns the kernel_id of a cpu.
- * Receives as input the APIC ID of a CPU.
- */
-int
-apic_get_cpu_kernel_id(uint16_t apic_id)
-{
-    return cpu_id_lut[apic_id];
-}
-
 /* apic_get_lapic: returns a reference to the common memory address for Local APIC. */
 volatile ApicLocalUnit*
 apic_get_lapic(void)
@@ -190,18 +180,6 @@ apic_get_num_ioapics(void)
     return apic_data.nioapics;
 }
 
-/* apic_get_total_gsis: returns the total number of GSIs in the system. */
-int
-apic_get_total_gsis(void)
-{
-    int id;
-    int gsis = 0;
-
-    for (id = 0; id < apic_get_num_ioapics(); id++)
-        gsis += apic_get_ioapic(id)->ngsis;
-
-    return gsis;
-}
 
 /*
  * apic_get_current_cpu: returns the apic_id of current cpu.
@@ -473,23 +451,13 @@ hpet_udelay(uint32_t us)
     } while (now - start < us);
 }
 
-void
-hpet_mdelay(uint32_t ms)
-{
-    hpet_udelay(ms * 1000);
-}
-
 /* This function is called in clock_interrupt(), so it's possible to be called
    when HPET is not available.  */
 uint32_t
 hpclock_read_counter(void)
 {
     /* We assume the APIC machines have HPET.  */
-#ifdef APIC
     return HPET32(HPET_COUNTER);
-#else
-    return 0;
-#endif
 }
 
 uint32_t

@@ -248,7 +248,6 @@ void apic_add_irq_override(struct IrqOverrideData irq_over);
 void apic_send_ipi(unsigned dest_shorthand, unsigned deliv_mode, unsigned dest_mode, unsigned level, unsigned trig_mode, unsigned vector, unsigned dest_id);
 IrqOverrideData *acpi_get_irq_override(uint8_t gsi);
 int apic_get_cpu_apic_id(int kernel_id);
-int apic_get_cpu_kernel_id(uint16_t apic_id);
 volatile ApicLocalUnit* apic_get_lapic(void);
 struct IoApicData *apic_get_ioapic(int kernel_id);
 uint8_t apic_get_numcpus(void);
@@ -257,7 +256,6 @@ int apic_get_current_cpu(void);
 void apic_print_info(void);
 int apic_refit_cpulist(void);
 void apic_generate_cpu_id_lut(void);
-int apic_get_total_gsis(void);
 void picdisable(void);
 void lapic_eoi(void);
 void ioapic_irq_eoi(int pin);
@@ -272,7 +270,6 @@ void ioapic_configure(void);
 
 void hpet_init(void);
 void hpet_udelay(uint32_t us);
-void hpet_mdelay(uint32_t ms);
 
 extern int timer_pin;
 extern void intnull(int unit);
@@ -346,7 +343,6 @@ extern struct irqinfo irqinfo[];
 
 #ifndef __ASSEMBLER__
 
-#ifdef APIC
 static inline void mask_irq (unsigned int irq_nr) {
     ioapic_toggle(irq_nr, IOAPIC_MASK_DISABLED);
 }
@@ -354,7 +350,6 @@ static inline void mask_irq (unsigned int irq_nr) {
 static inline void unmask_irq (unsigned int irq_nr) {
     ioapic_toggle(irq_nr, IOAPIC_MASK_ENABLED);
 }
-#endif
 
 #endif  /* !__ASSEMBLER__ */
 

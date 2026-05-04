@@ -75,23 +75,6 @@ queue_entry_t dequeue_head(
 }
 
 /*
- *	Remove and return element at tail of queue.
- */
-queue_entry_t dequeue_tail(
-	queue_t	que)
-{
-	queue_entry_t	elt;
-
-	if (que->prev == que)
-		return((queue_entry_t)0);
-
-	elt = que->prev;
-	elt->prev->next = que;
-	que->prev = elt->prev;
-	return(elt);
-}
-
-/*
  *	Remove arbitrary element from queue.
  *	Does not check whether element is on queue - the world
  *	will go haywire if it isn't.
@@ -106,16 +89,3 @@ void remqueue(
 	elt->prev->next = elt->next;
 }
 
-/*
- *	Routines to directly imitate the VAX hardware queue
- *	package.
- */
-void insque(
-	struct queue_entry *entry,
-	struct queue_entry *pred)
-{
-	entry->next = pred->next;
-	entry->prev = pred;
-	(pred->next)->prev = entry;
-	pred->next = entry;
-}

@@ -52,7 +52,6 @@
 #include <kern/printf.h>
 #include <kern/sched_prim.h>	/* for thread_wakeup */
 #include <kern/ipc_tt.h>
-#include <kern/syscall_emulation.h>
 #include <kern/task_notify.user.h>
 #include <vm/vm_kern.h>		/* for kernel_map, ipc_kernel_map */
 #include <machine/spl.h>	/* for splsched */
@@ -68,7 +67,6 @@ void task_init(void)
 	kmem_cache_init(&task_cache, "task", sizeof(struct task), 0,
 			NULL, 0);
 
-	eml_init();
 	machine_task_module_init ();
 
 	/*
@@ -151,8 +149,6 @@ task_create_kernel(
 	new_task->messages_sent = 0;
 	new_task->messages_received = 0;
 
-	eml_task_reference(new_task, parent_task);
-
 	ipc_task_init(new_task, parent_task);
 	machine_task_init (new_task);
 
@@ -183,11 +179,6 @@ task_create_kernel(
 	new_task->assign_active = FALSE;
 	new_task->essential = FALSE;
 
-#if	MACH_PCSAMPLE
-	new_task->pc_sample.buffer = 0;
-	new_task->pc_sample.seqno = 0;
-	new_task->pc_sample.sampletypes = 0;
-#endif	/* MACH_PCSAMPLE */
 
 	if (parent_task == TASK_NULL)
 		snprintf (new_task->name, sizeof new_task->name, "%p",
@@ -235,8 +226,6 @@ void task_deallocate(
 		return;
 
 	machine_task_terminate (task);
-
-	eml_task_deallocate(task);
 
 	pset = task->processor_set;
 	pset_lock(pset);

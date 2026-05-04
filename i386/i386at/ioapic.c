@@ -27,8 +27,16 @@
 #include <i386at/idt.h>
 #include <i386/pio.h>
 #include <i386/pit.h>
-#include <i386/pic.h> /* only for macros */
 #include <i386/smp.h>
+
+/*
+ * Legacy 8259 PIC mask registers, used only to mask the PIC out before
+ * switching to the IOAPIC.
+ */
+#define PIC_MASTER_OCW	0x21
+#define PIC_SLAVE_OCW	0xa1
+#define PICM_MASK	0xff
+#define PICS_MASK	0xff
 #include <mach/machine.h>
 #include <kern/printf.h>
 #include <kern/timer.h>

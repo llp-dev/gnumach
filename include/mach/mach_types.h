@@ -39,7 +39,6 @@
 #include <mach/machine.h>
 #include <mach/machine/vm_types.h>
 #include <mach/memory_object.h>
-#include <mach/pc_sample.h>
 #include <mach/port.h>
 #include <mach/processor_info.h>
 #include <mach/task_info.h>
@@ -80,7 +79,6 @@ typedef mach_port_t	processor_set_t;
 typedef mach_port_t	processor_set_name_t;
 typedef mach_port_t	*processor_set_array_t;
 typedef mach_port_t	*processor_set_name_array_t;
-typedef vm_offset_t	*emulation_vector_t;
 #endif	/* MACH_KERNEL */
 
 /*

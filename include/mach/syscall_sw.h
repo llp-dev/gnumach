@@ -44,9 +44,6 @@
  *	table in <kern/syscall_sw.c>.
  */
 
-kernel_trap(evc_wait,-17,1)
-kernel_trap(evc_wait_clear,-18,1)
-
 kernel_trap(mach_msg_trap,-25,7)
 kernel_trap(mach_reply_port,-26,0)
 kernel_trap(mach_thread_self,-27,0)

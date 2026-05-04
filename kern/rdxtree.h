@@ -92,20 +92,6 @@ rdxtree_insert(struct rdxtree *tree, rdxtree_key_t key, void *ptr)
 }
 
 /*
- * Insert a pointer in a tree and obtain its slot.
- *
- * The ptr and slotp parameters must not be NULL. If successful, the slot of
- * the newly inserted pointer is stored at the address pointed to by the slotp
- * parameter.
- */
-static inline int
-rdxtree_insert_slot(struct rdxtree *tree, rdxtree_key_t key,
-                    void *ptr, void ***slotp)
-{
-    return rdxtree_insert_common(tree, key, ptr, slotp);
-}
-
-/*
  * Insert a pointer in a tree, for which a new key is allocated.
  *
  * The ptr and keyp parameters must not be NULL. The newly allocated key is
@@ -115,22 +101,6 @@ static inline int
 rdxtree_insert_alloc(struct rdxtree *tree, void *ptr, rdxtree_key_t *keyp)
 {
     return rdxtree_insert_alloc_common(tree, ptr, keyp, NULL);
-}
-
-/*
- * Insert a pointer in a tree, for which a new key is allocated, and obtain
- * its slot.
- *
- * The ptr, keyp and slotp parameters must not be NULL. The newly allocated
- * key is stored at the address pointed to by the keyp parameter while the
- * slot of the inserted pointer is stored at the address pointed to by the
- * slotp parameter.
- */
-static inline int
-rdxtree_insert_alloc_slot(struct rdxtree *tree, void *ptr,
-                          rdxtree_key_t *keyp, void ***slotp)
-{
-    return rdxtree_insert_alloc_common(tree, ptr, keyp, slotp);
 }
 
 /*
@@ -184,15 +154,6 @@ void * rdxtree_replace_slot(void **slot, void *ptr);
 for (rdxtree_iter_init(iter), ptr = rdxtree_walk(tree, iter);   \
      ptr != NULL;                                               \
      ptr = rdxtree_walk(tree, iter))
-
-/*
- * Return the key of the current pointer from an iterator.
- */
-static inline rdxtree_key_t
-rdxtree_iter_key(const struct rdxtree_iter *iter)
-{
-    return iter->key;
-}
 
 /*
  * Remove all pointers from a tree.

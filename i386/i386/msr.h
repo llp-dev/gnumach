@@ -32,26 +32,6 @@
 
 #ifndef __ASSEMBLER__
 
-static inline void wrmsr(uint32_t regaddr, uint64_t value)
-{
-  uint32_t low = (uint32_t) value, high = ((uint32_t) (value >> 32));
-  asm volatile("wrmsr"
-               :
-               : "c" (regaddr), "a" (low), "d" (high)
-               : "memory"  /* wrmsr may cause a read from memory, so
-                            * make the compiler flush any changes */
-               );
-}
-
-static inline uint64_t rdmsr(uint32_t regaddr)
-{
-  uint32_t low, high;
-  asm volatile("rdmsr"
-               : "=a" (low), "=d" (high)
-               : "c" (regaddr)
-               );
-  return ((uint64_t)high << 32) | low;
-}
 #endif /* __ASSEMBLER__ */
 
 #endif /* _MACHINE_MSR_H_ */

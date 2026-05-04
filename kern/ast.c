@@ -44,7 +44,6 @@
 #include <kern/sched_prim.h>
 #include <kern/thread.h>
 #include <kern/processor.h>
-#include <device/net_io.h>
 
 #include <machine/spl.h>	/* for splsched */
 
@@ -76,13 +75,6 @@ ast_taken(void)
 	reasons = need_ast[cpu_number()];
 	need_ast[cpu_number()] = AST_ZILCH;
 	(void) spl0();
-
-	/*
-	 *	These actions must not block.
-	 */
-
-	if (reasons & AST_NETWORK)
-		net_ast();
 
 	/*
 	 *	Make darn sure that we don't call thread_halt_self

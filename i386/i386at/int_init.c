@@ -26,9 +26,7 @@
 #include <i386/gdt.h>
 #include <i386/mp_desc.h>
 #include <kern/printf.h>
-#ifdef APIC
 #include <i386/apic.h>
-#endif
 
 /* defined in locore.S */
 extern vm_offset_t int_entry_table[];
@@ -37,13 +35,8 @@ static void
 int_fill(struct real_gate *myidt)
 {
 	int i;
-#ifndef APIC
-	int base = PIC_INT_BASE;
-	int nirq = 16;
-#else
 	int base = IOAPIC_INT_BASE;
 	int nirq = NINTR;
-#endif
 
 	for (i = 0; i < nirq; i++) {
 		fill_idt_gate(myidt, base + i,
@@ -60,12 +53,10 @@ int_fill(struct real_gate *myidt)
 			      ACC_PL_K|ACC_INTR_GATE, 0);
 	i++;
 #endif
-#ifdef APIC
 	fill_idt_gate(myidt, IOAPIC_SPURIOUS_BASE,
 			      int_entry_table[i], KERNEL_CS,
 			      ACC_PL_K|ACC_INTR_GATE, 0);
 	i++;
-#endif
 }
 
 void

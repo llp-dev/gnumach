@@ -79,8 +79,6 @@ libkernel_a_SOURCES += \
 	kern/cpu_number.h \
 	kern/debug.c \
 	kern/debug.h \
-	kern/eventcount.c \
-	kern/eventcount.h \
 	kern/exception.c \
 	kern/exception.h \
 	kern/gsync.c \
@@ -112,8 +110,6 @@ libkernel_a_SOURCES += \
 	kern/machine.c \
 	kern/machine.h \
 	kern/macros.h \
-	kern/pc_sample.c \
-	kern/pc_sample.h \
 	kern/printf.c \
 	kern/printf.h \
 	kern/priority.c \
@@ -138,8 +134,6 @@ libkernel_a_SOURCES += \
 	kern/startup.c \
 	kern/startup.h \
 	kern/strings.c \
-	kern/syscall_emulation.c \
-	kern/syscall_emulation.h \
 	kern/syscall_subr.c \
 	kern/syscall_subr.h \
 	kern/syscall_sw.c \
@@ -171,9 +165,7 @@ EXTRA_DIST += \
 
 libkernel_a_SOURCES += \
 	util/atoi.c \
-	util/atoi.h \
-	util/byteorder.h \
-	util/byteorder.c
+	util/atoi.h
 
 #
 # Virtual memory implementation.
@@ -218,7 +210,6 @@ EXTRA_DIST += \
 
 # These device support files are always needed; the others are needed only if
 # particular drivers want the routines.
-# TODO.  Functions in device/subrs.c should each be moved elsewhere.
 libkernel_a_SOURCES += \
 	device/blkio.c \
 	device/blkio.h \
@@ -242,16 +233,11 @@ libkernel_a_SOURCES += \
 	device/ds_routines.c \
 	device/ds_routines.h \
 	device/if_ether.h \
-	device/if_hdr.h \
 	device/input.h \
 	device/intr.c \
 	device/intr.h \
 	device/io_req.h \
-	device/net_io.c \
-	device/net_io.h \
 	device/param.h \
-	device/subrs.c \
-	device/subrs.h \
 	device/tty.h
 EXTRA_DIST += \
 	device/device.srv \
@@ -331,12 +317,9 @@ include_mach_HEADERS = \
 	include/mach/message.h \
 	include/mach/mig_errors.h \
 	include/mach/notify.h \
-	include/mach/pc_sample.h \
 	include/mach/policy.h \
 	include/mach/port.h \
 	include/mach/processor_info.h \
-	include/mach/profil.h \
-	include/mach/profilparam.h \
 	include/mach/std_types.h \
 	include/mach/syscall_sw.h \
 	include/mach/task_info.h \
@@ -360,7 +343,6 @@ include_mach_HEADERS = \
 # If we name this `*_execdir', Automake won't add it to `install-data'...
 include_mach_eXecdir = $(includedir)/mach/exec
 include_mach_eXec_HEADERS = \
-	include/mach/exec/a.out.h \
 	include/mach/exec/elf.h \
 	include/mach/exec/exec.h
 

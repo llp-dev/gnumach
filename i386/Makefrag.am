@@ -96,15 +96,8 @@ libkernel_a_SOURCES += \
 	i386/i386/pit.c \
 	i386/i386/pit.h
 
-if enable_apic
 libkernel_a_SOURCES += \
 	i386/i386at/ioapic.c
-else
-libkernel_a_SOURCES += \
-	i386/i386/pic.c \
-	i386/i386/pic.h \
-	i386/i386at/pic_isa.c
-endif
 
 #
 # Files from the generic sources that we want.

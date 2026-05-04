@@ -34,7 +34,6 @@
  *	The proverbial page-out daemon.
  */
 
-#include <device/net_io.h>
 #include <mach/mach_types.h>
 #include <mach/memory_object.h>
 #include <vm/memory_object_default.user.h>
@@ -433,7 +432,6 @@ static boolean_t vm_pageout_scan(boolean_t *should_wait)
 	 */
 
 	stack_collect();
-	net_kmsg_collect();
 	consider_task_collect();
 	if (0)	/* XXX: pcb_collect doesn't do anything yet, so it is
 		   pointless to call consider_thread_collect.  */

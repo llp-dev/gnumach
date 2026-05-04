@@ -195,6 +195,7 @@ librust_ipc.a: $(RUST_IPC_SRCS)
 	    -C opt-level=2                             \
 	    -C codegen-units=1                         \
 	    -C strip=debuginfo                         \
+	    -D warnings                                \
 	    --emit=link                                \
 	    -o $@                                      \
 	    $(srcdir)/rust/ipc/lib.rs

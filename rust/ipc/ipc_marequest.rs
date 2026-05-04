@@ -7,21 +7,18 @@ use core::mem::size_of;
 use core::ptr::{addr_of, addr_of_mut};
 
 use crate::extern_c::{
-    kalloc, kmem_cache_alloc, kmem_cache_free, kmem_cache_init,
-    rdxtree_lookup_common, Assert,
+    kalloc, kmem_cache_alloc, kmem_cache_free, kmem_cache_init, rdxtree_lookup_common, Assert,
 };
-use crate::ipc_right::ipc_right_reverse;
-use crate::ipc_port::ipc_port_lookup_notify;
-use crate::ipc_space::ipc_space_destroy;
 use crate::ipc_notify::ipc_notify_msg_accepted;
+use crate::ipc_port::ipc_port_lookup_notify;
+use crate::ipc_right::ipc_right_reverse;
+use crate::ipc_space::ipc_space_destroy;
 use crate::mach_types::{
-    ipc_entry_t, ipc_marequest_bucket, ipc_marequest_bucket_t,
-    ipc_marequest_full, ipc_marequest_t, ipc_object,
-    ipc_port_t, ipc_space_t, kmem_cache, mach_port_name_t, mach_msg_return_t,
-    rdxtree_key_t, vm_offset_t, vm_size_t, IE_BITS_MAREQUEST, IE_BITS_TYPE_MASK,
-    IE_NULL, IMARB_NULL, IMAR_NULL, IPC_MAREQUEST_SIZE, IP_NULL,
-    MACH_MSG_SUCCESS, MACH_PORT_NAME_NULL, MACH_PORT_NULL,
-    MACH_PORT_TYPE_SEND_RECEIVE, MACH_SEND_INVALID_NOTIFY,
+    ipc_entry_t, ipc_marequest_bucket, ipc_marequest_bucket_t, ipc_marequest_full, ipc_marequest_t,
+    ipc_object, ipc_port_t, ipc_space_t, kmem_cache, mach_msg_return_t, mach_port_name_t,
+    rdxtree_key_t, vm_offset_t, vm_size_t, IE_BITS_MAREQUEST, IE_BITS_TYPE_MASK, IE_NULL,
+    IMARB_NULL, IMAR_NULL, IPC_MAREQUEST_SIZE, IP_NULL, MACH_MSG_SUCCESS, MACH_PORT_NAME_NULL,
+    MACH_PORT_NULL, MACH_PORT_TYPE_SEND_RECEIVE, MACH_SEND_INVALID_NOTIFY,
     MACH_SEND_NOTIFY_IN_PROGRESS, MACH_SEND_NO_NOTIFY,
 };
 
@@ -114,10 +111,7 @@ use crate::locks::ip_unlock;
 
 /// Mirror of the static inline `ipc_entry_lookup` from `ipc/ipc_space.h`.
 #[inline]
-unsafe fn ipc_entry_lookup(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-) -> ipc_entry_t {
+unsafe fn ipc_entry_lookup(space: ipc_space_t, name: mach_port_name_t) -> ipc_entry_t {
     if (*space).is_active == 0 {
         Assert(
             b"rust/ipc/ipc_marequest.rs\0".as_ptr(),
@@ -126,11 +120,8 @@ unsafe fn ipc_entry_lookup(
             b"space->is_active\0".as_ptr(),
         );
     }
-    let entry = rdxtree_lookup_common(
-        addr_of!((*space).is_map),
-        name as rdxtree_key_t,
-        0,
-    ) as ipc_entry_t;
+    let entry =
+        rdxtree_lookup_common(addr_of!((*space).is_map), name as rdxtree_key_t, 0) as ipc_entry_t;
     if entry == IE_NULL {
         return IE_NULL;
     }
@@ -169,9 +160,9 @@ pub unsafe extern "C" fn ipc_marequest_init() {
     }
 
     /* allocate ipc_marequest_table */
-    ipc_marequest_table = kalloc(
-        ipc_marequest_size * size_of::<ipc_marequest_bucket>() as vm_size_t,
-    ) as ipc_marequest_bucket_t;
+    ipc_marequest_table =
+        kalloc(ipc_marequest_size * size_of::<ipc_marequest_bucket>() as vm_size_t)
+            as ipc_marequest_bucket_t;
     if ipc_marequest_table == IMARB_NULL {
         Assert(
             b"rust/ipc/ipc_marequest.rs\0".as_ptr(),
@@ -242,8 +233,14 @@ pub unsafe extern "C" fn ipc_marequest_create(
         ip_unlock(port);
         bits = (*entry).ie_bits;
 
-        crate::kassert!(port == (*entry).ie_object as ipc_port_t, "port == entry->ie_object");
-        crate::kassert!((bits & MACH_PORT_TYPE_SEND_RECEIVE) != 0, "bits & MACH_PORT_TYPE_SEND_RECEIVE");
+        crate::kassert!(
+            port == (*entry).ie_object as ipc_port_t,
+            "port == entry->ie_object"
+        );
+        crate::kassert!(
+            (bits & MACH_PORT_TYPE_SEND_RECEIVE) != 0,
+            "bits & MACH_PORT_TYPE_SEND_RECEIVE"
+        );
 
         if bits & IE_BITS_MAREQUEST != 0 {
             is_write_unlock(space);
@@ -299,10 +296,7 @@ pub unsafe extern "C" fn ipc_marequest_create(
 // ---------------------------------------------------------------------------
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_marequest_cancel(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-) {
+pub unsafe extern "C" fn ipc_marequest_cancel(space: ipc_space_t, name: mach_port_name_t) {
     let bucket: ipc_marequest_bucket_t;
     let mut marequest: ipc_marequest_t;
     let mut last: *mut ipc_marequest_t;
@@ -416,8 +410,14 @@ pub unsafe extern "C" fn ipc_marequest_destroy(marequest: ipc_marequest_t) {
         if (*space).is_active != 0 {
             let entry: ipc_entry_t = ipc_entry_lookup(space, name);
             crate::kassert!(entry != IE_NULL, "entry != IE_NULL");
-            crate::kassert!(((*entry).ie_bits & IE_BITS_MAREQUEST) != 0, "entry->ie_bits & IE_BITS_MAREQUEST");
-            crate::kassert!(((*entry).ie_bits & MACH_PORT_TYPE_SEND_RECEIVE) != 0, "entry->ie_bits & MACH_PORT_TYPE_SEND_RECEIVE");
+            crate::kassert!(
+                ((*entry).ie_bits & IE_BITS_MAREQUEST) != 0,
+                "entry->ie_bits & IE_BITS_MAREQUEST"
+            );
+            crate::kassert!(
+                ((*entry).ie_bits & MACH_PORT_TYPE_SEND_RECEIVE) != 0,
+                "entry->ie_bits & MACH_PORT_TYPE_SEND_RECEIVE"
+            );
 
             (*entry).ie_bits &= !IE_BITS_MAREQUEST;
         } else {

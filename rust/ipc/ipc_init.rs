@@ -4,23 +4,19 @@
 
 use core::ptr::addr_of_mut;
 
-use crate::extern_c::{
-    ipc_host_init, kernel_map, kmem_cache_init, kmem_submap, Assert,
-};
+use crate::extern_c::{ipc_host_init, kernel_map, kmem_cache_init, kmem_submap, Assert};
 use crate::ipc_entry::ipc_entry_cache;
 use crate::ipc_marequest::ipc_marequest_init;
 use crate::ipc_notify::ipc_notify_init;
 use crate::ipc_object::ipc_object_caches;
 use crate::ipc_port::ipc_port_timestamp_data;
 use crate::ipc_space::{
-    ipc_space_cache, ipc_space_create_special, ipc_space_kernel,
-    ipc_space_reply,
+    ipc_space_cache, ipc_space_create_special, ipc_space_kernel, ipc_space_reply,
 };
 use crate::ipc_table::ipc_table_init;
 use crate::mach_types::{
-    vm_map_t, vm_offset_t, vm_size_t, IOT_PORT, IOT_PORT_SET, KERN_SUCCESS,
-    SIZE_OF_IPC_ENTRY, SIZE_OF_IPC_PORT, SIZE_OF_IPC_PSET, SIZE_OF_IPC_SPACE,
-    SIZE_OF_VM_MAP,
+    vm_map_t, vm_offset_t, vm_size_t, IOT_PORT, IOT_PORT_SET, KERN_SUCCESS, SIZE_OF_IPC_ENTRY,
+    SIZE_OF_IPC_PORT, SIZE_OF_IPC_PSET, SIZE_OF_IPC_SPACE, SIZE_OF_VM_MAP,
 };
 
 // `static struct vm_map ipc_kernel_map_store;`
@@ -31,13 +27,11 @@ use crate::mach_types::{
 #[repr(C, align(4))]
 struct VmMapStorage([u8; SIZE_OF_VM_MAP]);
 
-static mut ipc_kernel_map_store: VmMapStorage =
-    VmMapStorage([0; SIZE_OF_VM_MAP]);
+static mut ipc_kernel_map_store: VmMapStorage = VmMapStorage([0; SIZE_OF_VM_MAP]);
 
 /// Global: `vm_map_t ipc_kernel_map = &ipc_kernel_map_store;`
 #[no_mangle]
-pub static mut ipc_kernel_map: vm_map_t =
-    addr_of_mut!(ipc_kernel_map_store) as vm_map_t;
+pub static mut ipc_kernel_map: vm_map_t = addr_of_mut!(ipc_kernel_map_store) as vm_map_t;
 
 /// Global: `const vm_size_t ipc_kernel_map_size = 8 * 1024 * 1024;`
 #[no_mangle]

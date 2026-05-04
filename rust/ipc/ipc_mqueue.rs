@@ -4,34 +4,28 @@
 
 use core::ptr::{addr_of_mut, null_mut};
 
-use crate::ipc_kmsg::{
-    ipc_kmsg_destroy, ipc_kmsg_dequeue, ipc_kmsg_enqueue, ipc_kmsg_rmqueue,
-};
 use crate::extern_c::{
-    ipc_kobject_server, percpu_array, thread_block, thread_go,
-    thread_will_wait, thread_will_wait_with_timeout,
+    ipc_kobject_server, percpu_array, thread_block, thread_go, thread_will_wait,
+    thread_will_wait_with_timeout,
 };
+use crate::ipc_kmsg::{ipc_kmsg_dequeue, ipc_kmsg_destroy, ipc_kmsg_enqueue, ipc_kmsg_rmqueue};
 use crate::ipc_marequest::ipc_marequest_destroy;
 use crate::ipc_object::ipc_object_release;
 use crate::ipc_pset::ipc_pset_remove;
 use crate::ipc_thread::{ipc_thread_dequeue, ipc_thread_enqueue, ipc_thread_rmqueue};
 use crate::mach_types::{
-    boolean_t, continuation_t, ipc_entry_t, ipc_kmsg_full, ipc_kmsg_queue,
-    ipc_marequest_t, ipc_mqueue, ipc_object,
-    ipc_port_t, ipc_pset_t, ipc_space_t, ipc_thread_queue,
-    ipc_thread_t, long_natural_t, mach_msg_header_t, mach_msg_option_t,
-    mach_msg_return_t, mach_msg_size_t, mach_msg_timeout_t, mach_port_name_t,
-    mach_port_seqno_t, IE_BITS_TYPE_MASK, IE_NULL, IKM_NULL, IMAR_NULL,
-    IPS_NULL, ITH_NULL, KERN_SUCCESS, MACH_MSGH_BITS_CIRCULAR,
-    MACH_MSG_SUCCESS, MACH_MSG_TYPE_PORT_SEND_ONCE, MACH_PORT_TYPE_PORT_SET,
-    MACH_PORT_TYPE_RECEIVE, MACH_RCV_INTERRUPTED, MACH_RCV_INVALID_NAME,
-    MACH_RCV_IN_PROGRESS, MACH_RCV_IN_SET, MACH_RCV_PORT_CHANGED,
-    MACH_RCV_PORT_DIED, MACH_RCV_TIMEOUT, MACH_RCV_TIMED_OUT,
-    MACH_RCV_TOO_LARGE, MACH_SEND_ALWAYS, MACH_SEND_INTERRUPTED,
-    MACH_SEND_IN_PROGRESS, MACH_SEND_TIMED_OUT, MACH_SEND_TIMEOUT,
-    OFFSETOF_PERCPU_ACTIVE_THREAD, OFFSETOF_TASK_MESSAGES_RECEIVED,
-    OFFSETOF_TASK_MESSAGES_SENT, THREAD_INTERRUPTED, THREAD_RESTART,
-    THREAD_TIMED_OUT,
+    boolean_t, continuation_t, ipc_entry_t, ipc_kmsg_full, ipc_kmsg_queue, ipc_marequest_t,
+    ipc_mqueue, ipc_object, ipc_port_t, ipc_pset_t, ipc_space_t, ipc_thread_queue, ipc_thread_t,
+    long_natural_t, mach_msg_header_t, mach_msg_option_t, mach_msg_return_t, mach_msg_size_t,
+    mach_msg_timeout_t, mach_port_name_t, mach_port_seqno_t, IE_BITS_TYPE_MASK, IE_NULL, IKM_NULL,
+    IMAR_NULL, IPS_NULL, ITH_NULL, KERN_SUCCESS, MACH_MSGH_BITS_CIRCULAR, MACH_MSG_SUCCESS,
+    MACH_MSG_TYPE_PORT_SEND_ONCE, MACH_PORT_TYPE_PORT_SET, MACH_PORT_TYPE_RECEIVE,
+    MACH_RCV_INTERRUPTED, MACH_RCV_INVALID_NAME, MACH_RCV_IN_PROGRESS, MACH_RCV_IN_SET,
+    MACH_RCV_PORT_CHANGED, MACH_RCV_PORT_DIED, MACH_RCV_TIMED_OUT, MACH_RCV_TIMEOUT,
+    MACH_RCV_TOO_LARGE, MACH_SEND_ALWAYS, MACH_SEND_INTERRUPTED, MACH_SEND_IN_PROGRESS,
+    MACH_SEND_TIMED_OUT, MACH_SEND_TIMEOUT, OFFSETOF_PERCPU_ACTIVE_THREAD,
+    OFFSETOF_TASK_MESSAGES_RECEIVED, OFFSETOF_TASK_MESSAGES_SENT, THREAD_INTERRUPTED,
+    THREAD_RESTART, THREAD_TIMED_OUT,
 };
 
 // ---------------------------------------------------------------------------
@@ -39,9 +33,8 @@ use crate::mach_types::{
 // ---------------------------------------------------------------------------
 
 use crate::locks::{
-    imq_lock, imq_lock_init, imq_unlock, io_reference, io_unlock,
-    ip_active, ip_check_unlock, ip_lock, ip_release, ip_unlock, ips_active,
-    ips_lock, ips_unlock, is_read_lock, is_read_unlock,
+    imq_lock, imq_lock_init, imq_unlock, io_reference, io_unlock, ip_active, ip_check_unlock,
+    ip_lock, ip_release, ip_unlock, ips_active, ips_lock, ips_unlock, is_read_lock, is_read_unlock,
 };
 
 #[inline]
@@ -122,10 +115,7 @@ unsafe fn current_task_inc_messages_received() {
 
 /// Mirror of the static inline `ipc_entry_lookup` from `ipc/ipc_space.h`.
 #[inline]
-unsafe fn ipc_entry_lookup(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-) -> ipc_entry_t {
+unsafe fn ipc_entry_lookup(space: ipc_space_t, name: mach_port_name_t) -> ipc_entry_t {
     let entry = crate::extern_c::rdxtree_lookup_common(
         core::ptr::addr_of!((*space).is_map),
         name as crate::mach_types::rdxtree_key_t,
@@ -215,10 +205,7 @@ pub unsafe extern "C" fn ipc_mqueue_move(
 // ---------------------------------------------------------------------------
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_mqueue_changed(
-    mqueue: *mut ipc_mqueue,
-    mr: mach_msg_return_t,
-) {
+pub unsafe extern "C" fn ipc_mqueue_changed(mqueue: *mut ipc_mqueue, mr: mach_msg_return_t) {
     loop {
         let th = ipc_thread_dequeue(addr_of_mut!((*mqueue).imq_threads));
         if th == ITH_NULL {
@@ -240,7 +227,10 @@ pub unsafe extern "C" fn ipc_mqueue_send(
     mut time_out: mach_msg_timeout_t,
 ) -> mach_msg_return_t {
     let port: ipc_port_t = (*kmsg).ikm_header.msgh_remote_port as usize as ipc_port_t;
-    crate::kassert!((port as usize) != 0 && (port as usize) != !0usize, "IP_VALID(port)");
+    crate::kassert!(
+        (port as usize) != 0 && (port as usize) != !0usize,
+        "IP_VALID(port)"
+    );
 
     ip_lock(port);
 
@@ -287,8 +277,7 @@ pub unsafe extern "C" fn ipc_mqueue_send(
          */
         if (*port).ip_msgcount < (*port).ip_qlimit
             || (option & MACH_SEND_ALWAYS) != 0
-            || mach_msgh_bits_remote((*kmsg).ikm_header.msgh_bits)
-                == MACH_MSG_TYPE_PORT_SEND_ONCE
+            || mach_msgh_bits_remote((*kmsg).ikm_header.msgh_bits) == MACH_MSG_TYPE_PORT_SEND_ONCE
         {
             break 'outer;
         }
@@ -317,7 +306,10 @@ pub unsafe extern "C" fn ipc_mqueue_send(
         if (*self_th).ith_state == MACH_MSG_SUCCESS {
             continue 'outer;
         }
-        crate::kassert!((*self_th).ith_state == MACH_SEND_IN_PROGRESS, "self->ith_state == MACH_SEND_IN_PROGRESS");
+        crate::kassert!(
+            (*self_th).ith_state == MACH_SEND_IN_PROGRESS,
+            "self->ith_state == MACH_SEND_IN_PROGRESS"
+        );
 
         /* take ourselves off blocked queue */
         ipc_thread_rmqueue(addr_of_mut!((*port).ip_blocked), self_th);
@@ -332,7 +324,10 @@ pub unsafe extern "C" fn ipc_mqueue_send(
             }
             x if x == THREAD_TIMED_OUT => {
                 /* timeout expired */
-                crate::kassert!((option & MACH_SEND_TIMEOUT) != 0, "option & MACH_SEND_TIMEOUT");
+                crate::kassert!(
+                    (option & MACH_SEND_TIMEOUT) != 0,
+                    "option & MACH_SEND_TIMEOUT"
+                );
                 time_out = 0;
             }
             _ => {
@@ -384,7 +379,10 @@ pub unsafe extern "C" fn ipc_mqueue_send(
             /* ipc_thread_rmqueue_first_macro is the same as
              * ipc_thread_dequeue (drop the head we just inspected). */
             ipc_thread_dequeue(receivers);
-            crate::kassert!((*mqueue).imq_messages.ikmq_base.is_null(), "ipc_kmsg_queue_empty(&mqueue->imq_messages)");
+            crate::kassert!(
+                (*mqueue).imq_messages.ikmq_base.is_null(),
+                "ipc_kmsg_queue_empty(&mqueue->imq_messages)"
+            );
 
             if (*kmsg).ikm_header.msgh_size <= (*receiver).data.msize {
                 /* got a successful receiver */
@@ -441,7 +439,10 @@ pub unsafe extern "C" fn ipc_mqueue_copyin(
 
         ip_lock(port);
         crate::kassert!(ip_active(port), "ip_active(port)");
-        crate::kassert!((*port).ip_target.ipt_name == name, "port->ip_receiver_name == name");
+        crate::kassert!(
+            (*port).ip_target.ipt_name == name,
+            "port->ip_receiver_name == name"
+        );
         crate::kassert!((*port).data.receiver == space, "port->ip_receiver == space");
         is_read_unlock(space);
 
@@ -466,7 +467,10 @@ pub unsafe extern "C" fn ipc_mqueue_copyin(
 
         ips_lock(pset);
         crate::kassert!(ips_active(pset), "ips_active(pset)");
-        crate::kassert!((*pset).ips_target.ipt_name == name, "pset->ips_local_name == name");
+        crate::kassert!(
+            (*pset).ips_target.ipt_name == name,
+            "pset->ips_local_name == name"
+        );
         is_read_unlock(space);
 
         mqueue = addr_of_mut!((*pset).ips_target.ipt_messages);
@@ -520,11 +524,8 @@ pub unsafe extern "C" fn ipc_mqueue_receive(
                 let head = ipc_kmsg_queue_first(kmsgs);
                 if head != IKM_NULL {
                     /* check space requirements */
-                    if (msg_usize(addr_of_mut!((*head).ikm_header)) as u32)
-                        > max_size
-                    {
-                        *(kmsgp as *mut mach_msg_size_t) =
-                            (*head).ikm_header.msgh_size;
+                    if (msg_usize(addr_of_mut!((*head).ikm_header)) as u32) > max_size {
+                        *(kmsgp as *mut mach_msg_size_t) = (*head).ikm_header.msgh_size;
                         imq_unlock(mqueue);
                         return MACH_RCV_TOO_LARGE;
                     }
@@ -532,8 +533,7 @@ pub unsafe extern "C" fn ipc_mqueue_receive(
                     /* ipc_kmsg_rmqueue_first_macro = ipc_kmsg_dequeue. */
                     let _ = ipc_kmsg_dequeue(kmsgs);
                     kmsg = head;
-                    port = (*kmsg).ikm_header.msgh_remote_port as usize
-                        as ipc_port_t;
+                    port = (*kmsg).ikm_header.msgh_remote_port as usize as ipc_port_t;
                     seqno = (*port).ip_seqno;
                     (*port).ip_seqno = (*port).ip_seqno.wrapping_add(1);
                     break 'recv;
@@ -550,10 +550,7 @@ pub unsafe extern "C" fn ipc_mqueue_receive(
                     thread_will_wait(self_th);
                 }
 
-                ipc_thread_enqueue(
-                    addr_of_mut!((*mqueue).imq_threads),
-                    self_th,
-                );
+                ipc_thread_enqueue(addr_of_mut!((*mqueue).imq_threads), self_th);
                 (*self_th).ith_state = MACH_RCV_IN_PROGRESS;
                 (*self_th).data.msize = max_size;
 
@@ -570,8 +567,7 @@ pub unsafe extern "C" fn ipc_mqueue_receive(
                 /* pick up the message that was handed to us */
                 kmsg = (*self_th).data.kmsg as *mut ipc_kmsg_full;
                 seqno = (*self_th).ith_seqno;
-                port = (*kmsg).ikm_header.msgh_remote_port as usize
-                    as ipc_port_t;
+                port = (*kmsg).ikm_header.msgh_remote_port as usize as ipc_port_t;
                 break 'recv;
             }
 
@@ -581,17 +577,12 @@ pub unsafe extern "C" fn ipc_mqueue_receive(
                     imq_unlock(mqueue);
                     return (*self_th).ith_state;
                 }
-                x if x == MACH_RCV_PORT_DIED
-                    || x == MACH_RCV_PORT_CHANGED =>
-                {
+                x if x == MACH_RCV_PORT_DIED || x == MACH_RCV_PORT_CHANGED => {
                     imq_unlock(mqueue);
                     return (*self_th).ith_state;
                 }
                 x if x == MACH_RCV_IN_PROGRESS => {
-                    ipc_thread_rmqueue(
-                        addr_of_mut!((*mqueue).imq_threads),
-                        self_th,
-                    );
+                    ipc_thread_rmqueue(addr_of_mut!((*mqueue).imq_threads), self_th);
 
                     match (*self_th).wait_result {
                         y if y == THREAD_INTERRUPTED => {
@@ -599,12 +590,13 @@ pub unsafe extern "C" fn ipc_mqueue_receive(
                             return MACH_RCV_INTERRUPTED;
                         }
                         y if y == THREAD_TIMED_OUT => {
-                            crate::kassert!((option & MACH_RCV_TIMEOUT) != 0, "option & MACH_RCV_TIMEOUT");
+                            crate::kassert!(
+                                (option & MACH_RCV_TIMEOUT) != 0,
+                                "option & MACH_RCV_TIMEOUT"
+                            );
                             time_out = 0;
                         }
-                        _ => {
-                            /* THREAD_RESTART / unexpected — panic. */
-                        }
+                        _ => { /* THREAD_RESTART / unexpected — panic. */ }
                     }
                     /* break of inner switch -> continue outer for(;;) */
                 }

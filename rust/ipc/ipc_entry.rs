@@ -5,14 +5,13 @@
 use core::ptr::{addr_of, addr_of_mut, null_mut};
 
 use crate::extern_c::{
-    kmem_cache_alloc, kmem_cache_free, rdxtree_insert_alloc_common,
-    rdxtree_insert_common, rdxtree_lookup_common, rdxtree_replace_slot,
+    kmem_cache_alloc, kmem_cache_free, rdxtree_insert_alloc_common, rdxtree_insert_common,
+    rdxtree_lookup_common, rdxtree_replace_slot,
 };
 use crate::mach_types::{
-    ipc_entry_t, ipc_space_t, kern_return_t, kmem_cache,
-    mach_port_name_t, rdxtree_key_t, vm_offset_t, IE_BITS_TYPE_MASK, IE_NULL,
-    KERN_INVALID_TASK, KERN_NO_SPACE, KERN_RESOURCE_SHORTAGE, KERN_SUCCESS,
-    SIZE_OF_KMEM_CACHE,
+    ipc_entry_t, ipc_space_t, kern_return_t, kmem_cache, mach_port_name_t, rdxtree_key_t,
+    vm_offset_t, IE_BITS_TYPE_MASK, IE_NULL, KERN_INVALID_TASK, KERN_NO_SPACE,
+    KERN_RESOURCE_SHORTAGE, KERN_SUCCESS, SIZE_OF_KMEM_CACHE,
 };
 
 // ---------------------------------------------------------------------------
@@ -73,8 +72,14 @@ unsafe fn ipc_entry_get(
     (*free_entry).index.request = 0;
     let new_name: mach_port_name_t = (*free_entry).ie_name; /* MACH_PORT_MAKE(index, gen) = index */
 
-    crate::kassert!(new_name != 0 && new_name != !0u32, "MACH_PORT_NAME_VALID(new_name)");
-    crate::kassert!((*free_entry).ie_object.is_null(), "free_entry->ie_object == IO_NULL");
+    crate::kassert!(
+        new_name != 0 && new_name != !0u32,
+        "MACH_PORT_NAME_VALID(new_name)"
+    );
+    crate::kassert!(
+        (*free_entry).ie_object.is_null(),
+        "free_entry->ie_object == IO_NULL"
+    );
 
     (*space).is_size += 1;
     *namep = new_name;
@@ -145,11 +150,8 @@ pub unsafe extern "C" fn ipc_entry_alloc_name(
         return KERN_INVALID_TASK;
     }
 
-    let slot = rdxtree_lookup_common(
-        addr_of!((*space).is_map),
-        name as rdxtree_key_t,
-        1,
-    ) as *mut *mut core::ffi::c_void;
+    let slot = rdxtree_lookup_common(addr_of!((*space).is_map), name as rdxtree_key_t, 1)
+        as *mut *mut core::ffi::c_void;
 
     let mut entry: ipc_entry_t = IE_NULL;
     if !slot.is_null() {

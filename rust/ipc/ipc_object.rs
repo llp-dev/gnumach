@@ -5,33 +5,26 @@
 use core::ptr::{addr_of_mut, null_mut, write_bytes};
 
 use crate::extern_c::{kmem_cache_alloc, kmem_cache_free, rdxtree_remove};
+use crate::ipc_entry::{ipc_entry_alloc, ipc_entry_alloc_name, ipc_entry_cache};
+use crate::ipc_notify::{ipc_notify_no_senders, ipc_notify_port_deleted, ipc_notify_send_once};
 use crate::ipc_port::{ipc_port_release_receive, ipc_port_release_send};
 use crate::ipc_right::{
-    ipc_right_copyin, ipc_right_copyout, ipc_right_inuse,
-    ipc_right_lookup_write, ipc_right_rename, ipc_right_reverse,
-};
-use crate::ipc_entry::{ipc_entry_alloc, ipc_entry_alloc_name, ipc_entry_cache};
-use crate::ipc_notify::{
-    ipc_notify_no_senders, ipc_notify_port_deleted, ipc_notify_send_once,
+    ipc_right_copyin, ipc_right_copyout, ipc_right_inuse, ipc_right_lookup_write, ipc_right_rename,
+    ipc_right_reverse,
 };
 use crate::ipc_space::ipc_space_kernel;
 use crate::mach_types::{
-    ipc_entry_t, ipc_object, ipc_object_bits_t, ipc_port,
-    ipc_pset, ipc_space_t, kern_return_t, kmem_cache, mach_msg_type_name_t,
-    mach_port_mscount_t, mach_port_name_t, mach_port_right_t,
-    mach_port_type_t, mach_port_urefs_t, rdxtree_key_t, vm_offset_t,
-    IE_BITS_TYPE_MASK, IE_NULL, IOT_NUMBER, IOT_PORT, IOT_PORT_SET,
-    IO_BITS_ACTIVE, IO_BITS_OTYPE, IO_BITS_PROTECTED_PAYLOAD,
-    IS_FREE_LIST_SIZE_LIMIT, KERN_INVALID_CAPABILITY, KERN_INVALID_NAME,
-    KERN_INVALID_RIGHT, KERN_INVALID_TASK, KERN_NAME_EXISTS, KERN_RIGHT_EXISTS,
-    KERN_RESOURCE_SHORTAGE, KERN_SUCCESS, MACH_MSG_TYPE_COPY_SEND,
-    MACH_MSG_TYPE_MAKE_SEND, MACH_MSG_TYPE_MAKE_SEND_ONCE,
-    MACH_MSG_TYPE_MOVE_RECEIVE, MACH_MSG_TYPE_MOVE_SEND,
-    MACH_MSG_TYPE_MOVE_SEND_ONCE, MACH_MSG_TYPE_PORT_RECEIVE,
-    MACH_MSG_TYPE_PORT_SEND, MACH_MSG_TYPE_PORT_SEND_ONCE,
-    MACH_PORT_NAME_NULL, MACH_PORT_TYPE, MACH_PORT_TYPE_ALL_RIGHTS,
-    MACH_PORT_TYPE_DEAD_NAME, MACH_PORT_TYPE_NONE,
-    MACH_PORT_TYPE_SEND_RECEIVE, MACH_PORT_UREFS_MAX, SIZE_OF_KMEM_CACHE,
+    ipc_entry_t, ipc_object, ipc_object_bits_t, ipc_port, ipc_pset, ipc_space_t, kern_return_t,
+    kmem_cache, mach_msg_type_name_t, mach_port_mscount_t, mach_port_name_t, mach_port_right_t,
+    mach_port_type_t, mach_port_urefs_t, rdxtree_key_t, vm_offset_t, IE_BITS_TYPE_MASK, IE_NULL,
+    IOT_NUMBER, IOT_PORT, IOT_PORT_SET, IO_BITS_ACTIVE, IO_BITS_OTYPE, IO_BITS_PROTECTED_PAYLOAD,
+    IS_FREE_LIST_SIZE_LIMIT, KERN_INVALID_CAPABILITY, KERN_INVALID_NAME, KERN_INVALID_RIGHT,
+    KERN_INVALID_TASK, KERN_NAME_EXISTS, KERN_RESOURCE_SHORTAGE, KERN_RIGHT_EXISTS, KERN_SUCCESS,
+    MACH_MSG_TYPE_COPY_SEND, MACH_MSG_TYPE_MAKE_SEND, MACH_MSG_TYPE_MAKE_SEND_ONCE,
+    MACH_MSG_TYPE_MOVE_RECEIVE, MACH_MSG_TYPE_MOVE_SEND, MACH_MSG_TYPE_MOVE_SEND_ONCE,
+    MACH_MSG_TYPE_PORT_RECEIVE, MACH_MSG_TYPE_PORT_SEND, MACH_MSG_TYPE_PORT_SEND_ONCE,
+    MACH_PORT_NAME_NULL, MACH_PORT_TYPE, MACH_PORT_TYPE_ALL_RIGHTS, MACH_PORT_TYPE_DEAD_NAME,
+    MACH_PORT_TYPE_NONE, MACH_PORT_TYPE_SEND_RECEIVE, MACH_PORT_UREFS_MAX, SIZE_OF_KMEM_CACHE,
 };
 
 // ---------------------------------------------------------------------------
@@ -40,8 +33,12 @@ use crate::mach_types::{
 
 #[no_mangle]
 pub static mut ipc_object_caches: [kmem_cache; IOT_NUMBER] = [
-    kmem_cache { _bytes: [0u8; SIZE_OF_KMEM_CACHE] },
-    kmem_cache { _bytes: [0u8; SIZE_OF_KMEM_CACHE] },
+    kmem_cache {
+        _bytes: [0u8; SIZE_OF_KMEM_CACHE],
+    },
+    kmem_cache {
+        _bytes: [0u8; SIZE_OF_KMEM_CACHE],
+    },
 ];
 
 // ---------------------------------------------------------------------------
@@ -49,9 +46,8 @@ pub static mut ipc_object_caches: [kmem_cache; IOT_NUMBER] = [
 // ---------------------------------------------------------------------------
 
 use crate::locks::{
-    io_active, io_check_unlock, io_lock, io_lock_init, io_reference,
-    io_release, io_unlock, ip_active, ip_lock, ip_reference, ip_unlock,
-    is_read_unlock, is_write_lock, is_write_unlock,
+    io_active, io_check_unlock, io_lock, io_lock_init, io_reference, io_release, io_unlock,
+    ip_active, ip_lock, ip_reference, ip_unlock, is_read_unlock, is_write_lock, is_write_unlock,
 };
 
 #[inline]
@@ -67,8 +63,7 @@ fn io_makebits(active: bool, otype: u32, kotype: u32) -> ipc_object_bits_t {
 
 #[inline]
 unsafe fn io_alloc(otype: u32) -> *mut ipc_object {
-    kmem_cache_alloc(addr_of_mut!(ipc_object_caches[otype as usize]))
-        as *mut ipc_object
+    kmem_cache_alloc(addr_of_mut!(ipc_object_caches[otype as usize])) as *mut ipc_object
 }
 
 #[inline]
@@ -104,11 +99,7 @@ unsafe fn ipc_port_flag_protected_payload_clear(port: *mut ipc_port) {
 
 /// `ipc_entry_dealloc` — static inline from `ipc/ipc_space.h`.
 #[inline]
-unsafe fn ipc_entry_dealloc(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-    entry: ipc_entry_t,
-) {
+unsafe fn ipc_entry_dealloc(space: ipc_space_t, name: mach_port_name_t, entry: ipc_entry_t) {
     crate::kassert!((*space).is_active != 0, "space->is_active");
     crate::kassert!((*entry).ie_object.is_null(), "entry->ie_object == IO_NULL");
     crate::kassert!((*entry).index.request == 0, "entry->ie_request == 0");
@@ -120,10 +111,7 @@ unsafe fn ipc_entry_dealloc(
         (*entry).index.next_free = (*space).is_free_list;
         (*space).is_free_list = entry;
     } else {
-        rdxtree_remove(
-            addr_of_mut!((*space).is_map),
-            name as rdxtree_key_t,
-        );
+        rdxtree_remove(addr_of_mut!((*space).is_map), name as rdxtree_key_t);
         ie_free(entry);
     }
     (*space).is_size -= 1;
@@ -131,10 +119,7 @@ unsafe fn ipc_entry_dealloc(
 
 /// Mirror of the static inline `ipc_entry_lookup` from `ipc/ipc_space.h`.
 #[inline]
-unsafe fn ipc_entry_lookup(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-) -> ipc_entry_t {
+unsafe fn ipc_entry_lookup(space: ipc_space_t, name: mach_port_name_t) -> ipc_entry_t {
     crate::kassert!((*space).is_active != 0, "space->is_active");
     let entry = crate::extern_c::rdxtree_lookup_common(
         core::ptr::addr_of!((*space).is_map),
@@ -272,7 +257,10 @@ pub unsafe extern "C" fn ipc_object_alloc(
     let mut entry: ipc_entry_t = IE_NULL;
 
     crate::kassert!(otype < IOT_NUMBER as u32, "otype < IOT_NUMBER");
-    crate::kassert!((typ & MACH_PORT_TYPE_ALL_RIGHTS) == typ, "(type & MACH_PORT_TYPE_ALL_RIGHTS) == type");
+    crate::kassert!(
+        (typ & MACH_PORT_TYPE_ALL_RIGHTS) == typ,
+        "(type & MACH_PORT_TYPE_ALL_RIGHTS) == type"
+    );
     crate::kassert!(typ != MACH_PORT_TYPE_NONE, "type != MACH_PORT_TYPE_NONE");
     crate::kassert!(urefs <= MACH_PORT_UREFS_MAX, "urefs <= MACH_PORT_UREFS_MAX");
     let object = io_alloc(otype);
@@ -372,11 +360,15 @@ pub unsafe extern "C" fn ipc_object_copyin_type(
     match msgt_name {
         0 => 0,
         x if x == MACH_MSG_TYPE_MOVE_RECEIVE => MACH_MSG_TYPE_PORT_RECEIVE,
-        x if x == MACH_MSG_TYPE_MOVE_SEND_ONCE
-            || x == MACH_MSG_TYPE_MAKE_SEND_ONCE => MACH_MSG_TYPE_PORT_SEND_ONCE,
+        x if x == MACH_MSG_TYPE_MOVE_SEND_ONCE || x == MACH_MSG_TYPE_MAKE_SEND_ONCE => {
+            MACH_MSG_TYPE_PORT_SEND_ONCE
+        }
         x if x == MACH_MSG_TYPE_MOVE_SEND
             || x == MACH_MSG_TYPE_MAKE_SEND
-            || x == MACH_MSG_TYPE_COPY_SEND => MACH_MSG_TYPE_PORT_SEND,
+            || x == MACH_MSG_TYPE_COPY_SEND =>
+        {
+            MACH_MSG_TYPE_PORT_SEND
+        }
         _ => 0, /* in case assert/panic returns */
     }
 }
@@ -402,8 +394,13 @@ pub unsafe extern "C" fn ipc_object_copyin(
     /* space is write-locked and active */
 
     let kr = ipc_right_copyin(
-        space, name, entry, msgt_name, 1 /* TRUE */,
-        objectp, &mut soright,
+        space,
+        name,
+        entry,
+        msgt_name,
+        1, /* TRUE */
+        objectp,
+        &mut soright,
     );
     if ie_bits_type((*entry).ie_bits) == MACH_PORT_TYPE_NONE {
         ipc_entry_dealloc(space, name, entry);
@@ -426,15 +423,24 @@ pub unsafe extern "C" fn ipc_object_copyin_from_kernel(
     object: *mut ipc_object,
     msgt_name: mach_msg_type_name_t,
 ) {
-    crate::kassert!((object as usize) != 0 && (object as usize) != !0usize, "IO_VALID(object)");
+    crate::kassert!(
+        (object as usize) != 0 && (object as usize) != !0usize,
+        "IO_VALID(object)"
+    );
 
     if msgt_name == MACH_MSG_TYPE_MOVE_RECEIVE {
         let port = object as *mut ipc_port;
 
         ip_lock(port);
         crate::kassert!(ip_active(port), "ip_active(port)");
-        crate::kassert!((*port).ip_target.ipt_name != MACH_PORT_NAME_NULL, "port->ip_receiver_name != MACH_PORT_NULL");
-        crate::kassert!((*port).data.receiver == ipc_space_kernel, "port->ip_receiver == ipc_space_kernel");
+        crate::kassert!(
+            (*port).ip_target.ipt_name != MACH_PORT_NAME_NULL,
+            "port->ip_receiver_name != MACH_PORT_NULL"
+        );
+        crate::kassert!(
+            (*port).data.receiver == ipc_space_kernel,
+            "port->ip_receiver == ipc_space_kernel"
+        );
 
         /* relevant part of ipc_port_clear_receiver */
         ipc_port_set_mscount(port, 0);
@@ -458,8 +464,14 @@ pub unsafe extern "C" fn ipc_object_copyin_from_kernel(
 
         ip_lock(port);
         crate::kassert!(ip_active(port), "ip_active(port)");
-        crate::kassert!((*port).ip_target.ipt_name != MACH_PORT_NAME_NULL, "port->ip_receiver_name != MACH_PORT_NULL");
-        crate::kassert!((*port).data.receiver == ipc_space_kernel, "port->ip_receiver == ipc_space_kernel");
+        crate::kassert!(
+            (*port).ip_target.ipt_name != MACH_PORT_NAME_NULL,
+            "port->ip_receiver_name != MACH_PORT_NULL"
+        );
+        crate::kassert!(
+            (*port).data.receiver == ipc_space_kernel,
+            "port->ip_receiver == ipc_space_kernel"
+        );
 
         ip_reference(port);
         (*port).ip_mscount += 1;
@@ -472,8 +484,14 @@ pub unsafe extern "C" fn ipc_object_copyin_from_kernel(
 
         ip_lock(port);
         crate::kassert!(ip_active(port), "ip_active(port)");
-        crate::kassert!((*port).ip_target.ipt_name != MACH_PORT_NAME_NULL, "port->ip_receiver_name != MACH_PORT_NULL");
-        crate::kassert!((*port).data.receiver == ipc_space_kernel, "port->ip_receiver == ipc_space_kernel");
+        crate::kassert!(
+            (*port).ip_target.ipt_name != MACH_PORT_NAME_NULL,
+            "port->ip_receiver_name != MACH_PORT_NULL"
+        );
+        crate::kassert!(
+            (*port).data.receiver == ipc_space_kernel,
+            "port->ip_receiver == ipc_space_kernel"
+        );
 
         ip_reference(port);
         (*port).ip_sorights += 1;
@@ -494,7 +512,10 @@ pub unsafe extern "C" fn ipc_object_destroy(
     object: *mut ipc_object,
     msgt_name: mach_msg_type_name_t,
 ) {
-    crate::kassert!((object as usize) != 0 && (object as usize) != !0usize, "IO_VALID(object)");
+    crate::kassert!(
+        (object as usize) != 0 && (object as usize) != !0usize,
+        "IO_VALID(object)"
+    );
     crate::kassert!(io_otype(object) == IOT_PORT, "io_otype(object) == IOT_PORT");
 
     if msgt_name == MACH_MSG_TYPE_PORT_SEND {
@@ -523,7 +544,10 @@ pub unsafe extern "C" fn ipc_object_copyout(
     let mut name: mach_port_name_t = 0;
     let mut entry: ipc_entry_t = IE_NULL;
 
-    crate::kassert!((object as usize) != 0 && (object as usize) != !0usize, "IO_VALID(object)");
+    crate::kassert!(
+        (object as usize) != 0 && (object as usize) != !0usize,
+        "IO_VALID(object)"
+    );
     crate::kassert!(io_otype(object) == IOT_PORT, "io_otype(object) == IOT_PORT");
 
     is_write_lock(space);
@@ -538,7 +562,10 @@ pub unsafe extern "C" fn ipc_object_copyout(
             && ipc_right_reverse(space, object, &mut name, &mut entry) != 0
         {
             /* object is locked and active */
-            crate::kassert!(((*entry).ie_bits & MACH_PORT_TYPE_SEND_RECEIVE) != 0, "entry->ie_bits & MACH_PORT_TYPE_SEND_RECEIVE");
+            crate::kassert!(
+                ((*entry).ie_bits & MACH_PORT_TYPE_SEND_RECEIVE) != 0,
+                "entry->ie_bits & MACH_PORT_TYPE_SEND_RECEIVE"
+            );
             break;
         }
 
@@ -548,7 +575,10 @@ pub unsafe extern "C" fn ipc_object_copyout(
             return kr;
         }
 
-        crate::kassert!(ie_bits_type((*entry).ie_bits) == MACH_PORT_TYPE_NONE, "IE_BITS_TYPE(entry->ie_bits) == MACH_PORT_TYPE_NONE");
+        crate::kassert!(
+            ie_bits_type((*entry).ie_bits) == MACH_PORT_TYPE_NONE,
+            "IE_BITS_TYPE(entry->ie_bits) == MACH_PORT_TYPE_NONE"
+        );
         crate::kassert!((*entry).ie_object.is_null(), "entry->ie_object == IO_NULL");
 
         io_lock(object);
@@ -591,7 +621,10 @@ pub unsafe extern "C" fn ipc_object_copyout_name(
     let mut oentry: ipc_entry_t = IE_NULL;
     let mut entry: ipc_entry_t = IE_NULL;
 
-    crate::kassert!((object as usize) != 0 && (object as usize) != !0usize, "IO_VALID(object)");
+    crate::kassert!(
+        (object as usize) != 0 && (object as usize) != !0usize,
+        "IO_VALID(object)"
+    );
     crate::kassert!(io_otype(object) == IOT_PORT, "io_otype(object) == IOT_PORT");
 
     is_write_lock(space);
@@ -618,13 +651,19 @@ pub unsafe extern "C" fn ipc_object_copyout_name(
         }
 
         crate::kassert!(entry == oentry, "entry == oentry");
-        crate::kassert!(((*entry).ie_bits & MACH_PORT_TYPE_SEND_RECEIVE) != 0, "entry->ie_bits & MACH_PORT_TYPE_SEND_RECEIVE");
+        crate::kassert!(
+            ((*entry).ie_bits & MACH_PORT_TYPE_SEND_RECEIVE) != 0,
+            "entry->ie_bits & MACH_PORT_TYPE_SEND_RECEIVE"
+        );
     } else {
         if ipc_right_inuse(space, name, entry) != 0 {
             return KERN_NAME_EXISTS;
         }
 
-        crate::kassert!(ie_bits_type((*entry).ie_bits) == MACH_PORT_TYPE_NONE, "IE_BITS_TYPE(entry->ie_bits) == MACH_PORT_TYPE_NONE");
+        crate::kassert!(
+            ie_bits_type((*entry).ie_bits) == MACH_PORT_TYPE_NONE,
+            "IE_BITS_TYPE(entry->ie_bits) == MACH_PORT_TYPE_NONE"
+        );
         crate::kassert!((*entry).ie_object.is_null(), "entry->ie_object == IO_NULL");
 
         io_lock(object);
@@ -659,7 +698,10 @@ pub unsafe extern "C" fn ipc_object_copyout_dest(
 ) {
     let name: mach_port_name_t;
 
-    crate::kassert!((object as usize) != 0 && (object as usize) != !0usize, "IO_VALID(object)");
+    crate::kassert!(
+        (object as usize) != 0 && (object as usize) != !0usize,
+        "IO_VALID(object)"
+    );
     crate::kassert!(io_active(object), "io_active(object)");
 
     io_release(object);
@@ -669,7 +711,7 @@ pub unsafe extern "C" fn ipc_object_copyout_dest(
         let mut nsrequest: *mut ipc_port = null_mut();
         let mut mscount: mach_port_mscount_t = 0;
 
-crate::kassert!((*port).ip_srights > 0, "port->ip_srights > 0");
+        crate::kassert!((*port).ip_srights > 0, "port->ip_srights > 0");
         (*port).ip_srights -= 1;
         if (*port).ip_srights == 0 {
             nsrequest = (*port).ip_nsrequest;
@@ -693,7 +735,7 @@ crate::kassert!((*port).ip_srights > 0, "port->ip_srights > 0");
     } else if msgt_name == MACH_MSG_TYPE_PORT_SEND_ONCE {
         let port = object as *mut ipc_port;
 
-crate::kassert!((*port).ip_sorights > 0, "port->ip_sorights > 0");
+        crate::kassert!((*port).ip_sorights > 0, "port->ip_sorights > 0");
 
         if (*port).data.receiver == space {
             /* quietly consume the send-once right */

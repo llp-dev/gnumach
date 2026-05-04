@@ -15,10 +15,7 @@ unsafe fn ipc_thread_links_init(t: *mut thread) {
 
 /// `ipc_thread_enqueue` — append a thread to the tail of `queue`.
 #[no_mangle]
-pub unsafe extern "C" fn ipc_thread_enqueue(
-    queue: *mut ipc_thread_queue,
-    th: ipc_thread_t,
-) {
+pub unsafe extern "C" fn ipc_thread_enqueue(queue: *mut ipc_thread_queue, th: ipc_thread_t) {
     let first: ipc_thread_t = (*queue).ithq_base;
 
     if first == ITH_NULL {
@@ -38,9 +35,7 @@ pub unsafe extern "C" fn ipc_thread_enqueue(
 /// `ipc_thread_dequeue` — pop the head of `queue`.  Returns `ITH_NULL` if
 /// the queue was empty.
 #[no_mangle]
-pub unsafe extern "C" fn ipc_thread_dequeue(
-    queue: *mut ipc_thread_queue,
-) -> ipc_thread_t {
+pub unsafe extern "C" fn ipc_thread_dequeue(queue: *mut ipc_thread_queue) -> ipc_thread_t {
     let first: ipc_thread_t = (*queue).ithq_base;
 
     if first == ITH_NULL {
@@ -65,10 +60,7 @@ pub unsafe extern "C" fn ipc_thread_dequeue(
 
 /// `ipc_thread_rmqueue` — remove a specific thread from `queue`.
 #[no_mangle]
-pub unsafe extern "C" fn ipc_thread_rmqueue(
-    queue: *mut ipc_thread_queue,
-    th: ipc_thread_t,
-) {
+pub unsafe extern "C" fn ipc_thread_rmqueue(queue: *mut ipc_thread_queue, th: ipc_thread_t) {
     // assert(queue->ithq_base != ITH_NULL);
 
     let next: ipc_thread_t = (*th).ith_next;

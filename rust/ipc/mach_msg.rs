@@ -13,14 +13,13 @@
 use core::ptr::{addr_of_mut, null_mut};
 
 use crate::extern_c::{
-    copyinmsg, copyout, copyoutmsg, exception_raise_continue,
-    exception_raise_continue_fast, ipc_kobject_server, percpu_array,
-    thread_exception_return, thread_handoff, thread_set_syscall_return,
-    thread_syscall_return,
+    copyinmsg, copyout, copyoutmsg, exception_raise_continue, exception_raise_continue_fast,
+    ipc_kobject_server, percpu_array, thread_exception_return, thread_handoff,
+    thread_set_syscall_return, thread_syscall_return,
 };
 use crate::ipc_kmsg::{
-    ipc_kmsg_copyin, ipc_kmsg_copyout, ipc_kmsg_copyout_dest,
-    ipc_kmsg_copyout_pseudo, ipc_kmsg_get, ipc_kmsg_put,
+    ipc_kmsg_copyin, ipc_kmsg_copyout, ipc_kmsg_copyout_dest, ipc_kmsg_copyout_pseudo,
+    ipc_kmsg_get, ipc_kmsg_put,
 };
 use crate::ipc_marequest::ipc_marequest_create;
 use crate::ipc_mqueue::{ipc_mqueue_copyin, ipc_mqueue_receive, ipc_mqueue_send};
@@ -28,27 +27,21 @@ use crate::ipc_notify::{ipc_notify_no_senders, ipc_notify_send_once};
 use crate::ipc_object::ipc_object_release;
 use crate::ipc_thread::ipc_thread_rmqueue;
 use crate::mach_types::{
-    boolean_t, continuation_t, ipc_entry_t, ipc_kmsg, ipc_kmsg_full,
-    ipc_mqueue, ipc_object, ipc_port_t, ipc_pset_t, ipc_space_t, ipc_thread_t,
-    kern_return_t, mach_msg_header_t, mach_msg_option_t, mach_msg_return_t,
-    mach_msg_size_t, mach_msg_timeout_t, mach_msg_user_header_t,
-    mach_port_name_t, mach_port_seqno_t, vm_map_t, IE_BITS_MAREQUEST,
-    IE_BITS_TYPE_MASK, IE_BITS_UREFS_MASK, IKM_EXPAND_FACTOR,
-    IKM_SAVED_KMSG_SIZE, IKM_SAVED_MSG_SIZE, IMAR_NULL, IO_BITS_PROTECTED_PAYLOAD,
-    IO_NULL, IPS_NULL, ITH_NULL, KERN_SUCCESS,
-    MACH_MSG_MASK, MACH_MSG_OPTION_NONE,
-    MACH_MSG_SIZE_MAX, MACH_MSG_SUCCESS, MACH_MSG_TIMEOUT_NONE,
-    MACH_MSG_TYPE_COPY_SEND, MACH_MSG_TYPE_MAKE_SEND_ONCE,
-    MACH_MSG_TYPE_MOVE_SEND_ONCE, MACH_MSG_TYPE_PORT_SEND,
-    MACH_MSG_TYPE_PORT_SEND_ONCE, MACH_MSG_TYPE_PROTECTED_PAYLOAD,
-    MACH_PORT_NAME_NULL, MACH_PORT_NULL, MACH_PORT_TYPE_PORT_SET,
-    MACH_PORT_TYPE_RECEIVE, MACH_PORT_TYPE_SEND, MACH_PORT_TYPE_SEND_ONCE,
-    MACH_RCV_BODY_ERROR, MACH_RCV_INTERRUPTED,
-    MACH_RCV_INVALID_NOTIFY, MACH_RCV_IN_PROGRESS, MACH_RCV_LARGE,
-    MACH_RCV_MSG, MACH_RCV_NOTIFY, MACH_RCV_TIMEOUT, MACH_RCV_TOO_LARGE,
-    MACH_SEND_ALWAYS, MACH_SEND_CANCEL, MACH_SEND_INVALID_NOTIFY, MACH_SEND_MSG,
-    MACH_SEND_NOTIFY, MACH_SEND_TIMEOUT, MACH_SEND_TIMED_OUT,
-    MACH_SEND_WILL_NOTIFY, OFFSETOF_PERCPU_ACTIVE_THREAD,
+    boolean_t, continuation_t, ipc_entry_t, ipc_kmsg, ipc_kmsg_full, ipc_mqueue, ipc_object,
+    ipc_port_t, ipc_pset_t, ipc_space_t, ipc_thread_t, kern_return_t, mach_msg_header_t,
+    mach_msg_option_t, mach_msg_return_t, mach_msg_size_t, mach_msg_timeout_t,
+    mach_msg_user_header_t, mach_port_name_t, mach_port_seqno_t, vm_map_t, IE_BITS_MAREQUEST,
+    IE_BITS_TYPE_MASK, IE_BITS_UREFS_MASK, IKM_EXPAND_FACTOR, IKM_SAVED_KMSG_SIZE,
+    IKM_SAVED_MSG_SIZE, IMAR_NULL, IO_BITS_PROTECTED_PAYLOAD, IO_NULL, IPS_NULL, ITH_NULL,
+    KERN_SUCCESS, MACH_MSG_MASK, MACH_MSG_OPTION_NONE, MACH_MSG_SIZE_MAX, MACH_MSG_SUCCESS,
+    MACH_MSG_TIMEOUT_NONE, MACH_MSG_TYPE_COPY_SEND, MACH_MSG_TYPE_MAKE_SEND_ONCE,
+    MACH_MSG_TYPE_MOVE_SEND_ONCE, MACH_MSG_TYPE_PORT_SEND, MACH_MSG_TYPE_PORT_SEND_ONCE,
+    MACH_MSG_TYPE_PROTECTED_PAYLOAD, MACH_PORT_NAME_NULL, MACH_PORT_NULL, MACH_PORT_TYPE_PORT_SET,
+    MACH_PORT_TYPE_RECEIVE, MACH_PORT_TYPE_SEND, MACH_PORT_TYPE_SEND_ONCE, MACH_RCV_BODY_ERROR,
+    MACH_RCV_INTERRUPTED, MACH_RCV_INVALID_NOTIFY, MACH_RCV_IN_PROGRESS, MACH_RCV_LARGE,
+    MACH_RCV_MSG, MACH_RCV_NOTIFY, MACH_RCV_TIMEOUT, MACH_RCV_TOO_LARGE, MACH_SEND_ALWAYS,
+    MACH_SEND_CANCEL, MACH_SEND_INVALID_NOTIFY, MACH_SEND_MSG, MACH_SEND_NOTIFY,
+    MACH_SEND_TIMED_OUT, MACH_SEND_TIMEOUT, MACH_SEND_WILL_NOTIFY, OFFSETOF_PERCPU_ACTIVE_THREAD,
     OFFSETOF_TASK_ITK_SPACE, OFFSETOF_TASK_MAP, THREAD_AWAKENED,
 };
 
@@ -98,10 +91,9 @@ unsafe fn ikm_free(kmsg: *mut ipc_kmsg_full) {
 }
 
 use crate::locks::{
-    imq_lock, imq_lock_try, imq_unlock, io_check_unlock, io_lock, io_release,
-    io_unlock, ip_active, ip_check_unlock, ip_lock, ip_lock_try,
-    ip_reference as ipc_port_reference, ip_release, ip_unlock, ips_active,
-    ips_lock, is_read_lock, is_read_unlock, is_write_lock, is_write_unlock,
+    imq_lock, imq_lock_try, imq_unlock, io_check_unlock, io_lock, io_release, io_unlock, ip_active,
+    ip_check_unlock, ip_lock, ip_lock_try, ip_reference as ipc_port_reference, ip_release,
+    ip_unlock, ips_active, ips_lock, is_read_lock, is_read_unlock, is_write_lock, is_write_unlock,
 };
 
 #[inline]
@@ -115,9 +107,7 @@ unsafe fn msg_usize(hdr: *const mach_msg_header_t) -> usize {
 
 /// `ipc_thread_queue_first(q)` — head of the thread queue, ITH_NULL if empty.
 #[inline]
-unsafe fn ipc_thread_queue_first(
-    q: *mut crate::mach_types::ipc_thread_queue,
-) -> ipc_thread_t {
+unsafe fn ipc_thread_queue_first(q: *mut crate::mach_types::ipc_thread_queue) -> ipc_thread_t {
     (*q).ithq_base
 }
 
@@ -132,10 +122,7 @@ unsafe fn ipc_kmsg_queue_first(
 /// `ipc_thread_enqueue_macro(q, t)` — equivalent to `ipc_thread_enqueue`
 /// without the assertions; we forward to the canonical implementation.
 #[inline]
-unsafe fn ipc_thread_enqueue_macro(
-    q: *mut crate::mach_types::ipc_thread_queue,
-    t: ipc_thread_t,
-) {
+unsafe fn ipc_thread_enqueue_macro(q: *mut crate::mach_types::ipc_thread_queue, t: ipc_thread_t) {
     crate::ipc_thread::ipc_thread_enqueue(q, t);
 }
 
@@ -187,10 +174,7 @@ unsafe fn ikm_cache_free_try(kmsg: *mut ipc_kmsg_full) -> bool {
 /// `ikm_check_initialized(kmsg, size)` — debug-only invariant check.  In
 /// the freestanding build this collapses to nothing.
 #[inline]
-unsafe fn ikm_check_initialized(
-    _kmsg: *mut ipc_kmsg_full,
-    _size: crate::mach_types::vm_size_t,
-) {}
+unsafe fn ikm_check_initialized(_kmsg: *mut ipc_kmsg_full, _size: crate::mach_types::vm_size_t) {}
 
 // ---------------------------------------------------------------------------
 //  Lock / refcount no-op helpers (NCPUS == 1)
@@ -212,14 +196,8 @@ fn ie_bits_type(bits: u32) -> u32 {
 /// `ipc_entry_dealloc(space, name, entry)` — return the entry to the
 /// free-list (or remove from the radix tree once the free-list cap hits).
 #[inline]
-unsafe fn ipc_entry_dealloc(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-    entry: ipc_entry_t,
-) {
-    if ((*space).is_free_list_size as usize)
-        < crate::mach_types::IS_FREE_LIST_SIZE_LIMIT
-    {
+unsafe fn ipc_entry_dealloc(space: ipc_space_t, name: mach_port_name_t, entry: ipc_entry_t) {
+    if ((*space).is_free_list_size as usize) < crate::mach_types::IS_FREE_LIST_SIZE_LIMIT {
         (*space).is_free_list_size += 1;
         (*entry).ie_bits = 0;
         (*entry).index.next_free = (*space).is_free_list;
@@ -261,7 +239,10 @@ unsafe fn ipc_entry_get(
     (*free_entry).ie_bits = 0;
     (*free_entry).index.request = 0;
 
-    crate::kassert!(mach_port_name_valid(new_name), "MACH_PORT_NAME_VALID(new_name)");
+    crate::kassert!(
+        mach_port_name_valid(new_name),
+        "MACH_PORT_NAME_VALID(new_name)"
+    );
     crate::kassert!(
         (*free_entry).ie_object.is_null(),
         "free_entry->ie_object == IO_NULL"
@@ -275,10 +256,7 @@ unsafe fn ipc_entry_get(
 
 /// Mirror of the static inline `ipc_entry_lookup` from `ipc/ipc_space.h`.
 #[inline]
-unsafe fn ipc_entry_lookup(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-) -> ipc_entry_t {
+unsafe fn ipc_entry_lookup(space: ipc_space_t, name: mach_port_name_t) -> ipc_entry_t {
     let entry = crate::extern_c::rdxtree_lookup_common(
         core::ptr::addr_of!((*space).is_map),
         name as crate::mach_types::rdxtree_key_t,
@@ -296,16 +274,13 @@ unsafe fn ipc_entry_lookup(
 /// `ipc_entry_lookup_failed(msg, name)` — debug printf when a user-supplied
 /// port name doesn't resolve.  Mirrors the C macro from `ipc/ipc_space.h`.
 #[inline]
-unsafe fn ipc_entry_lookup_failed(
-    msg: *mut mach_msg_user_header_t,
-    port_name: mach_port_name_t,
-) {
+unsafe fn ipc_entry_lookup_failed(msg: *mut mach_msg_user_header_t, port_name: mach_port_name_t) {
     if port_name != MACH_PORT_NAME_NULL && port_name != !0u32 {
         let task = (*current_thread()).task as *mut u8;
-        let name_ptr =
-            task.add(crate::mach_types::OFFSETOF_TASK_NAME) as *const u8;
+        let name_ptr = task.add(crate::mach_types::OFFSETOF_TASK_NAME) as *const u8;
         crate::extern_c::printf(
-            b"task %.*s looked up a bogus port %lu for %d, most probably a bug.\n\0".as_ptr() as *const _,
+            b"task %.*s looked up a bogus port %lu for %d, most probably a bug.\n\0".as_ptr()
+                as *const _,
             crate::mach_types::TASK_NAME_SIZE as core::ffi::c_int,
             name_ptr,
             port_name as core::ffi::c_ulong,
@@ -368,12 +343,7 @@ pub unsafe extern "C" fn mach_msg_send(
             mr = if notify == MACH_PORT_NAME_NULL {
                 MACH_SEND_INVALID_NOTIFY
             } else {
-                ipc_marequest_create(
-                    space,
-                    dest,
-                    notify,
-                    &mut (*kmsg).ikm_marequest,
-                )
+                ipc_marequest_create(space, dest, notify, &mut (*kmsg).ikm_marequest)
             };
             if mr == MACH_MSG_SUCCESS {
                 /* ipc_mqueue_send_always = ipc_mqueue_send(kmsg, ALWAYS, NONE) */
@@ -391,7 +361,10 @@ pub unsafe extern "C" fn mach_msg_send(
 
     if mr != MACH_MSG_SUCCESS {
         mr |= ipc_kmsg_copyout_pseudo(kmsg, space, map);
-        crate::kassert!((*kmsg).ikm_marequest == IMAR_NULL, "kmsg->ikm_marequest == IMAR_NULL");
+        crate::kassert!(
+            (*kmsg).ikm_marequest == IMAR_NULL,
+            "kmsg->ikm_marequest == IMAR_NULL"
+        );
         let _ = IMAR_NULL;
         let _ = ipc_kmsg_put(msg, kmsg, (*kmsg).ikm_header.msgh_size);
     }
@@ -755,8 +728,7 @@ unsafe fn mach_msg_trap_combined(
                 if !want_slow {
                     'fast_get: {
                         if (send_size * IKM_EXPAND_FACTOR) > IKM_SAVED_MSG_SIZE
-                            || (send_size as usize)
-                                < core::mem::size_of::<mach_msg_user_header_t>()
+                            || (send_size as usize) < core::mem::size_of::<mach_msg_user_header_t>()
                             || (send_size & 3) != 0
                         {
                             want_slow = true;
@@ -769,8 +741,7 @@ unsafe fn mach_msg_trap_combined(
                         }
                         if copyinmsg(
                             msg as *const core::ffi::c_void,
-                            addr_of_mut!((*kmsg).ikm_header)
-                                as *mut core::ffi::c_void,
+                            addr_of_mut!((*kmsg).ikm_header) as *mut core::ffi::c_void,
                             send_size as usize,
                             (*kmsg).ikm_size as usize,
                         ) != 0
@@ -806,10 +777,7 @@ unsafe fn mach_msg_trap_combined(
                     MACH_MSG_TYPE_COPY_SEND,
                     MACH_MSG_TYPE_MAKE_SEND_ONCE,
                 );
-                let reply_pat = crate::mach_types::MACH_MSGH_BITS(
-                    MACH_MSG_TYPE_MOVE_SEND_ONCE,
-                    0,
-                );
+                let reply_pat = crate::mach_types::MACH_MSGH_BITS(MACH_MSG_TYPE_MOVE_SEND_ONCE, 0);
 
                 if bits == reply_pat {
                     /* === reply-message case === */
@@ -817,29 +785,22 @@ unsafe fn mach_msg_trap_combined(
                     let mut to_fast_send_receive = false;
 
                     'reply: {
-                        if (*kmsg).ikm_header.msgh_local_port != MACH_PORT_NULL
-                        {
+                        if (*kmsg).ikm_header.msgh_local_port != MACH_PORT_NULL {
                             break 'reply;
                         }
 
                         is_write_lock(space);
-                        crate::kassert!(
-                            (*space).is_active != 0,
-                            "space->is_active"
-                        );
+                        crate::kassert!((*space).is_active != 0, "space->is_active");
 
                         let dest_name = (*kmsg).ikm_header.msgh_remote_port;
-                        let entry: ipc_entry_t =
-                            ipc_entry_lookup(space, dest_name);
+                        let entry: ipc_entry_t = ipc_entry_lookup(space, dest_name);
                         if entry.is_null() {
                             ipc_entry_lookup_failed(msg, dest_name);
                             is_write_unlock(space);
                             break 'reply;
                         }
                         let entry_bits = (*entry).ie_bits;
-                        if ie_bits_type(entry_bits)
-                            != MACH_PORT_TYPE_SEND_ONCE
-                        {
+                        if ie_bits_type(entry_bits) != MACH_PORT_TYPE_SEND_ONCE {
                             is_write_unlock(space);
                             break 'reply;
                         }
@@ -859,10 +820,7 @@ unsafe fn mach_msg_trap_combined(
                         }
 
                         dest_port = (*entry).ie_object as ipc_port_t;
-                        crate::kassert!(
-                            !dest_port.is_null(),
-                            "dest_port != IP_NULL"
-                        );
+                        crate::kassert!(!dest_port.is_null(), "dest_port != IP_NULL");
 
                         ip_lock(dest_port);
                         if !ip_active(dest_port) {
@@ -871,30 +829,21 @@ unsafe fn mach_msg_trap_combined(
                             break 'reply;
                         }
 
-                        crate::kassert!(
-                            (*dest_port).ip_sorights > 0,
-                            "dest_port->ip_sorights > 0"
-                        );
+                        crate::kassert!((*dest_port).ip_sorights > 0, "dest_port->ip_sorights > 0");
                         (*entry).ie_object = IO_NULL;
                         ipc_entry_dealloc(space, dest_name, entry);
 
                         (*kmsg).ikm_header.msgh_bits =
-                            crate::mach_types::MACH_MSGH_BITS(
-                                MACH_MSG_TYPE_PORT_SEND_ONCE,
-                                0,
-                            );
-                        (*kmsg).ikm_header.msgh_remote_port =
-                            dest_port as usize as u32;
+                            crate::mach_types::MACH_MSGH_BITS(MACH_MSG_TYPE_PORT_SEND_ONCE, 0);
+                        (*kmsg).ikm_header.msgh_remote_port = dest_port as usize as u32;
 
                         crate::kassert!(
-                            (*dest_port).data.receiver
-                                != crate::ipc_space::ipc_space_kernel,
+                            (*dest_port).data.receiver != crate::ipc_space::ipc_space_kernel,
                             "dest_port->ip_receiver != ipc_space_kernel"
                         );
 
                         /* optimised ipc_mqueue_copyin */
-                        let rcv_entry: ipc_entry_t =
-                            ipc_entry_lookup(space, rcv_name);
+                        let rcv_entry: ipc_entry_t = ipc_entry_lookup(space, rcv_name);
                         if rcv_entry.is_null() {
                             ipc_entry_lookup_failed(msg, rcv_name);
                             /* abort_reply_rcv_copyin */
@@ -906,28 +855,15 @@ unsafe fn mach_msg_trap_combined(
                         let rcv_bits = (*rcv_entry).ie_bits;
 
                         if (rcv_bits & MACH_PORT_TYPE_PORT_SET) != 0 {
-                            let rcv_pset: ipc_pset_t =
-                                (*rcv_entry).ie_object as ipc_pset_t;
-                            crate::kassert!(
-                                !rcv_pset.is_null(),
-                                "rcv_pset != IPS_NULL"
-                            );
+                            let rcv_pset: ipc_pset_t = (*rcv_entry).ie_object as ipc_pset_t;
+                            crate::kassert!(!rcv_pset.is_null(), "rcv_pset != IPS_NULL");
                             ips_lock(rcv_pset);
-                            crate::kassert!(
-                                ips_active(rcv_pset),
-                                "ips_active(rcv_pset)"
-                            );
+                            crate::kassert!(ips_active(rcv_pset), "ips_active(rcv_pset)");
                             rcv_object = rcv_pset as *mut ipc_object;
-                            rcv_mqueue = addr_of_mut!(
-                                (*rcv_pset).ips_target.ipt_messages
-                            );
+                            rcv_mqueue = addr_of_mut!((*rcv_pset).ips_target.ipt_messages);
                         } else if (rcv_bits & MACH_PORT_TYPE_RECEIVE) != 0 {
-                            let rcv_port: ipc_port_t =
-                                (*rcv_entry).ie_object as ipc_port_t;
-                            crate::kassert!(
-                                !rcv_port.is_null(),
-                                "rcv_port != IP_NULL"
-                            );
+                            let rcv_port: ipc_port_t = (*rcv_entry).ie_object as ipc_port_t;
+                            crate::kassert!(!rcv_port.is_null(), "rcv_port != IP_NULL");
 
                             if !ip_lock_try(rcv_port) {
                                 /* abort_reply_rcv_copyin */
@@ -936,10 +872,7 @@ unsafe fn mach_msg_trap_combined(
                                 to_slow_send = true;
                                 break 'reply;
                             }
-                            crate::kassert!(
-                                ip_active(rcv_port),
-                                "ip_active(rcv_port)"
-                            );
+                            crate::kassert!(ip_active(rcv_port), "ip_active(rcv_port)");
                             if (*rcv_port).ip_pset != IPS_NULL {
                                 ip_unlock(rcv_port);
                                 /* abort_reply_rcv_copyin */
@@ -949,9 +882,7 @@ unsafe fn mach_msg_trap_combined(
                                 break 'reply;
                             }
                             rcv_object = rcv_port as *mut ipc_object;
-                            rcv_mqueue = addr_of_mut!(
-                                (*rcv_port).ip_target.ipt_messages
-                            );
+                            rcv_mqueue = addr_of_mut!((*rcv_port).ip_target.ipt_messages);
                         } else {
                             /* abort_reply_rcv_copyin */
                             ip_unlock(dest_port);
@@ -1003,8 +934,7 @@ unsafe fn mach_msg_trap_combined(
                         is_read_unlock(space);
                         break 'request;
                     }
-                    let reply_port: ipc_port_t =
-                        (*r_entry).ie_object as ipc_port_t;
+                    let reply_port: ipc_port_t = (*r_entry).ie_object as ipc_port_t;
                     crate::kassert!(!reply_port.is_null(), "reply_port != IP_NULL");
 
                     let dest_name = (*kmsg).ikm_header.msgh_remote_port;
@@ -1019,10 +949,7 @@ unsafe fn mach_msg_trap_combined(
                         is_read_unlock(space);
                         break 'request;
                     }
-                    crate::kassert!(
-                        (d_bits & IE_BITS_UREFS_MASK) > 0,
-                        "IE_BITS_UREFS(bits) > 0"
-                    );
+                    crate::kassert!((d_bits & IE_BITS_UREFS_MASK) > 0, "IE_BITS_UREFS(bits) > 0");
                     dest_port = (*d_entry).ie_object as ipc_port_t;
                     crate::kassert!(!dest_port.is_null(), "dest_port != IP_NULL");
 
@@ -1035,17 +962,13 @@ unsafe fn mach_msg_trap_combined(
                     }
                     is_read_unlock(space);
 
-                    crate::kassert!(
-                        (*dest_port).ip_srights > 0,
-                        "dest_port->ip_srights > 0"
-                    );
+                    crate::kassert!((*dest_port).ip_srights > 0, "dest_port->ip_srights > 0");
                     (*dest_port).ip_srights += 1;
                     ipc_port_reference(dest_port);
 
                     crate::kassert!(ip_active(reply_port), "ip_active(reply_port)");
                     crate::kassert!(
-                        (*reply_port).ip_target.ipt_name
-                            == (*kmsg).ikm_header.msgh_local_port,
+                        (*reply_port).ip_target.ipt_name == (*kmsg).ikm_header.msgh_local_port,
                         "reply_port->ip_receiver_name == msgh_local_port"
                     );
                     crate::kassert!(
@@ -1056,28 +979,20 @@ unsafe fn mach_msg_trap_combined(
                     (*reply_port).ip_sorights += 1;
                     ipc_port_reference(reply_port);
 
-                    (*kmsg).ikm_header.msgh_bits =
-                        crate::mach_types::MACH_MSGH_BITS(
-                            MACH_MSG_TYPE_PORT_SEND,
-                            MACH_MSG_TYPE_PORT_SEND_ONCE,
-                        );
-                    (*kmsg).ikm_header.msgh_remote_port =
-                        dest_port as usize as u32;
-                    (*kmsg).ikm_header.msgh_local_port =
-                        reply_port as usize as u32;
+                    (*kmsg).ikm_header.msgh_bits = crate::mach_types::MACH_MSGH_BITS(
+                        MACH_MSG_TYPE_PORT_SEND,
+                        MACH_MSG_TYPE_PORT_SEND_ONCE,
+                    );
+                    (*kmsg).ikm_header.msgh_remote_port = dest_port as usize as u32;
+                    (*kmsg).ikm_header.msgh_local_port = reply_port as usize as u32;
 
                     /* Late-fail conditions: kernel-dest, qlimit, reply pset */
-                    if (*dest_port).data.receiver
-                        == crate::ipc_space::ipc_space_kernel
-                    {
+                    if (*dest_port).data.receiver == crate::ipc_space::ipc_space_kernel {
                         /* The kernel server holds a reference to the reply
                          * port and hands it back in the reply message; we
                          * don't need the extra reference here. */
                         ip_unlock(reply_port);
-                        crate::kassert!(
-                            ip_active(dest_port),
-                            "ip_active(dest_port)"
-                        );
+                        crate::kassert!(ip_active(dest_port), "ip_active(dest_port)");
                         ip_unlock(dest_port);
                         to_kernel_send = true;
                         break 'request;
@@ -1099,8 +1014,7 @@ unsafe fn mach_msg_trap_combined(
                     rcv_object = reply_port as *mut ipc_object;
                     /* io_reference(rcv_object) */
                     (*rcv_object).io_references += 1;
-                    rcv_mqueue =
-                        addr_of_mut!((*reply_port).ip_target.ipt_messages);
+                    rcv_mqueue = addr_of_mut!((*reply_port).ip_target.ipt_messages);
                     imq_lock(rcv_mqueue);
                     io_unlock(rcv_object);
                     to_fast_send_receive = true;
@@ -1124,8 +1038,7 @@ unsafe fn mach_msg_trap_combined(
             FastSendReceive => {
                 crate::kassert!(ip_active(dest_port), "ip_active(dest_port)");
                 crate::kassert!(
-                    (*dest_port).data.receiver
-                        != crate::ipc_space::ipc_space_kernel,
+                    (*dest_port).data.receiver != crate::ipc_space::ipc_space_kernel,
                     "dest_port->ip_receiver != ipc_space_kernel"
                 );
 
@@ -1145,14 +1058,10 @@ unsafe fn mach_msg_trap_combined(
                     continue;
                 }
 
-                let receiver: ipc_thread_t = ipc_thread_queue_first(
-                    addr_of_mut!((*dest_mqueue).imq_threads),
-                );
+                let receiver: ipc_thread_t =
+                    ipc_thread_queue_first(addr_of_mut!((*dest_mqueue).imq_threads));
                 if receiver == ITH_NULL
-                    || !ipc_kmsg_queue_first(addr_of_mut!(
-                        (*rcv_mqueue).imq_messages
-                    ))
-                    .is_null()
+                    || !ipc_kmsg_queue_first(addr_of_mut!((*rcv_mqueue).imq_messages)).is_null()
                 {
                     imq_unlock(dest_mqueue);
                     /* abort_send_receive */
@@ -1177,17 +1086,14 @@ unsafe fn mach_msg_trap_combined(
                  * All variants pass `mach_msg_continue` as *self*'s continuation
                  * so that when self resumes (after the reply arrives) it picks
                  * up via mach_msg_continue. */
-                let mach_msg_cont_fn: unsafe extern "C" fn() -> ! =
-                    mach_msg_continue_thunk;
+                let mach_msg_cont_fn: unsafe extern "C" fn() -> ! = mach_msg_continue_thunk;
                 let mach_msg_cont_addr: usize = mach_msg_cont_fn as usize;
                 let mach_msg_recv_cont_fn: unsafe extern "C" fn() -> ! =
                     mach_msg_receive_continue_thunk;
-                let mach_msg_recv_continue_addr: usize =
-                    mach_msg_recv_cont_fn as usize;
+                let mach_msg_recv_continue_addr: usize = mach_msg_recv_cont_fn as usize;
                 let exception_raise_continue_fn: unsafe extern "C" fn() -> ! =
                     exception_raise_continue;
-                let exception_raise_continue_addr: usize =
-                    exception_raise_continue_fn as usize;
+                let exception_raise_continue_addr: usize = exception_raise_continue_fn as usize;
 
                 let receiver_swap_addr: usize = match (*receiver).swap_func {
                     Some(f) => f as usize,
@@ -1199,27 +1105,15 @@ unsafe fn mach_msg_trap_combined(
                 let mut handed_off_c = false;
 
                 if receiver_swap_addr == mach_msg_cont_addr
-                    && thread_handoff(
-                        self_th,
-                        Some(mach_msg_continue_thunk),
-                        receiver,
-                    ) != 0
+                    && thread_handoff(self_th, Some(mach_msg_continue_thunk), receiver) != 0
                 {
                     handed_off_a = true;
                 } else if receiver_swap_addr == exception_raise_continue_addr
-                    && thread_handoff(
-                        self_th,
-                        Some(mach_msg_continue_thunk),
-                        receiver,
-                    ) != 0
+                    && thread_handoff(self_th, Some(mach_msg_continue_thunk), receiver) != 0
                 {
                     handed_off_b = true;
                 } else if (send_size as u32) <= (*receiver).data.msize
-                    && thread_handoff(
-                        self_th,
-                        Some(mach_msg_continue_thunk),
-                        receiver,
-                    ) != 0
+                    && thread_handoff(self_th, Some(mach_msg_continue_thunk), receiver) != 0
                 {
                     handed_off_c = true;
                 }
@@ -1234,20 +1128,14 @@ unsafe fn mach_msg_trap_combined(
                     continue;
                 }
 
-                crate::kassert!(
-                    current_thread() == receiver,
-                    "current_thread() == receiver"
-                );
+                crate::kassert!(current_thread() == receiver, "current_thread() == receiver");
 
                 if handed_off_b {
                     /* Branch (b): the receiver is in the optimized exception
                      * handler.  Finish queue plumbing and tail-call
                      * exception_raise_continue_fast with dest_port still
                      * locked.  No sequence number for this case. */
-                    ipc_thread_enqueue_macro(
-                        addr_of_mut!((*rcv_mqueue).imq_threads),
-                        self_th,
-                    );
+                    ipc_thread_enqueue_macro(addr_of_mut!((*rcv_mqueue).imq_threads), self_th);
                     (*self_th).ith_state = MACH_RCV_IN_PROGRESS;
                     (*self_th).data.msize = MACH_MSG_SIZE_MAX;
                     imq_unlock(rcv_mqueue);
@@ -1267,13 +1155,11 @@ unsafe fn mach_msg_trap_combined(
                      * either continue with the optimized common epilogue
                      * (sub-case 1) or deliver the kmsg to the receiver via
                      * its swap_func (sub-case 2). */
-                    let receiver_swap_addr_now: usize =
-                        match (*receiver).swap_func {
-                            Some(f) => f as usize,
-                            None => 0,
-                        };
-                    let r_option =
-                        (*saved_recv(receiver)).option;
+                    let receiver_swap_addr_now: usize = match (*receiver).swap_func {
+                        Some(f) => f as usize,
+                        None => 0,
+                    };
+                    let r_option = (*saved_recv(receiver)).option;
 
                     if receiver_swap_addr_now == mach_msg_recv_continue_addr
                         && (r_option & MACH_RCV_NOTIFY) == 0
@@ -1286,10 +1172,7 @@ unsafe fn mach_msg_trap_combined(
                         (*dest_port).ip_msgcount += 1;
                         ip_unlock(dest_port);
 
-                        ipc_thread_enqueue_macro(
-                            addr_of_mut!((*rcv_mqueue).imq_threads),
-                            self_th,
-                        );
+                        ipc_thread_enqueue_macro(addr_of_mut!((*rcv_mqueue).imq_threads), self_th);
                         (*self_th).ith_state = MACH_RCV_IN_PROGRESS;
                         (*self_th).data.msize = MACH_MSG_SIZE_MAX;
                         imq_unlock(rcv_mqueue);
@@ -1305,9 +1188,9 @@ unsafe fn mach_msg_trap_combined(
                         imq_unlock(dest_mqueue);
 
                         (*receiver).wait_result = THREAD_AWAKENED;
-                        let cont_fn = (*receiver).swap_func.expect(
-                            "receiver->swap_func != NULL after handoff",
-                        );
+                        let cont_fn = (*receiver)
+                            .swap_func
+                            .expect("receiver->swap_func != NULL after handoff");
                         cont_fn();
                         /* NOTREACHED */
                     }
@@ -1316,18 +1199,12 @@ unsafe fn mach_msg_trap_combined(
                 /* Common epilogue: branch (a) or branch (c) sub-case 1
                  * (line 893+ in the C). */
                 ip_unlock(dest_port);
-                ipc_thread_enqueue_macro(
-                    addr_of_mut!((*rcv_mqueue).imq_threads),
-                    self_th,
-                );
+                ipc_thread_enqueue_macro(addr_of_mut!((*rcv_mqueue).imq_threads), self_th);
                 (*self_th).ith_state = MACH_RCV_IN_PROGRESS;
                 (*self_th).data.msize = MACH_MSG_SIZE_MAX;
                 imq_unlock(rcv_mqueue);
 
-                ipc_thread_rmqueue_first_macro(
-                    addr_of_mut!((*dest_mqueue).imq_threads),
-                    receiver,
-                );
+                ipc_thread_rmqueue_first_macro(addr_of_mut!((*dest_mqueue).imq_threads), receiver);
                 (*kmsg).ikm_header.msgh_seqno = (*dest_port).ip_seqno;
                 (*dest_port).ip_seqno += 1;
                 imq_unlock(dest_mqueue);
@@ -1353,8 +1230,7 @@ unsafe fn mach_msg_trap_combined(
             // --------------------------------------------------------------
             FastCopyout => {
                 crate::kassert!(
-                    (*kmsg).ikm_header.msgh_remote_port as usize as ipc_port_t
-                        == dest_port,
+                    (*kmsg).ikm_header.msgh_remote_port as usize as ipc_port_t == dest_port,
                     "kmsg->msgh_remote_port == dest_port"
                 );
 
@@ -1369,10 +1245,7 @@ unsafe fn mach_msg_trap_combined(
                     MACH_MSG_TYPE_PORT_SEND,
                     MACH_MSG_TYPE_PORT_SEND_ONCE,
                 );
-                let reply_pat = crate::mach_types::MACH_MSGH_BITS(
-                    MACH_MSG_TYPE_PORT_SEND_ONCE,
-                    0,
-                );
+                let reply_pat = crate::mach_types::MACH_MSGH_BITS(MACH_MSG_TYPE_PORT_SEND_ONCE, 0);
 
                 if bits == reply_pat {
                     /* === reply-message case (receiving an RPC reply) === */
@@ -1386,10 +1259,7 @@ unsafe fn mach_msg_trap_combined(
                         continue;
                     }
 
-                    crate::kassert!(
-                        (*dest_port).ip_sorights > 0,
-                        "dest_port->ip_sorights > 0"
-                    );
+                    crate::kassert!((*dest_port).ip_sorights > 0, "dest_port->ip_sorights > 0");
 
                     payload = (*dest_port).ip_protected_payload;
 
@@ -1406,17 +1276,11 @@ unsafe fn mach_msg_trap_combined(
 
                     if !ipc_port_flag_protected_payload(dest_port) {
                         (*kmsg).ikm_header.msgh_bits =
-                            crate::mach_types::MACH_MSGH_BITS(
-                                0,
-                                MACH_MSG_TYPE_PORT_SEND_ONCE,
-                            );
+                            crate::mach_types::MACH_MSGH_BITS(0, MACH_MSG_TYPE_PORT_SEND_ONCE);
                         (*kmsg).ikm_header.msgh_local_port = dest_name;
                     } else {
                         (*kmsg).ikm_header.msgh_bits =
-                            crate::mach_types::MACH_MSGH_BITS(
-                                0,
-                                MACH_MSG_TYPE_PROTECTED_PAYLOAD,
-                            );
+                            crate::mach_types::MACH_MSGH_BITS(0, MACH_MSG_TYPE_PROTECTED_PAYLOAD);
                         (*kmsg).ikm_header.msgh_local_port = payload;
                     }
                     (*kmsg).ikm_header.msgh_remote_port = MACH_PORT_NULL;
@@ -1465,10 +1329,7 @@ unsafe fn mach_msg_trap_combined(
                         break 'request_copyout;
                     }
 
-                    crate::kassert!(
-                        (*reply_port).ip_sorights > 0,
-                        "reply_port->ip_sorights > 0"
-                    );
+                    crate::kassert!((*reply_port).ip_sorights > 0, "reply_port->ip_sorights > 0");
                     ip_unlock(reply_port);
 
                     let mut entry: ipc_entry_t = core::ptr::null_mut();
@@ -1495,10 +1356,7 @@ unsafe fn mach_msg_trap_combined(
                     is_write_unlock(space);
 
                     /* optimised ipc_object_copyout_dest */
-                    crate::kassert!(
-                        (*dest_port).ip_srights > 0,
-                        "dest_port->ip_srights > 0"
-                    );
+                    crate::kassert!((*dest_port).ip_srights > 0, "dest_port->ip_srights > 0");
                     ip_release(dest_port);
 
                     if (*dest_port).data.receiver == space {
@@ -1509,9 +1367,7 @@ unsafe fn mach_msg_trap_combined(
                     payload = (*dest_port).ip_protected_payload;
 
                     (*dest_port).ip_srights -= 1;
-                    if (*dest_port).ip_srights == 0
-                        && !(*dest_port).ip_nsrequest.is_null()
-                    {
+                    if (*dest_port).ip_srights == 0 && !(*dest_port).ip_nsrequest.is_null() {
                         let nsrequest = (*dest_port).ip_nsrequest;
                         let mscount = (*dest_port).ip_mscount;
                         (*dest_port).ip_nsrequest = core::ptr::null_mut();
@@ -1528,18 +1384,16 @@ unsafe fn mach_msg_trap_combined(
                 }
 
                 if !ipc_port_flag_protected_payload(dest_port) {
-                    (*kmsg).ikm_header.msgh_bits =
-                        crate::mach_types::MACH_MSGH_BITS(
-                            MACH_MSG_TYPE_PORT_SEND_ONCE,
-                            MACH_MSG_TYPE_PORT_SEND,
-                        );
+                    (*kmsg).ikm_header.msgh_bits = crate::mach_types::MACH_MSGH_BITS(
+                        MACH_MSG_TYPE_PORT_SEND_ONCE,
+                        MACH_MSG_TYPE_PORT_SEND,
+                    );
                     (*kmsg).ikm_header.msgh_local_port = dest_name;
                 } else {
-                    (*kmsg).ikm_header.msgh_bits =
-                        crate::mach_types::MACH_MSGH_BITS(
-                            MACH_MSG_TYPE_PORT_SEND_ONCE,
-                            MACH_MSG_TYPE_PROTECTED_PAYLOAD,
-                        );
+                    (*kmsg).ikm_header.msgh_bits = crate::mach_types::MACH_MSGH_BITS(
+                        MACH_MSG_TYPE_PORT_SEND_ONCE,
+                        MACH_MSG_TYPE_PROTECTED_PAYLOAD,
+                    );
                     (*kmsg).ikm_header.msgh_local_port = payload;
                 }
                 (*kmsg).ikm_header.msgh_remote_port = reply_name;
@@ -1554,8 +1408,7 @@ unsafe fn mach_msg_trap_combined(
 
                 if (*kmsg).ikm_size != IKM_SAVED_KMSG_SIZE
                     || copyoutmsg(
-                        addr_of_mut!((*kmsg).ikm_header)
-                            as *const core::ffi::c_void,
+                        addr_of_mut!((*kmsg).ikm_header) as *const core::ffi::c_void,
                         msg as *mut core::ffi::c_void,
                         reply_size as usize,
                     ) != 0
@@ -1586,8 +1439,8 @@ unsafe fn mach_msg_trap_combined(
                     continue;
                 }
 
-                let reply_port: ipc_port_t = (*kmsg).ikm_header.msgh_remote_port
-                    as usize as ipc_port_t;
+                let reply_port: ipc_port_t =
+                    (*kmsg).ikm_header.msgh_remote_port as usize as ipc_port_t;
                 ip_lock(reply_port);
 
                 if !ip_active(reply_port)
@@ -1596,36 +1449,21 @@ unsafe fn mach_msg_trap_combined(
                     || (*reply_port).ip_pset != IPS_NULL
                 {
                     ip_unlock(reply_port);
-                    let _ = ipc_mqueue_send(
-                        kmsg,
-                        MACH_SEND_ALWAYS,
-                        MACH_MSG_TIMEOUT_NONE,
-                    );
+                    let _ = ipc_mqueue_send(kmsg, MACH_SEND_ALWAYS, MACH_MSG_TIMEOUT_NONE);
                     state = SlowGetRcvPort;
                     continue;
                 }
 
-                rcv_mqueue =
-                    addr_of_mut!((*reply_port).ip_target.ipt_messages);
+                rcv_mqueue = addr_of_mut!((*reply_port).ip_target.ipt_messages);
                 imq_lock(rcv_mqueue);
                 /* keep port locked, don't change ref count yet */
 
-                if !ipc_thread_queue_first(addr_of_mut!(
-                    (*rcv_mqueue).imq_threads
-                ))
-                .is_null()
-                    || !ipc_kmsg_queue_first(addr_of_mut!(
-                        (*rcv_mqueue).imq_messages
-                    ))
-                    .is_null()
+                if !ipc_thread_queue_first(addr_of_mut!((*rcv_mqueue).imq_threads)).is_null()
+                    || !ipc_kmsg_queue_first(addr_of_mut!((*rcv_mqueue).imq_messages)).is_null()
                 {
                     imq_unlock(rcv_mqueue);
                     ip_unlock(reply_port);
-                    let _ = ipc_mqueue_send(
-                        kmsg,
-                        MACH_SEND_ALWAYS,
-                        MACH_MSG_TIMEOUT_NONE,
-                    );
+                    let _ = ipc_mqueue_send(kmsg, MACH_SEND_ALWAYS, MACH_MSG_TIMEOUT_NONE);
                     state = SlowGetRcvPort;
                     continue;
                 }
@@ -1655,8 +1493,7 @@ unsafe fn mach_msg_trap_combined(
             //  slow_copyin
             // --------------------------------------------------------------
             SlowCopyin => {
-                let mr =
-                    ipc_kmsg_copyin(kmsg, space, current_map(), MACH_PORT_NAME_NULL);
+                let mr = ipc_kmsg_copyin(kmsg, space, current_map(), MACH_PORT_NAME_NULL);
                 if mr != MACH_MSG_SUCCESS {
                     ikm_free(kmsg);
                     thread_syscall_return(mr);
@@ -1664,22 +1501,12 @@ unsafe fn mach_msg_trap_combined(
 
                 /* Try to detect kernel-dest and shortcut to KernelSend
                  * (mirrors the C check at slow_copyin: line 1252). */
-                if (*kmsg).ikm_header.msgh_bits
-                    & crate::mach_types::MACH_MSGH_BITS_CIRCULAR
-                    == 0
-                {
-                    let dp: ipc_port_t =
-                        (*kmsg).ikm_header.msgh_remote_port as usize
-                            as ipc_port_t;
+                if (*kmsg).ikm_header.msgh_bits & crate::mach_types::MACH_MSGH_BITS_CIRCULAR == 0 {
+                    let dp: ipc_port_t = (*kmsg).ikm_header.msgh_remote_port as usize as ipc_port_t;
                     if !dp.is_null() && (dp as usize) != !0usize {
                         ip_lock(dp);
-                        if (*dp).data.receiver
-                            == crate::ipc_space::ipc_space_kernel
-                        {
-                            crate::kassert!(
-                                ip_active(dp),
-                                "ip_active(dest_port)"
-                            );
+                        if (*dp).data.receiver == crate::ipc_space::ipc_space_kernel {
+                            crate::kassert!(ip_active(dp), "ip_active(dest_port)");
                             ip_unlock(dp);
                             state = KernelSend;
                             continue;
@@ -1694,20 +1521,14 @@ unsafe fn mach_msg_trap_combined(
             //  slow_send
             // --------------------------------------------------------------
             SlowSend => {
-                let mr = ipc_mqueue_send(
-                    kmsg,
-                    MACH_MSG_OPTION_NONE,
-                    MACH_MSG_TIMEOUT_NONE,
-                );
+                let mr = ipc_mqueue_send(kmsg, MACH_MSG_OPTION_NONE, MACH_MSG_TIMEOUT_NONE);
                 if mr != MACH_MSG_SUCCESS {
-                    let mr2 =
-                        ipc_kmsg_copyout_pseudo(kmsg, space, current_map());
+                    let mr2 = ipc_kmsg_copyout_pseudo(kmsg, space, current_map());
                     crate::kassert!(
                         (*kmsg).ikm_marequest == IMAR_NULL,
                         "kmsg->ikm_marequest == IMAR_NULL"
                     );
-                    let _ =
-                        ipc_kmsg_put(msg, kmsg, (*kmsg).ikm_header.msgh_size);
+                    let _ = ipc_kmsg_put(msg, kmsg, (*kmsg).ikm_header.msgh_size);
                     thread_syscall_return(mr | mr2);
                 }
                 state = SlowGetRcvPort;
@@ -1757,8 +1578,7 @@ unsafe fn mach_msg_trap_combined(
                 }
                 kmsg = tk;
                 (*kmsg).ikm_header.msgh_seqno = tseq;
-                dest_port =
-                    (*kmsg).ikm_header.msgh_remote_port as usize as ipc_port_t;
+                dest_port = (*kmsg).ikm_header.msgh_remote_port as usize as ipc_port_t;
                 state = FastCopyout;
             }
 
@@ -1772,31 +1592,20 @@ unsafe fn mach_msg_trap_combined(
                     let _ = ipc_kmsg_put(
                         msg,
                         kmsg,
-                        core::mem::size_of::<mach_msg_user_header_t>()
-                            as mach_msg_size_t,
+                        core::mem::size_of::<mach_msg_user_header_t>() as mach_msg_size_t,
                     );
                     thread_syscall_return(MACH_RCV_TOO_LARGE);
                 }
-                let mr = ipc_kmsg_copyout(
-                    kmsg,
-                    space,
-                    current_map(),
-                    MACH_PORT_NAME_NULL,
-                );
+                let mr = ipc_kmsg_copyout(kmsg, space, current_map(), MACH_PORT_NAME_NULL);
                 if mr != MACH_MSG_SUCCESS {
                     if (mr & !MACH_MSG_MASK) == MACH_RCV_BODY_ERROR {
-                        let _ = ipc_kmsg_put(
-                            msg,
-                            kmsg,
-                            (*kmsg).ikm_header.msgh_size,
-                        );
+                        let _ = ipc_kmsg_put(msg, kmsg, (*kmsg).ikm_header.msgh_size);
                     } else {
                         ipc_kmsg_copyout_dest(kmsg, space);
                         let _ = ipc_kmsg_put(
                             msg,
                             kmsg,
-                            core::mem::size_of::<mach_msg_user_header_t>()
-                                as mach_msg_size_t,
+                            core::mem::size_of::<mach_msg_user_header_t>() as mach_msg_size_t,
                         );
                     }
                     thread_syscall_return(mr);

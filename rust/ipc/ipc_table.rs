@@ -6,8 +6,7 @@ use core::mem::size_of;
 
 use crate::extern_c::{kalloc, kfree, Assert};
 use crate::mach_types::{
-    ipc_port_request, ipc_table_size, ipc_table_size_t, vm_offset_t, vm_size_t,
-    ITS_NULL, PAGE_SIZE,
+    ipc_port_request, ipc_table_size, ipc_table_size_t, vm_offset_t, vm_size_t, ITS_NULL, PAGE_SIZE,
 };
 
 /// Global: `ipc_table_size_t ipc_table_dnrequests;`
@@ -67,9 +66,9 @@ pub unsafe extern "C" fn ipc_table_fill(
 /// terminate with a zero-sized sentinel.
 #[no_mangle]
 pub unsafe extern "C" fn ipc_table_init() {
-    ipc_table_dnrequests = kalloc(
-        size_of::<ipc_table_size>() as vm_size_t * ipc_table_dnrequests_size,
-    ) as ipc_table_size_t;
+    ipc_table_dnrequests =
+        kalloc(size_of::<ipc_table_size>() as vm_size_t * ipc_table_dnrequests_size)
+            as ipc_table_size_t;
     if ipc_table_dnrequests == ITS_NULL {
         Assert(
             b"rust/ipc/ipc_table.rs\0".as_ptr(),
@@ -87,8 +86,7 @@ pub unsafe extern "C" fn ipc_table_init() {
     );
 
     /* the last element should have zero size */
-    (*ipc_table_dnrequests.add((ipc_table_dnrequests_size - 1) as usize))
-        .its_size = 0;
+    (*ipc_table_dnrequests.add((ipc_table_dnrequests_size - 1) as usize)).its_size = 0;
 }
 
 /// `ipc_table_alloc` — allocate a table.  May block.

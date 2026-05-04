@@ -12,12 +12,11 @@ use crate::ipc_marequest::{hash_info_bucket_t, ipc_marequest_info};
 use crate::ipc_object::ipc_object_translate;
 use crate::ipc_right::ipc_right_lookup_write;
 use crate::mach_types::{
-    host_t, ipc_object, ipc_port_request_t, ipc_port_t, ipc_space_t,
-    kern_return_t, mach_port_name_t, mach_port_rights_t, vm_map_copy_t,
-    vm_offset_t, vm_size_t, round_page, HOST_NULL, IS_NULL,
-    KERN_INVALID_HOST, KERN_INVALID_RIGHT, KERN_INVALID_TASK,
-    KERN_RESOURCE_SHORTAGE, KERN_SUCCESS, MACH_PORT_NAME_NULL,
-    MACH_PORT_RIGHT_RECEIVE, MACH_PORT_TYPE_SEND_RECEIVE, IO_BITS_KOTYPE,
+    host_t, ipc_object, ipc_port_request_t, ipc_port_t, ipc_space_t, kern_return_t,
+    mach_port_name_t, mach_port_rights_t, round_page, vm_map_copy_t, vm_offset_t, vm_size_t,
+    HOST_NULL, IO_BITS_KOTYPE, IS_NULL, KERN_INVALID_HOST, KERN_INVALID_RIGHT, KERN_INVALID_TASK,
+    KERN_RESOURCE_SHORTAGE, KERN_SUCCESS, MACH_PORT_NAME_NULL, MACH_PORT_RIGHT_RECEIVE,
+    MACH_PORT_TYPE_SEND_RECEIVE,
 };
 
 use crate::locks::{ip_active, ip_lock, ip_unlock, is_read_unlock};
@@ -121,9 +120,7 @@ pub unsafe extern "C" fn host_ipc_marequest_info(
         kmem_free(ipc_kernel_map, addr, size);
         *countp = 0;
     } else {
-        let used = round_page(
-            actual as vm_size_t * size_of::<hash_info_bucket_t>() as vm_size_t,
-        );
+        let used = round_page(actual as vm_size_t * size_of::<hash_info_bucket_t>() as vm_size_t);
 
         if used != size {
             kmem_free(ipc_kernel_map, addr + used, size - used);

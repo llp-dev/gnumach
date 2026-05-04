@@ -16,8 +16,7 @@ use core::ptr::addr_of_mut;
 
 use crate::extern_c::{kmem_cache_free, lock_done, lock_read, lock_write};
 use crate::mach_types::{
-    ipc_mqueue, ipc_object, ipc_port, ipc_pset_t, ipc_space_t, vm_offset_t,
-    IO_BITS_OTYPE,
+    ipc_mqueue, ipc_object, ipc_port, ipc_pset_t, ipc_space_t, vm_offset_t, IO_BITS_OTYPE,
 };
 
 // ---------------------------------------------------------------------------
@@ -31,7 +30,9 @@ pub(crate) unsafe fn io_unlock(_io: *mut ipc_object) {}
 #[inline]
 pub(crate) unsafe fn io_lock_init(_io: *mut ipc_object) {}
 #[inline]
-pub(crate) unsafe fn io_lock_try(_io: *mut ipc_object) -> bool { true }
+pub(crate) unsafe fn io_lock_try(_io: *mut ipc_object) -> bool {
+    true
+}
 
 #[inline]
 pub(crate) unsafe fn io_active(io: *mut ipc_object) -> bool {
@@ -76,7 +77,9 @@ pub(crate) unsafe fn ip_lock_init(p: *mut ipc_port) {
     io_lock_init(addr_of_mut!((*p).ip_target.ipt_object));
 }
 #[inline]
-pub(crate) unsafe fn ip_lock_try(_p: *mut ipc_port) -> bool { true }
+pub(crate) unsafe fn ip_lock_try(_p: *mut ipc_port) -> bool {
+    true
+}
 
 #[inline]
 pub(crate) unsafe fn ip_active(p: *mut ipc_port) -> bool {
@@ -123,7 +126,9 @@ pub(crate) unsafe fn imq_unlock(_mq: *mut ipc_mqueue) {}
 #[inline]
 pub(crate) unsafe fn imq_lock_init(_mq: *mut ipc_mqueue) {}
 #[inline]
-pub(crate) unsafe fn imq_lock_try(_mq: *mut ipc_mqueue) -> bool { true }
+pub(crate) unsafe fn imq_lock_try(_mq: *mut ipc_mqueue) -> bool {
+    true
+}
 
 // ---------------------------------------------------------------------------
 //  Space read-write locks — REAL even at NCPUS == 1.

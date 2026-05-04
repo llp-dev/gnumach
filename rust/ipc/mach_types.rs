@@ -69,17 +69,41 @@ pub type timer_func_t = Option<unsafe extern "C" fn(*mut core::ffi::c_void)>;
 //  Forward-declared opaque structs
 // ---------------------------------------------------------------------------
 
-#[repr(C)] pub struct task         { _opaque: [u8; 0] }
-#[repr(C)] pub struct run_queue    { _opaque: [u8; 0] }
-#[repr(C)] pub struct pcb          { _opaque: [u8; 0] }
-#[repr(C)] pub struct ipc_kmsg     { _opaque: [u8; 0] }
+#[repr(C)]
+pub struct task {
+    _opaque: [u8; 0],
+}
+#[repr(C)]
+pub struct run_queue {
+    _opaque: [u8; 0],
+}
+#[repr(C)]
+pub struct pcb {
+    _opaque: [u8; 0],
+}
+#[repr(C)]
+pub struct ipc_kmsg {
+    _opaque: [u8; 0],
+}
 /// Sized opaque mirror for `struct kmem_cache`; internal layout is a black
 /// box from Rust.  `_bytes` is `pub` only so callers can construct a
 /// zero-initialized static.
-#[repr(C, align(4))] pub struct kmem_cache { pub _bytes: [u8; SIZE_OF_KMEM_CACHE] }
-#[repr(C)] pub struct vm_map       { _opaque: [u8; 0] }
-#[repr(C)] pub struct processor    { _opaque: [u8; 0] }
-#[repr(C)] pub struct processor_set{ _opaque: [u8; 0] }
+#[repr(C, align(4))]
+pub struct kmem_cache {
+    pub _bytes: [u8; SIZE_OF_KMEM_CACHE],
+}
+#[repr(C)]
+pub struct vm_map {
+    _opaque: [u8; 0],
+}
+#[repr(C)]
+pub struct processor {
+    _opaque: [u8; 0],
+}
+#[repr(C)]
+pub struct processor_set {
+    _opaque: [u8; 0],
+}
 /// `mach/message.h`: `mach_msg_user_header_t` — user-mode view of the
 /// message header.  Same first three fields as `mach_msg_header_t`
 /// (the type modeled here is the kernel mirror; user-side `mach_port_t`
@@ -100,15 +124,15 @@ const _: () = assert!(size_of::<mach_msg_user_header>() == 24);
 // are full mirrors defined later in this file (they need other types
 // declared below).
 
-pub type task_t           = *mut task;
-pub type run_queue_t      = *mut run_queue;
-pub type pcb_t            = *mut pcb;
-pub type ipc_port_t       = *mut ipc_port;
-pub type ipc_space_t      = *mut ipc_space;
-pub type ipc_pset_t       = *mut ipc_pset;
-pub type vm_map_t         = *mut vm_map;
-pub type processor_t      = *mut processor;
-pub type processor_set_t  = *mut processor_set;
+pub type task_t = *mut task;
+pub type run_queue_t = *mut run_queue;
+pub type pcb_t = *mut pcb;
+pub type ipc_port_t = *mut ipc_port;
+pub type ipc_space_t = *mut ipc_space;
+pub type ipc_pset_t = *mut ipc_pset;
+pub type vm_map_t = *mut vm_map;
+pub type processor_t = *mut processor;
+pub type processor_set_t = *mut processor_set;
 pub type mach_msg_user_header_t = mach_msg_user_header;
 
 /// `ipc/ipc_port.h`: `typedef unsigned int ipc_port_timestamp_t;`
@@ -136,25 +160,25 @@ pub type mach_port_urefs_t = natural_t;
 //  `struct ipc_space` stay opaque on the Rust side.
 // ---------------------------------------------------------------------------
 
-pub const SIZE_OF_VM_MAP:      usize = 84;
-pub const SIZE_OF_IPC_SPACE:   usize = 44;
-pub const SIZE_OF_IPC_ENTRY:   usize = 16;
-pub const SIZE_OF_IPC_PORT:    usize = 80;
-pub const SIZE_OF_IPC_PSET:    usize = 20;
-pub const SIZE_OF_KMEM_CACHE:  usize = 128;
+pub const SIZE_OF_VM_MAP: usize = 84;
+pub const SIZE_OF_IPC_SPACE: usize = 44;
+pub const SIZE_OF_IPC_ENTRY: usize = 16;
+pub const SIZE_OF_IPC_PORT: usize = 80;
+pub const SIZE_OF_IPC_PSET: usize = 20;
+pub const SIZE_OF_KMEM_CACHE: usize = 128;
 
 /// Offset of `messages_sent`/`messages_received` inside `struct task`.
 /// Pinned by `_Static_assert` in `ipc/ipc_layout_asserts.c`.
-pub const OFFSETOF_TASK_MESSAGES_SENT:     usize = 160;
+pub const OFFSETOF_TASK_MESSAGES_SENT: usize = 160;
 pub const OFFSETOF_TASK_MESSAGES_RECEIVED: usize = 164;
 /// Offset of `active_thread` inside `struct percpu`.
 pub const OFFSETOF_PERCPU_ACTIVE_THREAD: usize = 600;
 
 /// Offsets of `map`, `itk_space`, and `name` inside `struct task`.
-pub const OFFSETOF_TASK_MAP:       usize = 8;
+pub const OFFSETOF_TASK_MAP: usize = 8;
 pub const OFFSETOF_TASK_ITK_SPACE: usize = 128;
-pub const OFFSETOF_TASK_NAME:      usize = 168;
-pub const TASK_NAME_SIZE:          usize = 32;
+pub const OFFSETOF_TASK_NAME: usize = 168;
+pub const TASK_NAME_SIZE: usize = 32;
 
 // ---------------------------------------------------------------------------
 //  Lock primitives
@@ -179,7 +203,10 @@ pub struct queue_chain_t {
     pub prev: *mut queue_entry,
 }
 
-#[repr(C)] pub struct queue_entry  { _opaque: [u8; 0] }
+#[repr(C)]
+pub struct queue_entry {
+    _opaque: [u8; 0],
+}
 
 const _: () = assert!(size_of::<queue_chain_t>() == 8);
 
@@ -363,25 +390,25 @@ pub const fn MACH_MSGH_BITS(remote: u32, local: u32) -> u32 {
     remote | (local << 8)
 }
 
-pub const MACH_MSG_TYPE_INTEGER_32:     u32 = 2;
-pub const MACH_MSG_TYPE_PORT_NAME:      u32 = 15;
-pub const MACH_MSG_TYPE_MOVE_RECEIVE:   u32 = 16;
+pub const MACH_MSG_TYPE_INTEGER_32: u32 = 2;
+pub const MACH_MSG_TYPE_PORT_NAME: u32 = 15;
+pub const MACH_MSG_TYPE_MOVE_RECEIVE: u32 = 16;
 pub const MACH_MSG_TYPE_MOVE_SEND_ONCE: u32 = 18;
-pub const MACH_MSG_TYPE_PORT_RECEIVE:   u32 = MACH_MSG_TYPE_MOVE_RECEIVE;
+pub const MACH_MSG_TYPE_PORT_RECEIVE: u32 = MACH_MSG_TYPE_MOVE_RECEIVE;
 pub const MACH_MSG_TYPE_PORT_SEND_ONCE: u32 = MACH_MSG_TYPE_MOVE_SEND_ONCE;
 
 pub const MACH_PORT_NULL: u32 = 0;
 pub const MACH_MSG_TIMEOUT_NONE: mach_msg_timeout_t = 0;
-pub const MACH_MSG_OPTION_NONE:  mach_msg_option_t = 0;
-pub const MACH_MSG_SIZE_MAX:     mach_msg_size_t = !0;
+pub const MACH_MSG_OPTION_NONE: mach_msg_option_t = 0;
+pub const MACH_MSG_SIZE_MAX: mach_msg_size_t = !0;
 
 /// `mach/message.h`: option-bit constants used by mach_msg.
-pub const MACH_SEND_MSG:     mach_msg_option_t = 0x0000_0001;
-pub const MACH_RCV_MSG:      mach_msg_option_t = 0x0000_0002;
-pub const MACH_SEND_CANCEL:  mach_msg_option_t = 0x0000_0008;
-pub const MACH_RCV_NOTIFY:   mach_msg_option_t = 0x0000_0200;
-pub const MACH_RCV_LARGE:    mach_msg_option_t = 0x0000_0800;
-pub const MACH_SEND_NOTIFY:  mach_msg_option_t = 0x0000_0020;
+pub const MACH_SEND_MSG: mach_msg_option_t = 0x0000_0001;
+pub const MACH_RCV_MSG: mach_msg_option_t = 0x0000_0002;
+pub const MACH_SEND_CANCEL: mach_msg_option_t = 0x0000_0008;
+pub const MACH_RCV_NOTIFY: mach_msg_option_t = 0x0000_0200;
+pub const MACH_RCV_LARGE: mach_msg_option_t = 0x0000_0800;
+pub const MACH_SEND_NOTIFY: mach_msg_option_t = 0x0000_0020;
 
 pub const MACH_SEND_WILL_NOTIFY: mach_msg_return_t = 0x1000_0005;
 
@@ -389,13 +416,13 @@ pub const MACH_MSG_MASK: mach_msg_return_t = 0x0000_3c00;
 pub const MACH_SEND_ALWAYS: mach_msg_option_t = 0x00010000;
 
 /// MACH_NOTIFY_FIRST + offsets (notify.h, octal).
-pub const MACH_NOTIFY_FIRST:          mach_msg_id_t = 0o100;
-pub const MACH_NOTIFY_PORT_DELETED:   mach_msg_id_t = MACH_NOTIFY_FIRST + 0o001;
-pub const MACH_NOTIFY_MSG_ACCEPTED:   mach_msg_id_t = MACH_NOTIFY_FIRST + 0o002;
+pub const MACH_NOTIFY_FIRST: mach_msg_id_t = 0o100;
+pub const MACH_NOTIFY_PORT_DELETED: mach_msg_id_t = MACH_NOTIFY_FIRST + 0o001;
+pub const MACH_NOTIFY_MSG_ACCEPTED: mach_msg_id_t = MACH_NOTIFY_FIRST + 0o002;
 pub const MACH_NOTIFY_PORT_DESTROYED: mach_msg_id_t = MACH_NOTIFY_FIRST + 0o005;
-pub const MACH_NOTIFY_NO_SENDERS:     mach_msg_id_t = MACH_NOTIFY_FIRST + 0o006;
-pub const MACH_NOTIFY_SEND_ONCE:      mach_msg_id_t = MACH_NOTIFY_FIRST + 0o007;
-pub const MACH_NOTIFY_DEAD_NAME:      mach_msg_id_t = MACH_NOTIFY_FIRST + 0o010;
+pub const MACH_NOTIFY_NO_SENDERS: mach_msg_id_t = MACH_NOTIFY_FIRST + 0o006;
+pub const MACH_NOTIFY_SEND_ONCE: mach_msg_id_t = MACH_NOTIFY_FIRST + 0o007;
+pub const MACH_NOTIFY_DEAD_NAME: mach_msg_id_t = MACH_NOTIFY_FIRST + 0o010;
 
 /// `mach/message.h`: `mach_msg_header_t`.
 ///
@@ -460,25 +487,39 @@ impl mach_msg_type_t {
 
     /// `msgt_name : 8` (bits 0..8)
     #[inline]
-    pub const fn msgt_name(&self) -> u32 { self.bits & 0xff }
+    pub const fn msgt_name(&self) -> u32 {
+        self.bits & 0xff
+    }
     /// `msgt_size : 8` (bits 8..16)
     #[inline]
-    pub const fn msgt_size(&self) -> u32 { (self.bits >> 8) & 0xff }
+    pub const fn msgt_size(&self) -> u32 {
+        (self.bits >> 8) & 0xff
+    }
     /// `msgt_number : 12` (bits 16..28)
     #[inline]
-    pub const fn msgt_number(&self) -> u32 { (self.bits >> 16) & 0x0fff }
+    pub const fn msgt_number(&self) -> u32 {
+        (self.bits >> 16) & 0x0fff
+    }
     /// `msgt_inline : 1` (bit 28)
     #[inline]
-    pub const fn msgt_inline(&self) -> u32 { (self.bits >> 28) & 1 }
+    pub const fn msgt_inline(&self) -> u32 {
+        (self.bits >> 28) & 1
+    }
     /// `msgt_longform : 1` (bit 29)
     #[inline]
-    pub const fn msgt_longform(&self) -> u32 { (self.bits >> 29) & 1 }
+    pub const fn msgt_longform(&self) -> u32 {
+        (self.bits >> 29) & 1
+    }
     /// `msgt_deallocate : 1` (bit 30)
     #[inline]
-    pub const fn msgt_deallocate(&self) -> u32 { (self.bits >> 30) & 1 }
+    pub const fn msgt_deallocate(&self) -> u32 {
+        (self.bits >> 30) & 1
+    }
     /// `msgt_unused : 1` (bit 31)
     #[inline]
-    pub const fn msgt_unused(&self) -> u32 { (self.bits >> 31) & 1 }
+    pub const fn msgt_unused(&self) -> u32 {
+        (self.bits >> 31) & 1
+    }
 
     /// Setters; preserve other fields.
     #[inline]
@@ -499,8 +540,8 @@ impl mach_msg_type_t {
 #[repr(C, align(4))]
 pub struct mach_msg_type_long_t {
     pub msgtl_header: mach_msg_type_t,
-    pub msgtl_name:   u16,
-    pub msgtl_size:   u16,
+    pub msgtl_name: u16,
+    pub msgtl_size: u16,
     pub msgtl_number: natural_t,
 }
 const _: () = assert!(size_of::<mach_msg_type_long_t>() == 12);
@@ -512,32 +553,32 @@ const _: () = assert!(size_of::<mach_msg_type_long_t>() == 12);
 #[repr(C)]
 pub struct mach_port_deleted_notification_t {
     pub not_header: mach_msg_header_t,
-    pub not_type:   mach_msg_type_t,
-    pub not_port:   mach_port_name_t,
+    pub not_type: mach_msg_type_t,
+    pub not_port: mach_port_name_t,
 }
 const _: () = assert!(size_of::<mach_port_deleted_notification_t>() == 32);
 
 #[repr(C)]
 pub struct mach_msg_accepted_notification_t {
     pub not_header: mach_msg_header_t,
-    pub not_type:   mach_msg_type_t,
-    pub not_port:   mach_port_name_t,
+    pub not_type: mach_msg_type_t,
+    pub not_port: mach_port_name_t,
 }
 const _: () = assert!(size_of::<mach_msg_accepted_notification_t>() == 32);
 
 #[repr(C)]
 pub struct mach_port_destroyed_notification_t {
     pub not_header: mach_msg_header_t,
-    pub not_type:   mach_msg_type_t,
-    pub not_port:   u32,
+    pub not_type: mach_msg_type_t,
+    pub not_port: u32,
 }
 const _: () = assert!(size_of::<mach_port_destroyed_notification_t>() == 32);
 
 #[repr(C)]
 pub struct mach_no_senders_notification_t {
     pub not_header: mach_msg_header_t,
-    pub not_type:   mach_msg_type_t,
-    pub not_count:  u32,
+    pub not_type: mach_msg_type_t,
+    pub not_count: u32,
 }
 const _: () = assert!(size_of::<mach_no_senders_notification_t>() == 32);
 
@@ -550,8 +591,8 @@ const _: () = assert!(size_of::<mach_send_once_notification_t>() == 24);
 #[repr(C)]
 pub struct mach_dead_name_notification_t {
     pub not_header: mach_msg_header_t,
-    pub not_type:   mach_msg_type_t,
-    pub not_port:   mach_port_name_t,
+    pub not_type: mach_msg_type_t,
+    pub not_port: mach_port_name_t,
 }
 const _: () = assert!(size_of::<mach_dead_name_notification_t>() == 32);
 
@@ -584,7 +625,7 @@ pub const IKM_OVERHEAD: vm_size_t =
     (size_of::<ipc_kmsg_full>() - size_of::<mach_msg_header_t>()) as vm_size_t;
 
 /// `PORT_T_SIZE_IN_BITS = sizeof(mach_port_t) * 8`.
-pub const PORT_T_SIZE_IN_BITS:      u32 = 32;
+pub const PORT_T_SIZE_IN_BITS: u32 = 32;
 /// `PORT_NAME_T_SIZE_IN_BITS = sizeof(mach_port_name_t) * 8`.
 pub const PORT_NAME_T_SIZE_IN_BITS: u32 = 32;
 
@@ -635,7 +676,7 @@ const _: () = assert!(size_of::<thread_saved_receive>() == 28);
 pub union thread_saved {
     pub receive: core::mem::ManuallyDrop<thread_saved_receive>,
     /* The exception variant (16 bytes) and `other` (4 bytes) fit inside the
-       28-byte receive variant — no need to model them explicitly here. */
+    28-byte receive variant — no need to model them explicitly here. */
 }
 
 const _: () = assert!(size_of::<thread_saved>() == 28);
@@ -744,7 +785,9 @@ const _: () = assert!(size_of::<thread>() == 352);
 /// `kern/lock.h`: `struct lock`.  Internal layout is a black box from Rust;
 /// callers go through `lock_write` / `lock_done` C functions.
 #[repr(C, align(4))]
-pub struct lock_data_t { _bytes: [u8; 8] }
+pub struct lock_data_t {
+    _bytes: [u8; 8],
+}
 const _: () = assert!(size_of::<lock_data_t>() == 8);
 
 pub type lock_t = *mut lock_data_t;
@@ -754,7 +797,9 @@ pub type lock_t = *mut lock_data_t;
 // ---------------------------------------------------------------------------
 
 #[repr(C, align(4))]
-pub struct rdxtree { pub _bytes: [u8; 8] }
+pub struct rdxtree {
+    pub _bytes: [u8; 8],
+}
 
 /// `kern/rdxtree_i.h`: `struct rdxtree_iter { void *node; rdxtree_key_t key; };`
 #[repr(C)]
@@ -795,8 +840,8 @@ pub const IE_NULL: ipc_entry_t = core::ptr::null_mut();
 
 // IE_BITS_*
 pub const IE_BITS_UREFS_MASK: ipc_entry_bits_t = 0x0000_ffff;
-pub const IE_BITS_TYPE_MASK:  ipc_entry_bits_t = 0x001f_0000;
-pub const IE_BITS_MAREQUEST:  ipc_entry_bits_t = 0x0020_0000;
+pub const IE_BITS_TYPE_MASK: ipc_entry_bits_t = 0x001f_0000;
+pub const IE_BITS_MAREQUEST: ipc_entry_bits_t = 0x0020_0000;
 
 // ---------------------------------------------------------------------------
 //  ipc/ipc_space.h — `struct ipc_space`
@@ -867,39 +912,37 @@ pub const fn MACH_PORT_TYPE(right: u32) -> u32 {
     1u32 << (right + 16)
 }
 
-pub const MACH_PORT_RIGHT_SEND:      u32 = 0;
-pub const MACH_PORT_RIGHT_RECEIVE:   u32 = 1;
+pub const MACH_PORT_RIGHT_SEND: u32 = 0;
+pub const MACH_PORT_RIGHT_RECEIVE: u32 = 1;
 pub const MACH_PORT_RIGHT_SEND_ONCE: u32 = 2;
 
 pub const MACH_PORT_TYPE_SEND: u32 = MACH_PORT_TYPE(MACH_PORT_RIGHT_SEND);
 pub const MACH_PORT_TYPE_RECEIVE: u32 = MACH_PORT_TYPE(MACH_PORT_RIGHT_RECEIVE);
 pub const MACH_PORT_TYPE_SEND_ONCE: u32 = MACH_PORT_TYPE(MACH_PORT_RIGHT_SEND_ONCE);
-pub const MACH_PORT_TYPE_SEND_RECEIVE: u32 =
-    MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE;
+pub const MACH_PORT_TYPE_SEND_RECEIVE: u32 = MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE;
 
 pub const MACH_PORT_NAME_NULL: mach_port_name_t = 0;
 pub const MACH_PORT_NAME_DEAD: mach_port_name_t = !0;
 
 /// `mach/kern_return.h`: error codes used by ipc_entry.
-pub const KERN_NO_SPACE:           kern_return_t = 3;
-pub const KERN_INVALID_ARGUMENT:   kern_return_t = 4;
-pub const KERN_FAILURE:            kern_return_t = 5;
-pub const KERN_RESOURCE_SHORTAGE:  kern_return_t = 6;
-pub const KERN_NAME_EXISTS:        kern_return_t = 13;
-pub const KERN_INVALID_NAME:       kern_return_t = 15;
-pub const KERN_INVALID_TASK:       kern_return_t = 16;
-pub const KERN_INVALID_RIGHT:      kern_return_t = 17;
-pub const KERN_INVALID_VALUE:      kern_return_t = 18;
-pub const KERN_UREFS_OVERFLOW:     kern_return_t = 19;
+pub const KERN_NO_SPACE: kern_return_t = 3;
+pub const KERN_INVALID_ARGUMENT: kern_return_t = 4;
+pub const KERN_FAILURE: kern_return_t = 5;
+pub const KERN_RESOURCE_SHORTAGE: kern_return_t = 6;
+pub const KERN_NAME_EXISTS: kern_return_t = 13;
+pub const KERN_INVALID_NAME: kern_return_t = 15;
+pub const KERN_INVALID_TASK: kern_return_t = 16;
+pub const KERN_INVALID_RIGHT: kern_return_t = 17;
+pub const KERN_INVALID_VALUE: kern_return_t = 18;
+pub const KERN_UREFS_OVERFLOW: kern_return_t = 19;
 pub const KERN_INVALID_CAPABILITY: kern_return_t = 20;
-pub const KERN_RIGHT_EXISTS:       kern_return_t = 21;
+pub const KERN_RIGHT_EXISTS: kern_return_t = 21;
 
 /// `mach/port.h`: rights/types used by ipc_right.
 pub const MACH_PORT_RIGHT_NUMBER: u32 = 5;
-pub const MACH_PORT_TYPE_DNREQUEST:  u32 = 0x8000_0000;
-pub const MACH_PORT_TYPE_MAREQUEST:  u32 = 0x4000_0000;
-pub const MACH_PORT_TYPE_SEND_RIGHTS: u32 =
-    MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE;
+pub const MACH_PORT_TYPE_DNREQUEST: u32 = 0x8000_0000;
+pub const MACH_PORT_TYPE_MAREQUEST: u32 = 0x4000_0000;
+pub const MACH_PORT_TYPE_SEND_RIGHTS: u32 = MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_SEND_ONCE;
 
 /// `ipc/ipc_entry.h`: `IE_BITS_RIGHT_MASK = 0x003fffff` (urefs+type+marequest).
 pub const IE_BITS_RIGHT_MASK: u32 = 0x003f_ffff;
@@ -915,7 +958,10 @@ pub const VM_MIN_KERNEL_ADDRESS: u32 = 0xC000_0000;
 pub const IO_DEAD: *mut ipc_object = (!0usize) as *mut ipc_object;
 
 /// `kern/host.h`: `typedef struct host *host_t;`  Opaque to Rust.
-#[repr(C)] pub struct host { _opaque: [u8; 0] }
+#[repr(C)]
+pub struct host {
+    _opaque: [u8; 0],
+}
 pub type host_t = *mut host;
 /// `kern/host.h`: `HOST_NULL`.
 pub const HOST_NULL: host_t = core::ptr::null_mut();
@@ -924,7 +970,10 @@ pub const HOST_NULL: host_t = core::ptr::null_mut();
 pub const KERN_INVALID_HOST: kern_return_t = 22;
 
 /// `vm/vm_map.h`: `typedef struct vm_map_copy *vm_map_copy_t;`  Opaque.
-#[repr(C)] pub struct vm_map_copy { _opaque: [u8; 0] }
+#[repr(C)]
+pub struct vm_map_copy {
+    _opaque: [u8; 0],
+}
 pub type vm_map_copy_t = *mut vm_map_copy;
 
 /// `round_page(x) = (x + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)`.
@@ -936,38 +985,38 @@ pub const fn round_page(x: vm_size_t) -> vm_size_t {
 /// `mach/port.h`: `mach_port_status_t`.
 #[repr(C)]
 pub struct mach_port_status_t {
-    pub mps_pset:     mach_port_name_t,
-    pub mps_seqno:    mach_port_seqno_t,
-    pub mps_mscount:  mach_port_mscount_t,
-    pub mps_qlimit:   mach_port_msgcount_t,
+    pub mps_pset: mach_port_name_t,
+    pub mps_seqno: mach_port_seqno_t,
+    pub mps_mscount: mach_port_mscount_t,
+    pub mps_qlimit: mach_port_msgcount_t,
     pub mps_msgcount: mach_port_msgcount_t,
     pub mps_sorights: mach_port_rights_t,
-    pub mps_srights:  boolean_t,
+    pub mps_srights: boolean_t,
     pub mps_pdrequest: boolean_t,
     pub mps_nsrequest: boolean_t,
 }
 const _: () = assert!(size_of::<mach_port_status_t>() == 36);
 
 /// `mach/port.h`: `MACH_PORT_QLIMIT_MAX = 16`.
-pub const MACH_PORT_QLIMIT_MAX:    mach_port_msgcount_t = 16;
-pub const MACH_PORT_KTYPE_NONE:        u32 = 0;
+pub const MACH_PORT_QLIMIT_MAX: mach_port_msgcount_t = 16;
+pub const MACH_PORT_KTYPE_NONE: u32 = 0;
 pub const MACH_PORT_KTYPE_USER_DEVICE: u32 = 28;
 pub type mach_port_ktype_t = u32;
 
 /// `mach/vm_prot.h`: VM protection bits.
 pub type vm_prot_t = u32;
-pub const VM_PROT_NONE:  vm_prot_t = 0;
-pub const VM_PROT_READ:  vm_prot_t = 0x01;
+pub const VM_PROT_NONE: vm_prot_t = 0;
+pub const VM_PROT_READ: vm_prot_t = 0x01;
 pub const VM_PROT_WRITE: vm_prot_t = 0x02;
 
 /// `vm/vm_map.h`: `VM_MAP_COPY_NULL = NULL`.
 pub const VM_MAP_COPY_NULL: vm_map_copy_t = core::ptr::null_mut();
 
 /// `kern/ipc_kobject.h`: `IKO_NULL = 0`, `IKOT_USER_DEVICE = 28`.
-pub const IKO_NULL:           ipc_kobject_t = 0;
-pub const IKOT_USER_DEVICE:   u32 = 28;
+pub const IKO_NULL: ipc_kobject_t = 0;
+pub const IKOT_USER_DEVICE: u32 = 28;
 pub const IKOT_PAGING_REQUEST: u32 = 9;
-pub const IKOT_DEVICE:         u32 = 10;
+pub const IKOT_DEVICE: u32 = 10;
 
 /// `MACH_MSG_TYPE_PORT_ANY_RIGHT(x)` — port-types for *port rights* (move/make).
 #[inline]
@@ -987,23 +1036,21 @@ pub const MACH_PORT_UREFS_MAX: u32 = (1 << 16) - 1;
 
 /// `mach/port.h`: `MACH_PORT_TYPE_DEAD_NAME = MACH_PORT_TYPE(MACH_PORT_RIGHT_DEAD_NAME=4)`.
 pub const MACH_PORT_RIGHT_DEAD_NAME: u32 = 4;
-pub const MACH_PORT_TYPE_DEAD_NAME:  u32 = MACH_PORT_TYPE(MACH_PORT_RIGHT_DEAD_NAME);
-pub const MACH_PORT_TYPE_NONE:       u32 = 0;
+pub const MACH_PORT_TYPE_DEAD_NAME: u32 = MACH_PORT_TYPE(MACH_PORT_RIGHT_DEAD_NAME);
+pub const MACH_PORT_TYPE_NONE: u32 = 0;
 
 /// `mach/port.h`: combinations.
 pub const MACH_PORT_TYPE_PORT_RIGHTS: u32 =
     MACH_PORT_TYPE_SEND | MACH_PORT_TYPE_RECEIVE | MACH_PORT_TYPE_SEND_ONCE;
-pub const MACH_PORT_TYPE_PORT_OR_DEAD: u32 =
-    MACH_PORT_TYPE_PORT_RIGHTS | MACH_PORT_TYPE_DEAD_NAME;
-pub const MACH_PORT_TYPE_ALL_RIGHTS: u32 =
-    MACH_PORT_TYPE_PORT_OR_DEAD | MACH_PORT_TYPE_PORT_SET;
+pub const MACH_PORT_TYPE_PORT_OR_DEAD: u32 = MACH_PORT_TYPE_PORT_RIGHTS | MACH_PORT_TYPE_DEAD_NAME;
+pub const MACH_PORT_TYPE_ALL_RIGHTS: u32 = MACH_PORT_TYPE_PORT_OR_DEAD | MACH_PORT_TYPE_PORT_SET;
 
 /// `mach/message.h`: type-name codes.
-pub const MACH_MSG_TYPE_MOVE_SEND:      u32 = 17;
-pub const MACH_MSG_TYPE_COPY_SEND:      u32 = 19;
-pub const MACH_MSG_TYPE_MAKE_SEND:      u32 = 20;
+pub const MACH_MSG_TYPE_MOVE_SEND: u32 = 17;
+pub const MACH_MSG_TYPE_COPY_SEND: u32 = 19;
+pub const MACH_MSG_TYPE_MAKE_SEND: u32 = 20;
 pub const MACH_MSG_TYPE_MAKE_SEND_ONCE: u32 = 21;
-pub const MACH_MSG_TYPE_PORT_SEND:      u32 = MACH_MSG_TYPE_MOVE_SEND;
+pub const MACH_MSG_TYPE_PORT_SEND: u32 = MACH_MSG_TYPE_MOVE_SEND;
 
 /// `ipc/ipc_object.h`: `IO_BITS_PROTECTED_PAYLOAD = 0x40000000`.
 pub const IO_BITS_PROTECTED_PAYLOAD: ipc_object_bits_t = 0x4000_0000;
@@ -1012,69 +1059,68 @@ pub const IO_BITS_PROTECTED_PAYLOAD: ipc_object_bits_t = 0x4000_0000;
 pub const IS_FREE_LIST_SIZE_LIMIT: usize = 64;
 
 // mach/message.h return codes (subset).
-pub const MACH_MSG_SUCCESS:                mach_msg_return_t = 0x0000_0000;
-pub const MACH_SEND_NOTIFY_IN_PROGRESS:    mach_msg_return_t = 0x1000_0006;
-pub const MACH_SEND_INVALID_NOTIFY:        mach_msg_return_t = 0x1000_000b;
-pub const MACH_SEND_NO_NOTIFY:             mach_msg_return_t = 0x1000_000e;
+pub const MACH_MSG_SUCCESS: mach_msg_return_t = 0x0000_0000;
+pub const MACH_SEND_NOTIFY_IN_PROGRESS: mach_msg_return_t = 0x1000_0006;
+pub const MACH_SEND_INVALID_NOTIFY: mach_msg_return_t = 0x1000_000b;
+pub const MACH_SEND_NO_NOTIFY: mach_msg_return_t = 0x1000_000e;
 
 // ---------------------------------------------------------------------------
 //  More message-return constants used by ipc_pset
 // ---------------------------------------------------------------------------
 
 pub const MACH_RCV_PORT_CHANGED: mach_msg_return_t = 0x1000_4006;
-pub const MACH_RCV_PORT_DIED:    mach_msg_return_t = 0x1000_4009;
+pub const MACH_RCV_PORT_DIED: mach_msg_return_t = 0x1000_4009;
 
 /// `mach/message.h`: option-bit constants used by ipc_mqueue.
 pub const MACH_SEND_TIMEOUT: mach_msg_option_t = 0x0000_0010;
-pub const MACH_RCV_TIMEOUT:  mach_msg_option_t = 0x0000_0100;
+pub const MACH_RCV_TIMEOUT: mach_msg_option_t = 0x0000_0100;
 
 /// `mach/message.h`: msgh_bits flags.
 pub const MACH_MSGH_BITS_CIRCULAR: u32 = 0x4000_0000;
 
 /// `mach/message.h`: send/receive return codes.
-pub const MACH_SEND_IN_PROGRESS:   mach_msg_return_t = 0x1000_0001;
-pub const MACH_SEND_TIMED_OUT:     mach_msg_return_t = 0x1000_0004;
-pub const MACH_SEND_INTERRUPTED:   mach_msg_return_t = 0x1000_0007;
-pub const MACH_RCV_IN_PROGRESS:    mach_msg_return_t = 0x1000_4001;
-pub const MACH_RCV_INVALID_NAME:   mach_msg_return_t = 0x1000_4002;
-pub const MACH_RCV_TIMED_OUT:      mach_msg_return_t = 0x1000_4003;
-pub const MACH_RCV_TOO_LARGE:      mach_msg_return_t = 0x1000_4004;
-pub const MACH_RCV_INTERRUPTED:    mach_msg_return_t = 0x1000_4005;
-pub const MACH_RCV_IN_SET:         mach_msg_return_t = 0x1000_400a;
-pub const MACH_RCV_HEADER_ERROR:   mach_msg_return_t = 0x1000_400b;
-pub const MACH_RCV_BODY_ERROR:     mach_msg_return_t = 0x1000_400c;
+pub const MACH_SEND_IN_PROGRESS: mach_msg_return_t = 0x1000_0001;
+pub const MACH_SEND_TIMED_OUT: mach_msg_return_t = 0x1000_0004;
+pub const MACH_SEND_INTERRUPTED: mach_msg_return_t = 0x1000_0007;
+pub const MACH_RCV_IN_PROGRESS: mach_msg_return_t = 0x1000_4001;
+pub const MACH_RCV_INVALID_NAME: mach_msg_return_t = 0x1000_4002;
+pub const MACH_RCV_TIMED_OUT: mach_msg_return_t = 0x1000_4003;
+pub const MACH_RCV_TOO_LARGE: mach_msg_return_t = 0x1000_4004;
+pub const MACH_RCV_INTERRUPTED: mach_msg_return_t = 0x1000_4005;
+pub const MACH_RCV_IN_SET: mach_msg_return_t = 0x1000_400a;
+pub const MACH_RCV_HEADER_ERROR: mach_msg_return_t = 0x1000_400b;
+pub const MACH_RCV_BODY_ERROR: mach_msg_return_t = 0x1000_400c;
 
 /// Special-bit return-code flags (combined with `MACH_RCV_HEADER_ERROR` etc.).
-pub const MACH_MSG_IPC_SPACE:      mach_msg_return_t = 0x0000_2000;
-pub const MACH_MSG_VM_SPACE:       mach_msg_return_t = 0x0000_1000;
-pub const MACH_MSG_IPC_KERNEL:     mach_msg_return_t = 0x0000_0800;
-pub const MACH_MSG_VM_KERNEL:      mach_msg_return_t = 0x0000_0400;
+pub const MACH_MSG_IPC_SPACE: mach_msg_return_t = 0x0000_2000;
+pub const MACH_MSG_VM_SPACE: mach_msg_return_t = 0x0000_1000;
+pub const MACH_MSG_IPC_KERNEL: mach_msg_return_t = 0x0000_0800;
+pub const MACH_MSG_VM_KERNEL: mach_msg_return_t = 0x0000_0400;
 
 /// Send-side error codes used by ipc_kmsg copyin.
-pub const MACH_SEND_INVALID_DATA:    mach_msg_return_t = 0x1000_0002;
-pub const MACH_SEND_INVALID_DEST:    mach_msg_return_t = 0x1000_0003;
-pub const MACH_SEND_INVALID_REPLY:   mach_msg_return_t = 0x1000_0009;
-pub const MACH_SEND_INVALID_RIGHT:   mach_msg_return_t = 0x1000_000a;
-pub const MACH_SEND_INVALID_MEMORY:  mach_msg_return_t = 0x1000_000c;
-pub const MACH_SEND_NO_BUFFER:       mach_msg_return_t = 0x1000_000d;
-pub const MACH_SEND_INVALID_TYPE:    mach_msg_return_t = 0x1000_000f;
-pub const MACH_SEND_INVALID_HEADER:  mach_msg_return_t = 0x1000_0010;
-pub const MACH_SEND_MSG_TOO_SMALL:   mach_msg_return_t = 0x1000_0008;
-pub const MACH_RCV_INVALID_DATA:     mach_msg_return_t = 0x1000_4008;
-pub const MACH_RCV_INVALID_NOTIFY:   mach_msg_return_t = 0x1000_4007;
+pub const MACH_SEND_INVALID_DATA: mach_msg_return_t = 0x1000_0002;
+pub const MACH_SEND_INVALID_DEST: mach_msg_return_t = 0x1000_0003;
+pub const MACH_SEND_INVALID_REPLY: mach_msg_return_t = 0x1000_0009;
+pub const MACH_SEND_INVALID_RIGHT: mach_msg_return_t = 0x1000_000a;
+pub const MACH_SEND_INVALID_MEMORY: mach_msg_return_t = 0x1000_000c;
+pub const MACH_SEND_NO_BUFFER: mach_msg_return_t = 0x1000_000d;
+pub const MACH_SEND_INVALID_TYPE: mach_msg_return_t = 0x1000_000f;
+pub const MACH_SEND_INVALID_HEADER: mach_msg_return_t = 0x1000_0010;
+pub const MACH_SEND_MSG_TOO_SMALL: mach_msg_return_t = 0x1000_0008;
+pub const MACH_RCV_INVALID_DATA: mach_msg_return_t = 0x1000_4008;
+pub const MACH_RCV_INVALID_NOTIFY: mach_msg_return_t = 0x1000_4007;
 
 /// `mach/message.h`: `MACH_MSG_TYPE_PROTECTED_PAYLOAD = 23`.
 pub const MACH_MSG_TYPE_PROTECTED_PAYLOAD: u32 = 23;
 
 /// `mach/message.h`: alignment helpers.  KERNEL = sizeof(uintptr_t) = 4 on i686.
 pub const MACH_MSG_KERNEL_ALIGNMENT: usize = 4;
-pub const MACH_MSG_USER_ALIGNMENT:   usize = 4;
+pub const MACH_MSG_USER_ALIGNMENT: usize = 4;
 
 /// `MACH_MSGH_BITS_REMOTE/LOCAL/PORTS/OTHER` macros.
 pub const MACH_MSGH_BITS_REMOTE_MASK: u32 = 0x0000_00ff;
-pub const MACH_MSGH_BITS_LOCAL_MASK:  u32 = 0x0000_ff00;
-pub const MACH_MSGH_BITS_PORTS_MASK:  u32 =
-    MACH_MSGH_BITS_REMOTE_MASK | MACH_MSGH_BITS_LOCAL_MASK;
+pub const MACH_MSGH_BITS_LOCAL_MASK: u32 = 0x0000_ff00;
+pub const MACH_MSGH_BITS_PORTS_MASK: u32 = MACH_MSGH_BITS_REMOTE_MASK | MACH_MSGH_BITS_LOCAL_MASK;
 
 #[inline]
 #[allow(non_snake_case)]
@@ -1115,14 +1161,13 @@ pub const fn MACH_MSG_TYPE_PORT_ANY_SEND(x: u32) -> bool {
 }
 
 /// `kern/sched_prim.h`: `wait_result_t` codes.
-pub const THREAD_AWAKENED:   kern_return_t = 0;
-pub const THREAD_TIMED_OUT:  kern_return_t = 1;
+pub const THREAD_AWAKENED: kern_return_t = 0;
+pub const THREAD_TIMED_OUT: kern_return_t = 1;
 pub const THREAD_INTERRUPTED: kern_return_t = 2;
-pub const THREAD_RESTART:    kern_return_t = 3;
+pub const THREAD_RESTART: kern_return_t = 3;
 
 pub const MACH_PORT_RIGHT_PORT_SET: u32 = 3;
-pub const MACH_PORT_TYPE_PORT_SET: u32 =
-    MACH_PORT_TYPE(MACH_PORT_RIGHT_PORT_SET);
+pub const MACH_PORT_TYPE_PORT_SET: u32 = MACH_PORT_TYPE(MACH_PORT_RIGHT_PORT_SET);
 
 /// `mach/kern_return.h`: `KERN_NOT_IN_SET = 12`.
 pub const KERN_NOT_IN_SET: kern_return_t = 12;
@@ -1130,7 +1175,7 @@ pub const KERN_NOT_IN_SET: kern_return_t = 12;
 /// `ipc/ipc_object.h`: `IO_BITS_ACTIVE = 0x80000000U`.
 pub const IO_BITS_ACTIVE: ipc_object_bits_t = 0x8000_0000;
 /// `ipc/ipc_object.h`: `IO_BITS_OTYPE = 0x3fff0000`.
-pub const IO_BITS_OTYPE:  ipc_object_bits_t = 0x3fff_0000;
+pub const IO_BITS_OTYPE: ipc_object_bits_t = 0x3fff_0000;
 /// `ipc/ipc_object.h`: `IO_BITS_KOTYPE = 0x0000ffff`.
 pub const IO_BITS_KOTYPE: ipc_object_bits_t = 0x0000_ffff;
 
@@ -1163,22 +1208,22 @@ const _: () = assert!(size_of::<ipc_port_data>() == 4);
 
 #[repr(C)]
 pub struct ipc_port {
-    pub ip_target: ipc_target,           /* 0..20 */
-    pub ip_cur_target: *mut ipc_target,  /* 20..24 */
-    pub data: ipc_port_data,             /* 24..28 */
-    pub ip_kobject: ipc_kobject_t,       /* 28..32 */
-    pub ip_mscount: mach_port_mscount_t, /* 32..36 */
-    pub ip_srights: u32,                 /* 36..40 */
-    pub ip_sorights: u32,                /* 40..44 */
-    pub ip_nsrequest: *mut ipc_port,     /* 44..48 */
-    pub ip_pdrequest: *mut ipc_port,     /* 48..52 */
+    pub ip_target: ipc_target,                /* 0..20 */
+    pub ip_cur_target: *mut ipc_target,       /* 20..24 */
+    pub data: ipc_port_data,                  /* 24..28 */
+    pub ip_kobject: ipc_kobject_t,            /* 28..32 */
+    pub ip_mscount: mach_port_mscount_t,      /* 32..36 */
+    pub ip_srights: u32,                      /* 36..40 */
+    pub ip_sorights: u32,                     /* 40..44 */
+    pub ip_nsrequest: *mut ipc_port,          /* 44..48 */
+    pub ip_pdrequest: *mut ipc_port,          /* 48..52 */
     pub ip_dnrequests: *mut ipc_port_request, /* 52..56 */
-    pub ip_pset: *mut ipc_pset,          /* 56..60 */
-    pub ip_seqno: mach_port_seqno_t,     /* 60..64 */
-    pub ip_msgcount: u32,                /* 64..68 */
-    pub ip_qlimit: u32,                  /* 68..72 */
-    pub ip_blocked: ipc_thread_queue,    /* 72..76 */
-    pub ip_protected_payload: u32,       /* 76..80 */
+    pub ip_pset: *mut ipc_pset,               /* 56..60 */
+    pub ip_seqno: mach_port_seqno_t,          /* 60..64 */
+    pub ip_msgcount: u32,                     /* 64..68 */
+    pub ip_qlimit: u32,                       /* 68..72 */
+    pub ip_blocked: ipc_thread_queue,         /* 72..76 */
+    pub ip_protected_payload: u32,            /* 76..80 */
 }
 
 const _: () = assert!(size_of::<ipc_port>() == SIZE_OF_IPC_PORT);

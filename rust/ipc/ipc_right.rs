@@ -10,38 +10,31 @@ use crate::extern_c::{
 use crate::ipc_entry::ipc_entry_cache;
 use crate::ipc_marequest::{ipc_marequest_cancel, ipc_marequest_rename};
 use crate::ipc_notify::{
-    ipc_notify_dead_name, ipc_notify_no_senders, ipc_notify_port_deleted,
-    ipc_notify_send_once,
+    ipc_notify_dead_name, ipc_notify_no_senders, ipc_notify_port_deleted, ipc_notify_send_once,
 };
 use crate::ipc_port::{
-    ipc_port_dncancel, ipc_port_dngrow, ipc_port_dnrequest,
-    ipc_port_clear_receiver, ipc_port_destroy,
+    ipc_port_clear_receiver, ipc_port_destroy, ipc_port_dncancel, ipc_port_dngrow,
+    ipc_port_dnrequest,
 };
 use crate::ipc_pset::ipc_pset_destroy;
 use crate::mach_types::{
-    boolean_t, ipc_entry_t, ipc_object,
-    ipc_port_request_index_t, ipc_port_request_t, ipc_port_t,
-    ipc_pset_t, ipc_space_t, kern_return_t, mach_msg_type_name_t,
-    mach_port_delta_t, mach_port_mscount_t, mach_port_name_t,
-    mach_port_right_t, mach_port_type_t, mach_port_urefs_t, rdxtree_key_t,
-    vm_offset_t, IE_BITS_MAREQUEST, IE_BITS_RIGHT_MASK, IE_BITS_TYPE_MASK,
-    IE_BITS_UREFS_MASK, IE_NULL, IO_BITS_OTYPE, IO_DEAD, IPS_NULL, IS_NULL,
-    IS_FREE_LIST_SIZE_LIMIT, KERN_INVALID_ARGUMENT, KERN_INVALID_NAME,
-    KERN_INVALID_RIGHT, KERN_INVALID_TASK, KERN_INVALID_VALUE,
-    KERN_SUCCESS, KERN_UREFS_OVERFLOW, MACH_MSG_TYPE_COPY_SEND,
-    MACH_MSG_TYPE_MAKE_SEND, MACH_MSG_TYPE_MAKE_SEND_ONCE,
-    MACH_MSG_TYPE_MOVE_RECEIVE, MACH_MSG_TYPE_MOVE_SEND,
-    MACH_MSG_TYPE_MOVE_SEND_ONCE, MACH_MSG_TYPE_PORT_RECEIVE,
-    MACH_MSG_TYPE_PORT_SEND, MACH_MSG_TYPE_PORT_SEND_ONCE,
-    MACH_PORT_NAME_NULL, MACH_PORT_RIGHT_DEAD_NAME, MACH_PORT_RIGHT_NUMBER,
-    MACH_PORT_RIGHT_PORT_SET, MACH_PORT_RIGHT_RECEIVE,
-    MACH_PORT_RIGHT_SEND, MACH_PORT_RIGHT_SEND_ONCE,
-    MACH_PORT_TYPE_DEAD_NAME, MACH_PORT_TYPE_DNREQUEST,
-    MACH_PORT_TYPE_MAREQUEST, MACH_PORT_TYPE_NONE, MACH_PORT_TYPE_PORT_RIGHTS,
-    MACH_PORT_TYPE_PORT_SET, MACH_PORT_TYPE_PORT_OR_DEAD,
-    MACH_PORT_TYPE_RECEIVE, MACH_PORT_TYPE_SEND, MACH_PORT_TYPE_SEND_ONCE,
-    MACH_PORT_TYPE_SEND_RECEIVE, MACH_PORT_TYPE_SEND_RIGHTS,
-    MACH_PORT_UREFS_MAX, VM_MIN_KERNEL_ADDRESS,
+    boolean_t, ipc_entry_t, ipc_object, ipc_port_request_index_t, ipc_port_request_t, ipc_port_t,
+    ipc_pset_t, ipc_space_t, kern_return_t, mach_msg_type_name_t, mach_port_delta_t,
+    mach_port_mscount_t, mach_port_name_t, mach_port_right_t, mach_port_type_t, mach_port_urefs_t,
+    rdxtree_key_t, vm_offset_t, IE_BITS_MAREQUEST, IE_BITS_RIGHT_MASK, IE_BITS_TYPE_MASK,
+    IE_BITS_UREFS_MASK, IE_NULL, IO_BITS_OTYPE, IO_DEAD, IPS_NULL, IS_FREE_LIST_SIZE_LIMIT,
+    IS_NULL, KERN_INVALID_ARGUMENT, KERN_INVALID_NAME, KERN_INVALID_RIGHT, KERN_INVALID_TASK,
+    KERN_INVALID_VALUE, KERN_SUCCESS, KERN_UREFS_OVERFLOW, MACH_MSG_TYPE_COPY_SEND,
+    MACH_MSG_TYPE_MAKE_SEND, MACH_MSG_TYPE_MAKE_SEND_ONCE, MACH_MSG_TYPE_MOVE_RECEIVE,
+    MACH_MSG_TYPE_MOVE_SEND, MACH_MSG_TYPE_MOVE_SEND_ONCE, MACH_MSG_TYPE_PORT_RECEIVE,
+    MACH_MSG_TYPE_PORT_SEND, MACH_MSG_TYPE_PORT_SEND_ONCE, MACH_PORT_NAME_NULL,
+    MACH_PORT_RIGHT_DEAD_NAME, MACH_PORT_RIGHT_NUMBER, MACH_PORT_RIGHT_PORT_SET,
+    MACH_PORT_RIGHT_RECEIVE, MACH_PORT_RIGHT_SEND, MACH_PORT_RIGHT_SEND_ONCE,
+    MACH_PORT_TYPE_DEAD_NAME, MACH_PORT_TYPE_DNREQUEST, MACH_PORT_TYPE_MAREQUEST,
+    MACH_PORT_TYPE_NONE, MACH_PORT_TYPE_PORT_OR_DEAD, MACH_PORT_TYPE_PORT_RIGHTS,
+    MACH_PORT_TYPE_PORT_SET, MACH_PORT_TYPE_RECEIVE, MACH_PORT_TYPE_SEND, MACH_PORT_TYPE_SEND_ONCE,
+    MACH_PORT_TYPE_SEND_RECEIVE, MACH_PORT_TYPE_SEND_RIGHTS, MACH_PORT_UREFS_MAX,
+    VM_MIN_KERNEL_ADDRESS,
 };
 
 // ---------------------------------------------------------------------------
@@ -49,8 +42,8 @@ use crate::mach_types::{
 // ---------------------------------------------------------------------------
 
 use crate::locks::{
-    io_active, ip_active, ip_check_unlock, ip_lock, ip_reference, ip_release,
-    ip_unlock, ips_active, ips_lock, ips_unlock, is_write_lock, is_write_unlock,
+    io_active, ip_active, ip_check_unlock, ip_lock, ip_reference, ip_release, ip_unlock,
+    ips_active, ips_lock, ips_unlock, is_write_lock, is_write_unlock,
 };
 
 #[inline]
@@ -60,15 +53,12 @@ unsafe fn io_otype(io: *mut ipc_object) -> u32 {
 
 #[inline]
 unsafe fn ipc_port_release(port: ipc_port_t) {
-    crate::ipc_object::ipc_object_release(
-        addr_of_mut!((*port).ip_target.ipt_object),
-    );
+    crate::ipc_object::ipc_object_release(addr_of_mut!((*port).ip_target.ipt_object));
 }
 
 #[inline]
 unsafe fn ipc_port_flag_protected_payload_clear(port: ipc_port_t) {
-    (*port).ip_target.ipt_object.io_bits &=
-        !crate::mach_types::IO_BITS_PROTECTED_PAYLOAD;
+    (*port).ip_target.ipt_object.io_bits &= !crate::mach_types::IO_BITS_PROTECTED_PAYLOAD;
 }
 
 #[inline]
@@ -93,15 +83,9 @@ fn mach_port_urefs_underflow(urefs: u32, delta: i32) -> bool {
 
 /// Mirror of the static inline `ipc_entry_lookup` from `ipc/ipc_space.h`.
 #[inline]
-unsafe fn ipc_entry_lookup(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-) -> ipc_entry_t {
-    let entry = rdxtree_lookup_common(
-        addr_of!((*space).is_map),
-        name as rdxtree_key_t,
-        0,
-    ) as ipc_entry_t;
+unsafe fn ipc_entry_lookup(space: ipc_space_t, name: mach_port_name_t) -> ipc_entry_t {
+    let entry =
+        rdxtree_lookup_common(addr_of!((*space).is_map), name as rdxtree_key_t, 0) as ipc_entry_t;
     if entry == IE_NULL {
         return IE_NULL;
     }
@@ -113,11 +97,7 @@ unsafe fn ipc_entry_lookup(
 
 /// `ipc_entry_dealloc` — static inline from `ipc/ipc_space.h`.
 #[inline]
-unsafe fn ipc_entry_dealloc(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-    entry: ipc_entry_t,
-) {
+unsafe fn ipc_entry_dealloc(space: ipc_space_t, name: mach_port_name_t, entry: ipc_entry_t) {
     if ((*space).is_free_list_size as usize) < IS_FREE_LIST_SIZE_LIMIT {
         (*space).is_free_list_size += 1;
         /* IE_BITS_GEN_MASK == 0 */
@@ -125,10 +105,7 @@ unsafe fn ipc_entry_dealloc(
         (*entry).index.next_free = (*space).is_free_list;
         (*space).is_free_list = entry;
     } else {
-        rdxtree_remove(
-            addr_of_mut!((*space).is_map),
-            name as rdxtree_key_t,
-        );
+        rdxtree_remove(addr_of_mut!((*space).is_map), name as rdxtree_key_t);
         kmem_cache_free(addr_of_mut!(ipc_entry_cache), entry as vm_offset_t);
     }
     (*space).is_size -= 1;
@@ -156,26 +133,13 @@ unsafe fn ipc_reverse_insert(
 }
 
 #[inline]
-unsafe fn ipc_reverse_remove(
-    space: ipc_space_t,
-    obj: *mut ipc_object,
-) -> ipc_entry_t {
-    rdxtree_remove(
-        addr_of_mut!((*space).is_reverse_map),
-        key_for(obj),
-    ) as ipc_entry_t
+unsafe fn ipc_reverse_remove(space: ipc_space_t, obj: *mut ipc_object) -> ipc_entry_t {
+    rdxtree_remove(addr_of_mut!((*space).is_reverse_map), key_for(obj)) as ipc_entry_t
 }
 
 #[inline]
-unsafe fn ipc_reverse_lookup(
-    space: ipc_space_t,
-    obj: *mut ipc_object,
-) -> ipc_entry_t {
-    rdxtree_lookup_common(
-        addr_of!((*space).is_reverse_map),
-        key_for(obj),
-        0,
-    ) as ipc_entry_t
+unsafe fn ipc_reverse_lookup(space: ipc_space_t, obj: *mut ipc_object) -> ipc_entry_t {
+    rdxtree_lookup_common(addr_of!((*space).is_reverse_map), key_for(obj), 0) as ipc_entry_t
 }
 
 /// `ipc_right_dncancel_macro` — return IP_NULL early if no request slot,
@@ -267,8 +231,14 @@ pub unsafe extern "C" fn ipc_right_reverse(
 
         let entry = ipc_entry_lookup(space, name);
         crate::kassert!(entry != IE_NULL, "entry != IE_NULL");
-        crate::kassert!(((*entry).ie_bits & MACH_PORT_TYPE_RECEIVE) != 0, "entry->ie_bits & MACH_PORT_TYPE_RECEIVE");
-        crate::kassert!(port == (*entry).ie_object as ipc_port_t, "port == entry->ie_object");
+        crate::kassert!(
+            ((*entry).ie_bits & MACH_PORT_TYPE_RECEIVE) != 0,
+            "entry->ie_bits & MACH_PORT_TYPE_RECEIVE"
+        );
+        crate::kassert!(
+            port == (*entry).ie_object as ipc_port_t,
+            "port == entry->ie_object"
+        );
 
         *namep = name;
         *entryp = entry;
@@ -354,15 +324,18 @@ pub unsafe extern "C" fn ipc_right_dnrequest(
             }
 
             bits = (*entry).ie_bits;
-            crate::kassert!((bits & MACH_PORT_TYPE_DEAD_NAME) != 0, "bits & MACH_PORT_TYPE_DEAD_NAME");
+            crate::kassert!(
+                (bits & MACH_PORT_TYPE_DEAD_NAME) != 0,
+                "bits & MACH_PORT_TYPE_DEAD_NAME"
+            );
         }
 
-        if (bits & MACH_PORT_TYPE_DEAD_NAME) != 0
-            && immediate != 0
-            && !notify.is_null()
-        {
+        if (bits & MACH_PORT_TYPE_DEAD_NAME) != 0 && immediate != 0 && !notify.is_null() {
             let urefs = ie_bits_urefs(bits);
-            crate::kassert!(ie_bits_type(bits) == MACH_PORT_TYPE_DEAD_NAME, "IE_BITS_TYPE(bits) == MACH_PORT_TYPE_DEAD_NAME");
+            crate::kassert!(
+                ie_bits_type(bits) == MACH_PORT_TYPE_DEAD_NAME,
+                "IE_BITS_TYPE(bits) == MACH_PORT_TYPE_DEAD_NAME"
+            );
             crate::kassert!(urefs > 0, "urefs > 0");
 
             if mach_port_urefs_overflow(urefs, 1) {
@@ -402,7 +375,10 @@ pub unsafe extern "C" fn ipc_right_dncancel(
     entry: ipc_entry_t,
 ) -> ipc_port_t {
     crate::kassert!(ip_active(port), "ip_active(port)");
-    crate::kassert!(port == (*entry).ie_object as ipc_port_t, "port == entry->ie_object");
+    crate::kassert!(
+        port == (*entry).ie_object as ipc_port_t,
+        "port == entry->ie_object"
+    );
 
     let dnrequest = ipc_port_dncancel(port, name, (*entry).index.request);
     (*entry).index.request = 0;
@@ -440,7 +416,10 @@ pub unsafe extern "C" fn ipc_right_check(
     entry: ipc_entry_t,
 ) -> boolean_t {
     crate::kassert!((*space).is_active != 0, "space->is_active");
-    crate::kassert!(port == (*entry).ie_object as ipc_port_t, "port == entry->ie_object");
+    crate::kassert!(
+        port == (*entry).ie_object as ipc_port_t,
+        "port == entry->ie_object"
+    );
 
     ip_lock(port);
     if ip_active(port) {
@@ -450,7 +429,10 @@ pub unsafe extern "C" fn ipc_right_check(
 
     /* this was either a pure send right or a send-once right */
     let mut bits = (*entry).ie_bits;
-    crate::kassert!((bits & MACH_PORT_TYPE_RECEIVE) == 0, "(bits & MACH_PORT_TYPE_RECEIVE) == 0");
+    crate::kassert!(
+        (bits & MACH_PORT_TYPE_RECEIVE) == 0,
+        "(bits & MACH_PORT_TYPE_RECEIVE) == 0"
+    );
     crate::kassert!(ie_bits_urefs(bits) > 0, "IE_BITS_UREFS(bits) > 0");
 
     if (bits & MACH_PORT_TYPE_SEND) != 0 {
@@ -468,7 +450,10 @@ pub unsafe extern "C" fn ipc_right_check(
     bits = (bits & !IE_BITS_TYPE_MASK) | MACH_PORT_TYPE_DEAD_NAME;
 
     if (*entry).index.request != 0 {
-        crate::kassert!(ie_bits_urefs(bits) < MACH_PORT_UREFS_MAX, "IE_BITS_UREFS(bits) < MACH_PORT_UREFS_MAX");
+        crate::kassert!(
+            ie_bits_urefs(bits) < MACH_PORT_UREFS_MAX,
+            "IE_BITS_UREFS(bits) < MACH_PORT_UREFS_MAX"
+        );
         (*entry).index.request = 0;
         bits += 1; /* increment urefs */
     }
@@ -535,7 +520,10 @@ pub unsafe extern "C" fn ipc_right_clean(
         }
 
         if (typ & MACH_PORT_TYPE_RECEIVE) != 0 {
-            crate::kassert!((*port).ip_target.ipt_name == name, "port->ip_receiver_name == name");
+            crate::kassert!(
+                (*port).ip_target.ipt_name == name,
+                "port->ip_receiver_name == name"
+            );
             crate::kassert!((*port).data.receiver == space, "port->ip_receiver == space");
             ipc_port_clear_receiver(port);
             ipc_port_destroy(port); /* consumes our ref, unlocks */
@@ -775,8 +763,7 @@ pub unsafe extern "C" fn ipc_right_dealloc(
                         mscount = (*port).ip_mscount;
                     }
                 }
-                (*entry).ie_bits =
-                    bits & !(IE_BITS_UREFS_MASK | MACH_PORT_TYPE_SEND);
+                (*entry).ie_bits = bits & !(IE_BITS_UREFS_MASK | MACH_PORT_TYPE_SEND);
             } else {
                 (*entry).ie_bits = bits - 1; /* decrement urefs */
             }
@@ -809,7 +796,10 @@ pub unsafe extern "C" fn ipc_right_delta(
 ) -> kern_return_t {
     let mut bits = (*entry).ie_bits;
     crate::kassert!((*space).is_active != 0, "space->is_active");
-    crate::kassert!(right < MACH_PORT_RIGHT_NUMBER, "right < MACH_PORT_RIGHT_NUMBER");
+    crate::kassert!(
+        right < MACH_PORT_RIGHT_NUMBER,
+        "right < MACH_PORT_RIGHT_NUMBER"
+    );
 
     if right == MACH_PORT_RIGHT_PORT_SET {
         if (bits & MACH_PORT_TYPE_PORT_SET) == 0 {
@@ -863,7 +853,10 @@ pub unsafe extern "C" fn ipc_right_delta(
 
         ip_lock(port);
         crate::kassert!(ip_active(port), "ip_active(port)");
-        crate::kassert!((*port).ip_target.ipt_name == name, "port->ip_receiver_name == name");
+        crate::kassert!(
+            (*port).ip_target.ipt_name == name,
+            "port->ip_receiver_name == name"
+        );
         crate::kassert!((*port).data.receiver == space, "port->ip_receiver == space");
 
         if (bits & MACH_PORT_TYPE_SEND) != 0 {
@@ -1008,8 +1001,7 @@ pub unsafe extern "C" fn ipc_right_delta(
             }
 
             if (bits & MACH_PORT_TYPE_RECEIVE) != 0 {
-                (*entry).ie_bits =
-                    bits & !(IE_BITS_UREFS_MASK | MACH_PORT_TYPE_SEND);
+                (*entry).ie_bits = bits & !(IE_BITS_UREFS_MASK | MACH_PORT_TYPE_SEND);
             } else {
                 dnrequest = ipc_right_dncancel_macro(space, port, name, entry);
                 ipc_reverse_remove(space, port as *mut ipc_object);
@@ -1269,8 +1261,7 @@ pub unsafe extern "C" fn ipc_right_copyin(
                 }
                 (*entry).ie_object = null_mut();
             }
-            (*entry).ie_bits =
-                bits & !(IE_BITS_UREFS_MASK | MACH_PORT_TYPE_SEND);
+            (*entry).ie_bits = bits & !(IE_BITS_UREFS_MASK | MACH_PORT_TYPE_SEND);
         } else {
             (*port).ip_srights += 1;
             ip_reference(port);
@@ -1312,7 +1303,7 @@ pub unsafe extern "C" fn ipc_right_copyin(
         return KERN_SUCCESS;
     }
 
-crate::kpanic!("ipc_right_copyin: strange rights");
+    crate::kpanic!("ipc_right_copyin: strange rights");
 }
 
 #[inline]
@@ -1368,11 +1359,9 @@ pub unsafe extern "C" fn ipc_right_copyin_undo(
     crate::kassert!((*space).is_active != 0, "space->is_active");
 
     if !soright.is_null() {
-        (*entry).ie_bits =
-            (bits & !IE_BITS_RIGHT_MASK) | MACH_PORT_TYPE_DEAD_NAME | 2;
+        (*entry).ie_bits = (bits & !IE_BITS_RIGHT_MASK) | MACH_PORT_TYPE_DEAD_NAME | 2;
     } else if ie_bits_type(bits) == MACH_PORT_TYPE_NONE {
-        (*entry).ie_bits =
-            (bits & !IE_BITS_RIGHT_MASK) | MACH_PORT_TYPE_DEAD_NAME | 1;
+        (*entry).ie_bits = (bits & !IE_BITS_RIGHT_MASK) | MACH_PORT_TYPE_DEAD_NAME | 1;
     } else if ie_bits_type(bits) == MACH_PORT_TYPE_DEAD_NAME {
         if _msgt_name != MACH_MSG_TYPE_COPY_SEND {
             (*entry).ie_bits = bits + 1;
@@ -1441,8 +1430,7 @@ pub unsafe extern "C" fn ipc_right_copyin_two(
             ip_reference(port);
             (*entry).ie_object = null_mut();
         }
-        (*entry).ie_bits =
-            bits & !(IE_BITS_UREFS_MASK | MACH_PORT_TYPE_SEND);
+        (*entry).ie_bits = bits & !(IE_BITS_UREFS_MASK | MACH_PORT_TYPE_SEND);
     } else {
         (*port).ip_srights += 2;
         ip_reference(port);
@@ -1470,8 +1458,14 @@ pub unsafe extern "C" fn ipc_right_copyout(
     object: *mut ipc_object,
 ) -> kern_return_t {
     let bits = (*entry).ie_bits;
-    crate::kassert!((object as usize) != 0 && (object as usize) != !0usize, "IO_VALID(object)");
-    crate::kassert!(io_otype(object) == crate::mach_types::IOT_PORT, "io_otype(object) == IOT_PORT");
+    crate::kassert!(
+        (object as usize) != 0 && (object as usize) != !0usize,
+        "IO_VALID(object)"
+    );
+    crate::kassert!(
+        io_otype(object) == crate::mach_types::IOT_PORT,
+        "io_otype(object) == IOT_PORT"
+    );
     crate::kassert!(io_active(object), "io_active(object)");
     crate::kassert!((*entry).ie_object == object, "entry->ie_object == object");
 
@@ -1538,7 +1532,7 @@ pub unsafe extern "C" fn ipc_right_copyout(
         return KERN_SUCCESS;
     }
 
-crate::kpanic!("ipc_right_copyout: strange rights");
+    crate::kpanic!("ipc_right_copyout: strange rights");
 }
 
 // ---------------------------------------------------------------------------
@@ -1562,7 +1556,10 @@ pub unsafe extern "C" fn ipc_right_rename(
 
     if request != 0 {
         let port = object as ipc_port_t;
-        crate::kassert!((bits & MACH_PORT_TYPE_PORT_RIGHTS) != 0, "bits & MACH_PORT_TYPE_PORT_RIGHTS");
+        crate::kassert!(
+            (bits & MACH_PORT_TYPE_PORT_RIGHTS) != 0,
+            "bits & MACH_PORT_TYPE_PORT_RIGHTS"
+        );
         crate::kassert!(!port.is_null(), "port != IP_NULL");
 
         if ipc_right_check(space, port, oname, oentry) != 0 {
@@ -1593,14 +1590,15 @@ pub unsafe extern "C" fn ipc_right_rename(
         ipc_reverse_remove(space, port as *mut ipc_object);
         (*nentry).ie_name = nname;
         ipc_reverse_insert(space, port as *mut ipc_object, nentry);
-    } else if typ == MACH_PORT_TYPE_RECEIVE
-        || typ == MACH_PORT_TYPE_SEND_RECEIVE
-    {
+    } else if typ == MACH_PORT_TYPE_RECEIVE || typ == MACH_PORT_TYPE_SEND_RECEIVE {
         let port = object as ipc_port_t;
         crate::kassert!(!port.is_null(), "port != IP_NULL");
         ip_lock(port);
         crate::kassert!(ip_active(port), "ip_active(port)");
-        crate::kassert!((*port).ip_target.ipt_name == oname, "port->ip_receiver_name == oname");
+        crate::kassert!(
+            (*port).ip_target.ipt_name == oname,
+            "port->ip_receiver_name == oname"
+        );
         crate::kassert!((*port).data.receiver == space, "port->ip_receiver == space");
         (*port).ip_target.ipt_name = nname;
         ip_unlock(port);
@@ -1609,12 +1607,13 @@ pub unsafe extern "C" fn ipc_right_rename(
         crate::kassert!(pset != IPS_NULL, "pset != IPS_NULL");
         ips_lock(pset);
         crate::kassert!(ips_active(pset), "ips_active(pset)");
-        crate::kassert!((*pset).ips_target.ipt_name == oname, "pset->ips_local_name == oname");
+        crate::kassert!(
+            (*pset).ips_target.ipt_name == oname,
+            "pset->ips_local_name == oname"
+        );
         (*pset).ips_target.ipt_name = nname;
         ips_unlock(pset);
-    } else if typ == MACH_PORT_TYPE_SEND_ONCE
-        || typ == MACH_PORT_TYPE_DEAD_NAME
-    {
+    } else if typ == MACH_PORT_TYPE_SEND_ONCE || typ == MACH_PORT_TYPE_DEAD_NAME {
         /* nothing extra */
     } else {
         crate::kpanic!("ipc_right_rename: strange rights");

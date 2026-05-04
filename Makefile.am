@@ -181,6 +181,36 @@ RUST_IPC_SRCS = \
 EXTRA_DIST += $(RUST_IPC_SRCS)
 MOSTLYCLEANFILES += librust_ipc.a
 
+# rustfmt check — fails the build target if any rust/ipc/ file is unformatted.
+# Use `make rustfmt` to apply formatting in place.
+.PHONY: rustfmt-check rustfmt clippy
+rustfmt-check:
+	@command -v rustfmt >/dev/null 2>&1 || { echo "skip: rustfmt not installed"; exit 0; }
+	rustfmt --edition 2021 --check $(RUST_IPC_SRCS)
+rustfmt:
+	rustfmt --edition 2021 $(RUST_IPC_SRCS)
+
+# clippy lint — runs the same compile flags as the librust_ipc.a build.
+# Requires `rustup component add clippy` (already wired into the Dockerfile).
+clippy:
+	@command -v clippy-driver >/dev/null 2>&1 || { echo "skip: clippy-driver not installed"; exit 0; }
+	clippy-driver                                  \
+	    --crate-type=staticlib                     \
+	    --crate-name=gnumach_ipc                   \
+	    --edition=2021                             \
+	    --target=i686-unknown-linux-gnu            \
+	    -C panic=abort                             \
+	    -C relocation-model=static                 \
+	    -C target-feature=-sse,-sse2               \
+	    -C force-unwind-tables=no                  \
+	    -C debuginfo=0                             \
+	    -C opt-level=2                             \
+	    -C codegen-units=1                         \
+	    -C strip=debuginfo                         \
+	    --emit=metadata                            \
+	    -o /tmp/clippy.rmeta                       \
+	    $(srcdir)/rust/ipc/lib.rs
+
 librust_ipc.a: $(RUST_IPC_SRCS)
 	$(AM_V_GEN)$(RUSTC)                            \
 	    --crate-type=staticlib                     \

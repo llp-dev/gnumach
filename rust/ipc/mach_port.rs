@@ -6,51 +6,44 @@ use core::mem::size_of;
 use core::ptr::{addr_of_mut, null_mut};
 
 use crate::extern_c::{
-    ipc_kobject_set_locked, kmem_free, percpu_array, printf, rdxtree_walk,
-    vm_allocate, vm_map_copyin, vm_map_pageable, SoftDebugger,
+    ipc_kobject_set_locked, kmem_free, percpu_array, printf, rdxtree_walk, vm_allocate,
+    vm_map_copyin, vm_map_pageable, SoftDebugger,
 };
 use crate::ipc_init::ipc_kernel_map;
 use crate::ipc_object::{
-    ipc_object_alloc_dead, ipc_object_alloc_dead_name, ipc_object_copyin,
-    ipc_object_copyin_type, ipc_object_copyout_name, ipc_object_rename,
-    ipc_object_translate,
+    ipc_object_alloc_dead, ipc_object_alloc_dead_name, ipc_object_copyin, ipc_object_copyin_type,
+    ipc_object_copyout_name, ipc_object_rename, ipc_object_translate,
 };
 use crate::ipc_port::{
-    ipc_port_alloc, ipc_port_alloc_name, ipc_port_clear_protected_payload,
-    ipc_port_nsrequest, ipc_port_pdrequest, ipc_port_set_protected_payload,
+    ipc_port_alloc, ipc_port_alloc_name, ipc_port_clear_protected_payload, ipc_port_nsrequest,
+    ipc_port_pdrequest, ipc_port_set_protected_payload,
     ipc_port_set_qlimit as ipc_port_set_qlimit_inner,
     ipc_port_set_seqno as ipc_port_set_seqno_inner, ipc_port_timestamp,
 };
 use crate::ipc_pset::{ipc_pset_alloc, ipc_pset_alloc_name, ipc_pset_move};
 use crate::ipc_right::{
-    ipc_right_dealloc, ipc_right_delta, ipc_right_destroy, ipc_right_dnrequest,
-    ipc_right_info, ipc_right_lookup_write,
+    ipc_right_dealloc, ipc_right_delta, ipc_right_destroy, ipc_right_dnrequest, ipc_right_info,
+    ipc_right_lookup_write,
 };
 use crate::mach_types::{
-    boolean_t, ipc_entry_num_t, ipc_entry_t, ipc_object,
-    ipc_port_t, ipc_port_timestamp_t, ipc_pset_t,
-    ipc_space_t, host_t, ipc_thread_t, kern_return_t, mach_msg_id_t,
-    mach_msg_type_name_t, mach_msg_type_number_t, mach_port_delta_t,
-    mach_port_ktype_t, mach_port_mscount_t, mach_port_msgcount_t,
-    mach_port_name_t, mach_port_right_t, mach_port_seqno_t,
-    mach_port_status_t, mach_port_type_t, mach_port_urefs_t, rdxtree_iter,
-    vm_map_copy_t, vm_offset_t, vm_size_t, round_page,
-    OFFSETOF_PERCPU_ACTIVE_THREAD, OFFSETOF_TASK_ITK_SPACE,
-    OFFSETOF_TASK_NAME, TASK_NAME_SIZE, IO_BITS_KOTYPE, IPS_NULL, IS_NULL,
-    IO_DEAD, IKOT_NONE, IKOT_USER_DEVICE, IKO_NULL, HOST_NULL,
-    IE_BITS_MAREQUEST, IE_BITS_TYPE_MASK, IE_NULL, KERN_INVALID_ARGUMENT,
-    KERN_INVALID_CAPABILITY, KERN_INVALID_HOST, KERN_INVALID_NAME,
-    KERN_INVALID_RIGHT, KERN_INVALID_TASK, KERN_INVALID_VALUE,
-    KERN_RESOURCE_SHORTAGE, KERN_SUCCESS, MACH_NOTIFY_DEAD_NAME,
-    MACH_NOTIFY_NO_SENDERS, MACH_NOTIFY_PORT_DESTROYED, MACH_PORT_NAME_NULL,
-    MACH_PORT_QLIMIT_MAX, MACH_PORT_KTYPE_NONE, MACH_PORT_KTYPE_USER_DEVICE,
+    boolean_t, host_t, ipc_entry_num_t, ipc_entry_t, ipc_object, ipc_port_t, ipc_port_timestamp_t,
+    ipc_pset_t, ipc_space_t, ipc_thread_t, kern_return_t, mach_msg_id_t, mach_msg_type_name_t,
+    mach_msg_type_number_t, mach_port_delta_t, mach_port_ktype_t, mach_port_mscount_t,
+    mach_port_msgcount_t, mach_port_name_t, mach_port_right_t, mach_port_seqno_t,
+    mach_port_status_t, mach_port_type_t, mach_port_urefs_t, rdxtree_iter, round_page,
+    vm_map_copy_t, vm_offset_t, vm_size_t, HOST_NULL, IE_BITS_MAREQUEST, IE_BITS_TYPE_MASK,
+    IE_NULL, IKOT_NONE, IKOT_USER_DEVICE, IKO_NULL, IO_BITS_KOTYPE, IO_DEAD, IPS_NULL, IS_NULL,
+    KERN_INVALID_ARGUMENT, KERN_INVALID_CAPABILITY, KERN_INVALID_HOST, KERN_INVALID_NAME,
+    KERN_INVALID_RIGHT, KERN_INVALID_TASK, KERN_INVALID_VALUE, KERN_RESOURCE_SHORTAGE,
+    KERN_SUCCESS, MACH_MSG_TYPE_PORT_ANY, MACH_MSG_TYPE_PORT_ANY_RIGHT, MACH_NOTIFY_DEAD_NAME,
+    MACH_NOTIFY_NO_SENDERS, MACH_NOTIFY_PORT_DESTROYED, MACH_PORT_KTYPE_NONE,
+    MACH_PORT_KTYPE_USER_DEVICE, MACH_PORT_NAME_NULL, MACH_PORT_QLIMIT_MAX,
     MACH_PORT_RIGHT_DEAD_NAME, MACH_PORT_RIGHT_NUMBER, MACH_PORT_RIGHT_PORT_SET,
     MACH_PORT_RIGHT_RECEIVE, MACH_PORT_RIGHT_SEND, MACH_PORT_RIGHT_SEND_ONCE,
     MACH_PORT_TYPE_DNREQUEST, MACH_PORT_TYPE_MAREQUEST, MACH_PORT_TYPE_NONE,
-    MACH_PORT_TYPE_PORT_SET, MACH_PORT_TYPE_RECEIVE,
-    MACH_PORT_TYPE_SEND_RIGHTS, MACH_MSG_TYPE_PORT_ANY,
-    MACH_MSG_TYPE_PORT_ANY_RIGHT, PAGE_SIZE, VM_MAP_COPY_NULL, VM_PROT_NONE,
-    VM_PROT_READ, VM_PROT_WRITE,
+    MACH_PORT_TYPE_PORT_SET, MACH_PORT_TYPE_RECEIVE, MACH_PORT_TYPE_SEND_RIGHTS,
+    OFFSETOF_PERCPU_ACTIVE_THREAD, OFFSETOF_TASK_ITK_SPACE, OFFSETOF_TASK_NAME, PAGE_SIZE,
+    TASK_NAME_SIZE, VM_MAP_COPY_NULL, VM_PROT_NONE, VM_PROT_READ, VM_PROT_WRITE,
 };
 
 // ---------------------------------------------------------------------------
@@ -82,8 +75,8 @@ fn mach_port_name_valid(name: mach_port_name_t) -> bool {
 }
 
 use crate::locks::{
-    imq_lock, imq_unlock, ip_active, ip_lock, ip_unlock, ips_active, ips_lock,
-    ips_unlock, is_read_lock, is_read_unlock, is_write_unlock,
+    imq_lock, imq_unlock, ip_active, ip_lock, ip_unlock, ips_active, ips_lock, ips_unlock,
+    is_read_lock, is_read_unlock, is_write_unlock,
 };
 
 #[inline]
@@ -122,10 +115,7 @@ unsafe fn ipc_port_translate_receive(
 }
 
 #[inline]
-unsafe fn ipc_entry_lookup(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-) -> ipc_entry_t {
+unsafe fn ipc_entry_lookup(space: ipc_space_t, name: mach_port_name_t) -> ipc_entry_t {
     let entry = crate::extern_c::rdxtree_lookup_common(
         core::ptr::addr_of!((*space).is_map),
         name as crate::mach_types::rdxtree_key_t,
@@ -159,8 +149,7 @@ unsafe fn mach_port_names_helper(
     if (bits & MACH_PORT_TYPE_SEND_RIGHTS) != 0 {
         let port = (*entry).ie_object as ipc_port_t;
         ip_lock(port);
-        let died = !ip_active(port)
-            && ip_timestamp_order((*port).data.timestamp, timestamp);
+        let died = !ip_active(port) && ip_timestamp_order((*port).data.timestamp, timestamp);
         ip_unlock(port);
 
         if died {
@@ -272,9 +261,11 @@ pub unsafe extern "C" fn mach_port_names(
 
     let timestamp = ipc_port_timestamp();
 
-    let mut iter = rdxtree_iter { node: null_mut(), key: !0 };
-    let mut entry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter)
-        as ipc_entry_t;
+    let mut iter = rdxtree_iter {
+        node: null_mut(),
+        key: !0,
+    };
+    let mut entry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter) as ipc_entry_t;
     while !entry.is_null() {
         let bits = (*entry).ie_bits;
         if ie_bits_type(bits) != MACH_PORT_TYPE_NONE {
@@ -287,8 +278,7 @@ pub unsafe extern "C" fn mach_port_names(
                 &mut actual,
             );
         }
-        entry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter)
-            as ipc_entry_t;
+        entry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter) as ipc_entry_t;
     }
     crate::kassert!(actual < bound, "actual < bound");
     let _ = bound;
@@ -306,9 +296,8 @@ pub unsafe extern "C" fn mach_port_names(
             kmem_free(ipc_kernel_map, addr2, size);
         }
     } else {
-        let size_used = round_page(
-            actual as vm_size_t * size_of::<mach_port_name_t>() as vm_size_t,
-        );
+        let size_used =
+            round_page(actual as vm_size_t * size_of::<mach_port_name_t>() as vm_size_t);
 
         let _ = vm_map_pageable(ipc_kernel_map, addr1, addr1 + size_used, VM_PROT_NONE, 1, 1);
         let _ = vm_map_pageable(ipc_kernel_map, addr2, addr2 + size_used, VM_PROT_NONE, 1, 1);
@@ -471,7 +460,8 @@ pub unsafe extern "C" fn mach_port_destroy(
     if kr != KERN_SUCCESS {
         if mach_port_name_valid(name) && space == current_space() {
             printf(
-                b"task %.*s destroying a bogus port %lu, most probably a bug.\n\0".as_ptr() as *const _,
+                b"task %.*s destroying a bogus port %lu, most probably a bug.\n\0".as_ptr()
+                    as *const _,
                 TASK_NAME_SIZE as core::ffi::c_int,
                 current_task_name(),
                 name as core::ffi::c_ulong,
@@ -500,7 +490,8 @@ pub unsafe extern "C" fn mach_port_deallocate(
     if kr != KERN_SUCCESS {
         if mach_port_name_valid(name) && space == current_space() {
             printf(
-                b"task %.*s deallocating a bogus port %lu, most probably a bug.\n\0".as_ptr() as *const _,
+                b"task %.*s deallocating a bogus port %lu, most probably a bug.\n\0".as_ptr()
+                    as *const _,
                 TASK_NAME_SIZE as core::ffi::c_int,
                 current_task_name(),
                 name as core::ffi::c_ulong,
@@ -552,9 +543,11 @@ pub unsafe extern "C" fn mach_port_get_refs(
         match right {
             x if x == MACH_PORT_RIGHT_SEND_ONCE
                 || x == MACH_PORT_RIGHT_PORT_SET
-                || x == MACH_PORT_RIGHT_RECEIVE => *urefsp = 1,
-            x if x == MACH_PORT_RIGHT_DEAD_NAME
-                || x == MACH_PORT_RIGHT_SEND => *urefsp = urefs,
+                || x == MACH_PORT_RIGHT_RECEIVE =>
+            {
+                *urefsp = 1
+            }
+            x if x == MACH_PORT_RIGHT_DEAD_NAME || x == MACH_PORT_RIGHT_SEND => *urefsp = urefs,
             _ => *urefsp = 0,
         }
     } else {
@@ -750,21 +743,21 @@ pub unsafe extern "C" fn mach_port_get_set_status(
 
         let pset = (*entry).ie_object as ipc_pset_t;
         let names = addr as *mut mach_port_name_t;
-        let maxnames = (size / size_of::<mach_port_name_t>() as vm_size_t)
-            as ipc_entry_num_t;
+        let maxnames = (size / size_of::<mach_port_name_t>() as vm_size_t) as ipc_entry_num_t;
         actual = 0;
 
-        let mut iter = rdxtree_iter { node: null_mut(), key: !0 };
-        let mut ientry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter)
-            as ipc_entry_t;
+        let mut iter = rdxtree_iter {
+            node: null_mut(),
+            key: !0,
+        };
+        let mut ientry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter) as ipc_entry_t;
         while !ientry.is_null() {
             let bits = (*ientry).ie_bits;
             if (bits & MACH_PORT_TYPE_RECEIVE) != 0 {
                 let port = (*ientry).ie_object as ipc_port_t;
                 mach_port_gst_helper(pset, port, maxnames, names, &mut actual);
             }
-            ientry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter)
-                as ipc_entry_t;
+            ientry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter) as ipc_entry_t;
         }
 
         is_read_unlock(space);
@@ -774,26 +767,17 @@ pub unsafe extern "C" fn mach_port_get_set_status(
         }
 
         kmem_free(ipc_kernel_map, addr, size);
-        size = round_page(
-            actual as vm_size_t * size_of::<mach_port_name_t>() as vm_size_t,
-        ) + PAGE_SIZE;
+        size = round_page(actual as vm_size_t * size_of::<mach_port_name_t>() as vm_size_t)
+            + PAGE_SIZE;
     }
 
     if actual == 0 {
         memory = VM_MAP_COPY_NULL;
         kmem_free(ipc_kernel_map, addr, size);
     } else {
-        let size_used = round_page(
-            actual as vm_size_t * size_of::<mach_port_name_t>() as vm_size_t,
-        );
-        let _ = vm_map_pageable(
-            ipc_kernel_map,
-            addr,
-            addr + size_used,
-            VM_PROT_NONE,
-            1,
-            1,
-        );
+        let size_used =
+            round_page(actual as vm_size_t * size_of::<mach_port_name_t>() as vm_size_t);
+        let _ = vm_map_pageable(ipc_kernel_map, addr, addr + size_used, VM_PROT_NONE, 1, 1);
         let mut copy: vm_map_copy_t = null_mut();
         let _ = vm_map_copyin(ipc_kernel_map, addr, size_used, 1, &mut copy);
         memory = copy;
@@ -897,13 +881,7 @@ pub unsafe extern "C" fn mach_port_request_notification(
         ipc_port_nsrequest(port, sync, notify, previousp);
         KERN_SUCCESS
     } else if id == MACH_NOTIFY_DEAD_NAME {
-        ipc_right_dnrequest(
-            space,
-            name,
-            (sync != 0) as boolean_t,
-            notify,
-            previousp,
-        )
+        ipc_right_dnrequest(space, name, (sync != 0) as boolean_t, notify, previousp)
     } else {
         KERN_INVALID_VALUE
     }
@@ -929,13 +907,7 @@ pub unsafe extern "C" fn mach_port_insert_right(
     if (poly as usize) == 0 || (poly as usize) == !0usize {
         return KERN_INVALID_CAPABILITY;
     }
-    ipc_object_copyout_name(
-        space,
-        poly as *mut ipc_object,
-        polyPoly,
-        0,
-        name,
-    )
+    ipc_object_copyout_name(space, poly as *mut ipc_object, polyPoly, 0, name)
 }
 
 #[no_mangle]
@@ -952,12 +924,7 @@ pub unsafe extern "C" fn mach_port_extract_right(
     if !MACH_MSG_TYPE_PORT_ANY(msgt_name) {
         return KERN_INVALID_VALUE;
     }
-    let kr = ipc_object_copyin(
-        space,
-        name,
-        msgt_name,
-        poly as *mut *mut ipc_object,
-    );
+    let kr = ipc_object_copyin(space, name, msgt_name, poly as *mut *mut ipc_object);
     if kr == KERN_SUCCESS {
         *polyPoly = ipc_object_copyin_type(msgt_name);
     }

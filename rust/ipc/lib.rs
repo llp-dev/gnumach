@@ -6,6 +6,40 @@
 
 #![no_std]
 #![allow(non_camel_case_types, non_snake_case, non_upper_case_globals)]
+// C-shaped-Rust port: silence clippy lints that conflict with the
+// "1:1 mirror of the C originals" style.
+//
+// - `manual_c_str_literals`: we use `b"...\0"` literals for FFI strings;
+//   clippy suggests `c"..."`.  Equivalent at runtime, but the byte form
+//   matches the C originals.
+// - `needless_late_init`: we late-init locals to mirror the C
+//   declaration-then-assignment pattern.
+// - `missing_safety_doc`: safety contracts for `#[no_mangle] pub unsafe
+//   extern "C"` functions match the C-side preconditions documented in
+//   the original `ipc/*.c` files.
+// - `macro_metavars_in_unsafe`: the `kassert!`/`kpanic!` macros expand
+//   `$msg` inside the unsafe block of an `Assert(...)` call.
+// - `unnecessary_cast`, `useless_conversion`: many casts here exist for
+//   clarity at the C/Rust boundary (`x as u32` where `x` is already u32
+//   on i686 but conceptually a different type in C).
+// - `nonminimal_bool`: some boolean expressions mirror the C exactly
+//   (e.g. `!ptr.is_null() && !(ptr as usize) == !0` for IO_VALID).
+// - `no_effect`: arithmetic with constants that collapse on i686 (e.g.
+//   `bits + IE_BITS_GEN_ONE` where IE_BITS_GEN_ONE == 0) are kept for
+//   parity with the C originals.
+#![allow(
+    clippy::manual_c_str_literals,
+    clippy::needless_late_init,
+    clippy::missing_safety_doc,
+    clippy::macro_metavars_in_unsafe,
+    clippy::unnecessary_cast,
+    clippy::useless_conversion,
+    clippy::nonminimal_bool,
+    clippy::no_effect,
+    clippy::identity_op,
+    clippy::eq_op,
+    clippy::manual_range_contains
+)]
 
 /// Runtime assert — expands to a call to the kernel's `Assert(...)` (which
 /// panics) when the condition is false.  Mirrors the C `assert(...)` macro

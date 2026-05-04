@@ -5,16 +5,14 @@
 use core::ptr::{addr_of_mut, null_mut};
 
 use crate::extern_c::{
-    kmem_cache_alloc, kmem_cache_free, lock_init,
-    rdxtree_insert_common, rdxtree_remove_all, rdxtree_walk,
+    kmem_cache_alloc, kmem_cache_free, lock_init, rdxtree_insert_common, rdxtree_remove_all,
+    rdxtree_walk,
 };
 use crate::ipc_right::ipc_right_clean;
 use crate::mach_types::{
-    ipc_entry, ipc_entry_index_u, ipc_entry_t, ipc_space_t,
-    kern_return_t, kmem_cache, mach_port_name_t, rdxtree, rdxtree_iter,
-    rdxtree_key_t, vm_offset_t, IE_BITS_TYPE_MASK, IS_NULL,
-    KERN_RESOURCE_SHORTAGE, KERN_SUCCESS, MACH_PORT_NAME_NULL,
-    SIZE_OF_KMEM_CACHE,
+    ipc_entry, ipc_entry_index_u, ipc_entry_t, ipc_space_t, kern_return_t, kmem_cache,
+    mach_port_name_t, rdxtree, rdxtree_iter, rdxtree_key_t, vm_offset_t, IE_BITS_TYPE_MASK,
+    IS_NULL, KERN_RESOURCE_SHORTAGE, KERN_SUCCESS, MACH_PORT_NAME_NULL, SIZE_OF_KMEM_CACHE,
 };
 
 // ---------------------------------------------------------------------------
@@ -141,9 +139,7 @@ pub unsafe extern "C" fn ipc_space_release(space: ipc_space_t) {
 // ---------------------------------------------------------------------------
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_space_create(
-    spacep: *mut ipc_space_t,
-) -> kern_return_t {
+pub unsafe extern "C" fn ipc_space_create(spacep: *mut ipc_space_t) -> kern_return_t {
     let space = is_alloc();
     if space == IS_NULL {
         return KERN_RESOURCE_SHORTAGE;
@@ -177,9 +173,7 @@ pub unsafe extern "C" fn ipc_space_create(
 // ---------------------------------------------------------------------------
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_space_create_special(
-    spacep: *mut ipc_space_t,
-) -> kern_return_t {
+pub unsafe extern "C" fn ipc_space_create_special(spacep: *mut ipc_space_t) -> kern_return_t {
     let space = is_alloc();
     if space == IS_NULL {
         return KERN_RESOURCE_SHORTAGE;
@@ -213,24 +207,22 @@ pub unsafe extern "C" fn ipc_space_destroy(space: ipc_space_t) {
     }
 
     /* rdxtree_for_each(&space->is_map, &iter, entry) { ... } */
-    let mut iter = rdxtree_iter { node: null_mut(), key: !0 };
+    let mut iter = rdxtree_iter {
+        node: null_mut(),
+        key: !0,
+    };
     rdxtree_iter_init(&mut iter);
-    let mut entry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter)
-        as ipc_entry_t;
+    let mut entry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter) as ipc_entry_t;
     while !entry.is_null() {
         if (*entry).ie_name != MACH_PORT_NAME_NULL {
             let typ = ie_bits_type((*entry).ie_bits);
             if typ != 0 {
-                let name = mach_port_makeb(
-                    (*entry).ie_name,
-                    (*entry).ie_bits,
-                );
+                let name = mach_port_makeb((*entry).ie_name, (*entry).ie_bits);
                 ipc_right_clean(space, name, entry);
             }
             ie_free(entry);
         }
-        entry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter)
-            as ipc_entry_t;
+        entry = rdxtree_walk(addr_of_mut!((*space).is_map), &mut iter) as ipc_entry_t;
     }
     rdxtree_remove_all(addr_of_mut!((*space).is_map));
     rdxtree_remove_all(addr_of_mut!((*space).is_reverse_map));

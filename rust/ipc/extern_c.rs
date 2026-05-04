@@ -45,14 +45,12 @@
 use core::ffi::{c_char, c_int};
 
 use crate::mach_types::{
-    boolean_t, ipc_port, kern_return_t, kmem_cache, lock_t,
-    mach_msg_timeout_t, rdxtree, rdxtree_key_t, vm_map_t, vm_offset_t,
-    vm_size_t,
+    boolean_t, ipc_port, kern_return_t, kmem_cache, lock_t, mach_msg_timeout_t, rdxtree,
+    rdxtree_key_t, vm_map_t, vm_offset_t, vm_size_t,
 };
 
 /// Type of kmem_cache constructor: `void (*)(void *)`.
-pub type kmem_cache_ctor_t =
-    Option<unsafe extern "C" fn(*mut core::ffi::c_void)>;
+pub type kmem_cache_ctor_t = Option<unsafe extern "C" fn(*mut core::ffi::c_void)>;
 
 /* `simple_lock_data_t` is a zero-sized struct (NCPUS == 1 / MACH_SLOCKS == 0)
  * which Rust flags as not-FFI-safe per the strict C rules.  gcc and the
@@ -79,13 +77,7 @@ extern "C" {
 
     /// `kern/debug.h`:
     /// `void Assert(const char *file, int line, const char *fun, const char *s, ...);`
-    pub fn Assert(
-        file: *const u8,
-        line: c_int,
-        fun: *const u8,
-        s: *const u8,
-    ) -> !;
-
+    pub fn Assert(file: *const u8, line: c_int, fun: *const u8, s: *const u8) -> !;
 
     // VM.
     pub static mut kernel_map: vm_map_t;
@@ -146,10 +138,7 @@ extern "C" {
     ) -> *mut core::ffi::c_void;
 
     /// `kern/rdxtree.h`: remove a key, returning the prior pointer or NULL.
-    pub fn rdxtree_remove(
-        tree: *mut rdxtree,
-        key: rdxtree_key_t,
-    ) -> *mut core::ffi::c_void;
+    pub fn rdxtree_remove(tree: *mut rdxtree, key: rdxtree_key_t) -> *mut core::ffi::c_void;
 
     /// `kern/sched_prim.h`: `void thread_go(thread_t);`
     pub fn thread_go(thread: crate::mach_types::ipc_thread_t);
@@ -204,7 +193,6 @@ extern "C" {
     /// `kern/ipc_kobject.h`: `void ipc_kobject_destroy(ipc_port_t);`
     pub fn ipc_kobject_destroy(port: *mut ipc_port);
 
-
     /// `vm/vm_kern.h`: `kern_return_t kmem_alloc_pageable(vm_map_t, vm_offset_t *, vm_size_t);`
     pub fn kmem_alloc_pageable(
         map: vm_map_t,
@@ -243,11 +231,7 @@ extern "C" {
 
     /// `vm/vm_user.h`:
     /// `kern_return_t vm_deallocate(vm_map_t, vm_offset_t, vm_size_t);`
-    pub fn vm_deallocate(
-        map: vm_map_t,
-        start: vm_offset_t,
-        size: vm_size_t,
-    ) -> kern_return_t;
+    pub fn vm_deallocate(map: vm_map_t, start: vm_offset_t, size: vm_size_t) -> kern_return_t;
 
     /// `vm/vm_kern.h`: `int copyinmap(vm_map_t, char *, char *, int);`
     pub fn copyinmap(
@@ -272,7 +256,6 @@ extern "C" {
         dst_addr: *mut vm_offset_t,
         copy: crate::mach_types::vm_map_copy_t,
     ) -> kern_return_t;
-
 
     /// `i386/i386/copy_user.S`: low-level user→kernel single-port copy.
     /// (Inline `copyin_port` in `ipc/copy_user.h` calls plain `copyin`.)
@@ -316,10 +299,7 @@ extern "C" {
     pub fn thread_syscall_return(ret: kern_return_t) -> !;
 
     /// `kern/thread.h`: `void thread_set_syscall_return(thread_t, kern_return_t);`
-    pub fn thread_set_syscall_return(
-        thread: crate::mach_types::ipc_thread_t,
-        ret: kern_return_t,
-    );
+    pub fn thread_set_syscall_return(thread: crate::mach_types::ipc_thread_t, ret: kern_return_t);
 
     /// `kern/thread.h`: `void thread_exception_return(void);`  (Continuation.)
     pub fn thread_exception_return() -> !;
@@ -347,13 +327,6 @@ extern "C" {
         uaddr: *mut core::ffi::c_void,
         count: usize,
     ) -> c_int;
-
-
-
-
-
-
-
 
     /// `kern/lock.h`: `void lock_init(lock_t, boolean_t);`
     pub fn lock_init(lock: lock_t, can_sleep: crate::mach_types::boolean_t);

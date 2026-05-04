@@ -6,24 +6,19 @@
 
 use core::ptr::addr_of_mut;
 
-use crate::extern_c::{
-    kalloc, printf,
-};
+use crate::extern_c::{kalloc, printf};
 use crate::ipc_mqueue::ipc_mqueue_send;
 use crate::ipc_port::{ipc_port_release_receive, ipc_port_release_sonce};
 use crate::mach_types::{
-    ipc_kmsg_full, ipc_port, mach_dead_name_notification_t,
-    mach_msg_accepted_notification_t, mach_msg_header_t, mach_msg_type_t,
-    mach_no_senders_notification_t, mach_port_deleted_notification_t,
-    mach_port_destroyed_notification_t, mach_port_mscount_t,
-    mach_port_name_t, mach_send_once_notification_t, vm_size_t, IKM_NULL,
-    IKM_OVERHEAD, IMAR_NULL, MACH_MSGH_BITS, MACH_MSGH_BITS_COMPLEX,
-    MACH_MSG_TIMEOUT_NONE, MACH_MSG_TYPE_INTEGER_32, MACH_MSG_TYPE_PORT_NAME,
-    MACH_MSG_TYPE_PORT_RECEIVE, MACH_MSG_TYPE_PORT_SEND_ONCE,
+    ipc_kmsg_full, ipc_port, mach_dead_name_notification_t, mach_msg_accepted_notification_t,
+    mach_msg_header_t, mach_msg_type_t, mach_no_senders_notification_t,
+    mach_port_deleted_notification_t, mach_port_destroyed_notification_t, mach_port_mscount_t,
+    mach_port_name_t, mach_send_once_notification_t, vm_size_t, IKM_NULL, IKM_OVERHEAD, IMAR_NULL,
+    MACH_MSGH_BITS, MACH_MSGH_BITS_COMPLEX, MACH_MSG_TIMEOUT_NONE, MACH_MSG_TYPE_INTEGER_32,
+    MACH_MSG_TYPE_PORT_NAME, MACH_MSG_TYPE_PORT_RECEIVE, MACH_MSG_TYPE_PORT_SEND_ONCE,
     MACH_NOTIFY_DEAD_NAME, MACH_NOTIFY_MSG_ACCEPTED, MACH_NOTIFY_NO_SENDERS,
-    MACH_NOTIFY_PORT_DELETED, MACH_NOTIFY_PORT_DESTROYED, MACH_NOTIFY_SEND_ONCE,
-    MACH_PORT_NULL, MACH_SEND_ALWAYS, PORT_NAME_T_SIZE_IN_BITS,
-    PORT_T_SIZE_IN_BITS,
+    MACH_NOTIFY_PORT_DELETED, MACH_NOTIFY_PORT_DESTROYED, MACH_NOTIFY_SEND_ONCE, MACH_PORT_NULL,
+    MACH_SEND_ALWAYS, PORT_NAME_T_SIZE_IN_BITS, PORT_T_SIZE_IN_BITS,
 };
 
 const NOTIFY_MSGH_SEQNO: u32 = 0;
@@ -163,14 +158,11 @@ unsafe fn ipc_notify_init_msg_accepted(n: *mut mach_msg_accepted_notification_t)
     (*n).not_port = MACH_PORT_NULL;
 }
 
-unsafe fn ipc_notify_init_port_destroyed(
-    n: *mut mach_port_destroyed_notification_t,
-) {
+unsafe fn ipc_notify_init_port_destroyed(n: *mut mach_port_destroyed_notification_t) {
     let m = addr_of_mut!((*n).not_header);
     let t = addr_of_mut!((*n).not_type);
 
-    (*m).msgh_bits = MACH_MSGH_BITS_COMPLEX
-        | MACH_MSGH_BITS(MACH_MSG_TYPE_PORT_SEND_ONCE, 0);
+    (*m).msgh_bits = MACH_MSGH_BITS_COMPLEX | MACH_MSGH_BITS(MACH_MSG_TYPE_PORT_SEND_ONCE, 0);
     (*m).msgh_size = core::mem::size_of::<mach_port_destroyed_notification_t>() as u32;
     (*m).msgh_seqno = NOTIFY_MSGH_SEQNO;
     (*m).msgh_local_port = MACH_PORT_NULL;
@@ -201,15 +193,7 @@ unsafe fn ipc_notify_init_no_senders(n: *mut mach_no_senders_notification_t) {
     (*m).msgh_remote_port = MACH_PORT_NULL;
     (*m).msgh_id = MACH_NOTIFY_NO_SENDERS;
 
-    *t = mach_msg_type_t::new(
-        MACH_MSG_TYPE_INTEGER_32,
-        32,
-        1,
-        TRUE,
-        FALSE,
-        FALSE,
-        0,
-    );
+    *t = mach_msg_type_t::new(MACH_MSG_TYPE_INTEGER_32, 32, 1, TRUE, FALSE, FALSE, 0);
 
     (*n).not_count = 0;
 }
@@ -257,19 +241,14 @@ unsafe fn ipc_notify_init_dead_name(n: *mut mach_dead_name_notification_t) {
 pub unsafe extern "C" fn ipc_notify_init() {
     ipc_notify_init_port_deleted(addr_of_mut!(ipc_notify_port_deleted_template));
     ipc_notify_init_msg_accepted(addr_of_mut!(ipc_notify_msg_accepted_template));
-    ipc_notify_init_port_destroyed(addr_of_mut!(
-        ipc_notify_port_destroyed_template
-    ));
+    ipc_notify_init_port_destroyed(addr_of_mut!(ipc_notify_port_destroyed_template));
     ipc_notify_init_no_senders(addr_of_mut!(ipc_notify_no_senders_template));
     ipc_notify_init_send_once(addr_of_mut!(ipc_notify_send_once_template));
     ipc_notify_init_dead_name(addr_of_mut!(ipc_notify_dead_name_template));
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_notify_port_deleted(
-    port: *mut ipc_port,
-    name: mach_port_name_t,
-) {
+pub unsafe extern "C" fn ipc_notify_port_deleted(port: *mut ipc_port, name: mach_port_name_t) {
     let kmsg: *mut ipc_kmsg_full;
     let n: *mut mach_port_deleted_notification_t;
 
@@ -284,7 +263,10 @@ pub unsafe extern "C" fn ipc_notify_port_deleted(
         return;
     }
 
-    ikm_init(kmsg, core::mem::size_of::<mach_port_deleted_notification_t>() as u32);
+    ikm_init(
+        kmsg,
+        core::mem::size_of::<mach_port_deleted_notification_t>() as u32,
+    );
     n = addr_of_mut!((*kmsg).ikm_header) as *mut mach_port_deleted_notification_t;
     *n = core::ptr::read(addr_of_mut!(ipc_notify_port_deleted_template));
 
@@ -295,10 +277,7 @@ pub unsafe extern "C" fn ipc_notify_port_deleted(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_notify_msg_accepted(
-    port: *mut ipc_port,
-    name: mach_port_name_t,
-) {
+pub unsafe extern "C" fn ipc_notify_msg_accepted(port: *mut ipc_port, name: mach_port_name_t) {
     let kmsg: *mut ipc_kmsg_full;
     let n: *mut mach_msg_accepted_notification_t;
 
@@ -313,7 +292,10 @@ pub unsafe extern "C" fn ipc_notify_msg_accepted(
         return;
     }
 
-    ikm_init(kmsg, core::mem::size_of::<mach_msg_accepted_notification_t>() as u32);
+    ikm_init(
+        kmsg,
+        core::mem::size_of::<mach_msg_accepted_notification_t>() as u32,
+    );
     n = addr_of_mut!((*kmsg).ikm_header) as *mut mach_msg_accepted_notification_t;
     *n = core::ptr::read(addr_of_mut!(ipc_notify_msg_accepted_template));
 
@@ -324,10 +306,7 @@ pub unsafe extern "C" fn ipc_notify_msg_accepted(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_notify_port_destroyed(
-    port: *mut ipc_port,
-    right: *mut ipc_port,
-) {
+pub unsafe extern "C" fn ipc_notify_port_destroyed(port: *mut ipc_port, right: *mut ipc_port) {
     let kmsg: *mut ipc_kmsg_full;
     let n: *mut mach_port_destroyed_notification_t;
 
@@ -343,7 +322,10 @@ pub unsafe extern "C" fn ipc_notify_port_destroyed(
         return;
     }
 
-    ikm_init(kmsg, core::mem::size_of::<mach_port_destroyed_notification_t>() as u32);
+    ikm_init(
+        kmsg,
+        core::mem::size_of::<mach_port_destroyed_notification_t>() as u32,
+    );
     n = addr_of_mut!((*kmsg).ikm_header) as *mut mach_port_destroyed_notification_t;
     *n = core::ptr::read(addr_of_mut!(ipc_notify_port_destroyed_template));
 
@@ -354,10 +336,7 @@ pub unsafe extern "C" fn ipc_notify_port_destroyed(
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_notify_no_senders(
-    port: *mut ipc_port,
-    mscount: mach_port_mscount_t,
-) {
+pub unsafe extern "C" fn ipc_notify_no_senders(port: *mut ipc_port, mscount: mach_port_mscount_t) {
     let kmsg: *mut ipc_kmsg_full;
     let n: *mut mach_no_senders_notification_t;
 
@@ -372,7 +351,10 @@ pub unsafe extern "C" fn ipc_notify_no_senders(
         return;
     }
 
-    ikm_init(kmsg, core::mem::size_of::<mach_no_senders_notification_t>() as u32);
+    ikm_init(
+        kmsg,
+        core::mem::size_of::<mach_no_senders_notification_t>() as u32,
+    );
     n = addr_of_mut!((*kmsg).ikm_header) as *mut mach_no_senders_notification_t;
     *n = core::ptr::read(addr_of_mut!(ipc_notify_no_senders_template));
 
@@ -389,15 +371,15 @@ pub unsafe extern "C" fn ipc_notify_send_once(port: *mut ipc_port) {
 
     kmsg = ikm_alloc(core::mem::size_of::<mach_send_once_notification_t>() as u32);
     if kmsg == IKM_NULL {
-        printf(
-            b"dropped send-once (0x%p)\n\0".as_ptr() as *const _,
-            port,
-        );
+        printf(b"dropped send-once (0x%p)\n\0".as_ptr() as *const _, port);
         ipc_port_release_sonce(port);
         return;
     }
 
-    ikm_init(kmsg, core::mem::size_of::<mach_send_once_notification_t>() as u32);
+    ikm_init(
+        kmsg,
+        core::mem::size_of::<mach_send_once_notification_t>() as u32,
+    );
     n = addr_of_mut!((*kmsg).ikm_header) as *mut mach_send_once_notification_t;
     *n = core::ptr::read(addr_of_mut!(ipc_notify_send_once_template));
 
@@ -407,10 +389,7 @@ pub unsafe extern "C" fn ipc_notify_send_once(port: *mut ipc_port) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_notify_dead_name(
-    port: *mut ipc_port,
-    name: mach_port_name_t,
-) {
+pub unsafe extern "C" fn ipc_notify_dead_name(port: *mut ipc_port, name: mach_port_name_t) {
     let kmsg: *mut ipc_kmsg_full;
     let n: *mut mach_dead_name_notification_t;
 
@@ -425,7 +404,10 @@ pub unsafe extern "C" fn ipc_notify_dead_name(
         return;
     }
 
-    ikm_init(kmsg, core::mem::size_of::<mach_dead_name_notification_t>() as u32);
+    ikm_init(
+        kmsg,
+        core::mem::size_of::<mach_dead_name_notification_t>() as u32,
+    );
     n = addr_of_mut!((*kmsg).ikm_header) as *mut mach_dead_name_notification_t;
     *n = core::ptr::read(addr_of_mut!(ipc_notify_dead_name_template));
 

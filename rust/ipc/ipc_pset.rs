@@ -8,10 +8,9 @@ use crate::ipc_mqueue::{ipc_mqueue_changed, ipc_mqueue_move};
 use crate::ipc_object::{ipc_object_alloc, ipc_object_alloc_name};
 use crate::ipc_target::{ipc_target_init, ipc_target_terminate};
 use crate::mach_types::{
-    ipc_object, ipc_port_t, ipc_pset_t,
-    ipc_space_t, kern_return_t, mach_port_name_t, IOT_PORT_SET,
-    IO_BITS_ACTIVE, IPS_NULL, KERN_NOT_IN_SET, KERN_SUCCESS,
-    MACH_PORT_TYPE_PORT_SET, MACH_RCV_PORT_CHANGED, MACH_RCV_PORT_DIED,
+    ipc_object, ipc_port_t, ipc_pset_t, ipc_space_t, kern_return_t, mach_port_name_t, IOT_PORT_SET,
+    IO_BITS_ACTIVE, IPS_NULL, KERN_NOT_IN_SET, KERN_SUCCESS, MACH_PORT_TYPE_PORT_SET,
+    MACH_RCV_PORT_CHANGED, MACH_RCV_PORT_DIED,
 };
 
 // ---------------------------------------------------------------------------
@@ -19,8 +18,8 @@ use crate::mach_types::{
 // ---------------------------------------------------------------------------
 
 use crate::locks::{
-    imq_lock, imq_unlock, ip_active, ip_lock, ip_unlock,
-    ips_active, ips_lock, ips_unlock, is_read_unlock,
+    imq_lock, imq_unlock, ip_active, ip_lock, ip_unlock, ips_active, ips_lock, ips_unlock,
+    is_read_unlock,
 };
 
 #[inline]
@@ -128,7 +127,12 @@ pub unsafe extern "C" fn ipc_pset_add(pset: ipc_pset_t, port: ipc_port_t) {
     ipc_mqueue_move(pset_mq, port_mq, port);
     imq_unlock(pset_mq);
     crate::kassert!(
-        (*port).ip_target.ipt_messages.imq_messages.ikmq_base.is_null(),
+        (*port)
+            .ip_target
+            .ipt_messages
+            .imq_messages
+            .ikmq_base
+            .is_null(),
         "ipc_kmsg_queue_empty(&port->ip_messages.imq_messages)"
     );
 
@@ -136,7 +140,12 @@ pub unsafe extern "C" fn ipc_pset_add(pset: ipc_pset_t, port: ipc_port_t) {
 
     ipc_mqueue_changed(port_mq, MACH_RCV_PORT_CHANGED);
     crate::kassert!(
-        (*port).ip_target.ipt_messages.imq_threads.ithq_base.is_null(),
+        (*port)
+            .ip_target
+            .ipt_messages
+            .imq_threads
+            .ithq_base
+            .is_null(),
         "ipc_thread_queue_empty(&port->ip_messages.imq_threads)"
     );
     imq_unlock(port_mq);

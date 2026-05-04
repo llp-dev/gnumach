@@ -5,29 +5,24 @@
 use core::mem::size_of;
 use core::ptr::{addr_of_mut, null_mut};
 
-use crate::extern_c::{
-    ipc_kobject_destroy, kmem_cache_alloc, rdxtree_lookup_common, thread_go,
-};
-use crate::ipc_kmsg::{ipc_kmsg_destroy, ipc_kmsg_dequeue};
+use crate::extern_c::{ipc_kobject_destroy, kmem_cache_alloc, rdxtree_lookup_common, thread_go};
+use crate::ipc_kmsg::{ipc_kmsg_dequeue, ipc_kmsg_destroy};
 use crate::ipc_mqueue::{ipc_mqueue_changed, ipc_mqueue_init};
 use crate::ipc_notify::{
-    ipc_notify_dead_name, ipc_notify_no_senders, ipc_notify_port_destroyed,
-    ipc_notify_send_once,
+    ipc_notify_dead_name, ipc_notify_no_senders, ipc_notify_port_destroyed, ipc_notify_send_once,
 };
 use crate::ipc_object::{ipc_object_caches, ipc_object_copyout};
 use crate::ipc_target::{ipc_target_init, ipc_target_terminate};
 use crate::mach_types::{
     ipc_entry_t, ipc_object, ipc_object_bits_t, ipc_port, ipc_port_request,
-    ipc_port_request_index_t, ipc_port_request_t, ipc_port_t,
-    ipc_port_timestamp_t, ipc_pset_t, ipc_space_t, ipc_table_size_t,
-    ipc_thread_t, kern_return_t, mach_port_mscount_t,
-    mach_port_msgcount_t, mach_port_name_t, mach_port_seqno_t, vm_offset_t,
-    IE_BITS_TYPE_MASK, IE_NULL, IKM_NULL, IKOT_NONE, IOT_PORT, IO_BITS_ACTIVE,
-    IO_BITS_KOTYPE, IO_BITS_PROTECTED_PAYLOAD, IPS_NULL,
-    ITH_NULL, IS_NULL, KERN_NO_SPACE, KERN_RESOURCE_SHORTAGE, KERN_SUCCESS,
-    KERN_INVALID_CAPABILITY, MACH_MSG_SUCCESS, MACH_MSG_TYPE_PORT_SEND,
-    MACH_PORT_NAME_DEAD, MACH_PORT_NAME_NULL, MACH_PORT_QLIMIT_DEFAULT,
-    MACH_PORT_TYPE_RECEIVE, MACH_RCV_PORT_DIED,
+    ipc_port_request_index_t, ipc_port_request_t, ipc_port_t, ipc_port_timestamp_t, ipc_pset_t,
+    ipc_space_t, ipc_table_size_t, ipc_thread_t, kern_return_t, mach_port_mscount_t,
+    mach_port_msgcount_t, mach_port_name_t, mach_port_seqno_t, vm_offset_t, IE_BITS_TYPE_MASK,
+    IE_NULL, IKM_NULL, IKOT_NONE, IOT_PORT, IO_BITS_ACTIVE, IO_BITS_KOTYPE,
+    IO_BITS_PROTECTED_PAYLOAD, IPS_NULL, IS_NULL, ITH_NULL, KERN_INVALID_CAPABILITY, KERN_NO_SPACE,
+    KERN_RESOURCE_SHORTAGE, KERN_SUCCESS, MACH_MSG_SUCCESS, MACH_MSG_TYPE_PORT_SEND,
+    MACH_PORT_NAME_DEAD, MACH_PORT_NAME_NULL, MACH_PORT_QLIMIT_DEFAULT, MACH_PORT_TYPE_RECEIVE,
+    MACH_RCV_PORT_DIED,
 };
 
 // ---------------------------------------------------------------------------
@@ -48,8 +43,8 @@ pub static mut ipc_port_timestamp_data: ipc_port_timestamp_t = 0;
 // ---------------------------------------------------------------------------
 
 use crate::locks::{
-    io_check_unlock, ip_active, ip_check_unlock, ip_lock, ip_lock_init,
-    ip_lock_try, ip_reference, ip_release, ip_unlock,
+    io_check_unlock, ip_active, ip_check_unlock, ip_lock, ip_lock_init, ip_lock_try, ip_reference,
+    ip_release, ip_unlock,
 };
 
 #[inline]
@@ -65,8 +60,7 @@ fn io_makebits(active: bool, otype: u32, kotype: u32) -> ipc_object_bits_t {
 
 #[inline]
 unsafe fn io_alloc(otype: u32) -> *mut ipc_object {
-    kmem_cache_alloc(addr_of_mut!(ipc_object_caches[otype as usize]))
-        as *mut ipc_object
+    kmem_cache_alloc(addr_of_mut!(ipc_object_caches[otype as usize])) as *mut ipc_object
 }
 #[inline]
 unsafe fn ip_kotype(port: *mut ipc_port) -> u32 {
@@ -115,9 +109,7 @@ unsafe fn ipc_port_multiple_unlock() {}
 unsafe fn ipc_port_timestamp_lock() {}
 #[inline]
 unsafe fn ipc_port_timestamp_unlock() {}
-use crate::locks::{
-    imq_lock, imq_unlock, ips_active, ips_lock, ips_unlock,
-};
+use crate::locks::{imq_lock, imq_unlock, ips_active, ips_lock, ips_unlock};
 
 #[inline]
 unsafe fn ips_check_unlock(pset: ipc_pset_t) {
@@ -152,10 +144,7 @@ unsafe fn it_dnrequests_free(its: ipc_table_size_t, table: ipc_port_request_t) {
 
 /// Mirror of the static inline `ipc_entry_lookup` from `ipc/ipc_space.h`.
 #[inline]
-unsafe fn ipc_entry_lookup(
-    space: ipc_space_t,
-    name: mach_port_name_t,
-) -> ipc_entry_t {
+unsafe fn ipc_entry_lookup(space: ipc_space_t, name: mach_port_name_t) -> ipc_entry_t {
     let entry = rdxtree_lookup_common(
         core::ptr::addr_of!((*space).is_map),
         name as crate::mach_types::rdxtree_key_t,
@@ -209,7 +198,7 @@ pub unsafe extern "C" fn ipc_port_dnrequest(
     soright: ipc_port_t,
     indexp: *mut ipc_port_request_index_t,
 ) -> kern_return_t {
-crate::kassert!(ip_active(port), "ip_active(port)");
+    crate::kassert!(ip_active(port), "ip_active(port)");
     crate::kassert!(name != MACH_PORT_NAME_NULL, "name != MACH_PORT_NULL");
     crate::kassert!(!soright.is_null(), "soright != IP_NULL");
 
@@ -224,7 +213,10 @@ crate::kassert!(ip_active(port), "ip_active(port)");
     }
 
     let ipr: ipc_port_request_t = table.add(index as usize);
-crate::kassert!((*ipr).name.name == MACH_PORT_NAME_NULL, "ipr->ipr_name == MACH_PORT_NULL");
+    crate::kassert!(
+        (*ipr).name.name == MACH_PORT_NAME_NULL,
+        "ipr->ipr_name == MACH_PORT_NULL"
+    );
 
     (*table).notify.index = (*ipr).notify.index;
     (*ipr).name.name = name;
@@ -274,8 +266,7 @@ pub unsafe extern "C" fn ipc_port_dngrow(port: ipc_port_t) -> kern_return_t {
 
     let still_ours = ip_active(port)
         && (*port).ip_dnrequests == otable
-        && (otable.is_null()
-            || (*otable).name.size.add(1) == its);
+        && (otable.is_null() || (*otable).name.size.add(1) == its);
 
     if still_ours {
         let oits: ipc_table_size_t;
@@ -340,16 +331,16 @@ pub unsafe extern "C" fn ipc_port_dncancel(
     _name: mach_port_name_t,
     index: ipc_port_request_index_t,
 ) -> ipc_port_t {
-crate::kassert!(ip_active(port), "ip_active(port)");
+    crate::kassert!(ip_active(port), "ip_active(port)");
     crate::kassert!(_name != MACH_PORT_NAME_NULL, "name != MACH_PORT_NULL");
     crate::kassert!(index != 0, "index != 0");
 
     let table: ipc_port_request_t = (*port).ip_dnrequests;
-crate::kassert!(!table.is_null(), "table != IPR_NULL");
+    crate::kassert!(!table.is_null(), "table != IPR_NULL");
 
     let ipr: ipc_port_request_t = table.add(index as usize);
     let dnrequest = (*ipr).notify.port;
-crate::kassert!((*ipr).name.name == _name, "ipr->ipr_name == name");
+    crate::kassert!((*ipr).name.name == _name, "ipr->ipr_name == name");
 
     /* return ipr to the free list inside the table */
     (*ipr).name.name = MACH_PORT_NAME_NULL;
@@ -411,10 +402,7 @@ pub unsafe extern "C" fn ipc_port_nsrequest(
 // ---------------------------------------------------------------------------
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_port_set_qlimit(
-    port: ipc_port_t,
-    qlimit: mach_port_msgcount_t,
-) {
+pub unsafe extern "C" fn ipc_port_set_qlimit(port: ipc_port_t, qlimit: mach_port_msgcount_t) {
     crate::kassert!(ip_active(port), "ip_active(port)");
 
     if qlimit > (*port).ip_qlimit {
@@ -422,9 +410,8 @@ pub unsafe extern "C" fn ipc_port_set_qlimit(
 
         let mut i: mach_port_msgcount_t = 0;
         while i < wakeup {
-            let th: ipc_thread_t = crate::ipc_thread::ipc_thread_dequeue(
-                addr_of_mut!((*port).ip_blocked),
-            );
+            let th: ipc_thread_t =
+                crate::ipc_thread::ipc_thread_dequeue(addr_of_mut!((*port).ip_blocked));
             if th == ITH_NULL {
                 break;
             }
@@ -469,10 +456,7 @@ pub unsafe extern "C" fn ipc_port_lock_mqueue(
 // ---------------------------------------------------------------------------
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_port_set_seqno(
-    port: ipc_port_t,
-    seqno: mach_port_seqno_t,
-) {
+pub unsafe extern "C" fn ipc_port_set_seqno(port: ipc_port_t, seqno: mach_port_seqno_t) {
     let mqueue = ipc_port_lock_mqueue(port);
     (*port).ip_seqno = seqno;
     imq_unlock(mqueue);
@@ -631,7 +615,7 @@ pub unsafe extern "C" fn ipc_port_alloc_name(
 
 #[no_mangle]
 pub unsafe extern "C" fn ipc_port_destroy(port: ipc_port_t) {
-crate::kassert!(ip_active(port), "ip_active(port)");
+    crate::kassert!(ip_active(port), "ip_active(port)");
     crate::kassert!((*port).ip_pset == IPS_NULL, "port->ip_pset == IPS_NULL");
     crate::kassert!((*port).ip_mscount == 0, "port->ip_mscount == 0");
     crate::kassert!((*port).ip_seqno == 0, "port->ip_seqno == 0");
@@ -658,13 +642,22 @@ crate::kassert!(ip_active(port), "ip_active(port)");
         }
 
         ip_lock(port);
-crate::kassert!(ip_active(port), "ip_active(port)");
+        crate::kassert!(ip_active(port), "ip_active(port)");
         crate::kassert!((*port).ip_pset == IPS_NULL, "port->ip_pset == IPS_NULL");
         crate::kassert!((*port).ip_mscount == 0, "port->ip_mscount == 0");
         crate::kassert!((*port).ip_seqno == 0, "port->ip_seqno == 0");
-        crate::kassert!((*port).ip_pdrequest.is_null(), "port->ip_pdrequest == IP_NULL");
-        crate::kassert!((*port).ip_target.ipt_name == MACH_PORT_NAME_NULL, "port->ip_receiver_name == MACH_PORT_NULL");
-        crate::kassert!((*port).data.destination.is_null(), "port->ip_destination == IP_NULL");
+        crate::kassert!(
+            (*port).ip_pdrequest.is_null(),
+            "port->ip_pdrequest == IP_NULL"
+        );
+        crate::kassert!(
+            (*port).ip_target.ipt_name == MACH_PORT_NAME_NULL,
+            "port->ip_receiver_name == MACH_PORT_NULL"
+        );
+        crate::kassert!(
+            (*port).data.destination.is_null(),
+            "port->ip_destination == IP_NULL"
+        );
     }
 
     /*
@@ -674,9 +667,7 @@ crate::kassert!(ip_active(port), "ip_active(port)");
      *  play with the ip_blocked queue of a dead port.
      */
     loop {
-        let sender = crate::ipc_thread::ipc_thread_dequeue(
-            addr_of_mut!((*port).ip_blocked),
-        );
+        let sender = crate::ipc_thread::ipc_thread_dequeue(addr_of_mut!((*port).ip_blocked));
         if sender == ITH_NULL {
             break;
         }
@@ -701,7 +692,10 @@ crate::kassert!(ip_active(port), "ip_active(port)");
 
     let mqueue = addr_of_mut!((*port).ip_target.ipt_messages);
     imq_lock(mqueue);
-crate::kassert!((*mqueue).imq_threads.ithq_base.is_null(), "ipc_thread_queue_empty(&mqueue->imq_threads)");
+    crate::kassert!(
+        (*mqueue).imq_threads.ithq_base.is_null(),
+        "ipc_thread_queue_empty(&mqueue->imq_threads)"
+    );
     let kmqueue = addr_of_mut!((*mqueue).imq_messages);
 
     loop {
@@ -711,7 +705,10 @@ crate::kassert!((*mqueue).imq_threads.ithq_base.is_null(), "ipc_thread_queue_emp
         }
         imq_unlock(mqueue);
 
-crate::kassert!((*kmsg).ikm_header.msgh_remote_port == port as usize as u32, "kmsg->ikm_header.msgh_remote_port == (mach_port_t) port");
+        crate::kassert!(
+            (*kmsg).ikm_header.msgh_remote_port == port as usize as u32,
+            "kmsg->ikm_header.msgh_remote_port == (mach_port_t) port"
+        );
         ipc_port_release(port);
         (*kmsg).ikm_header.msgh_remote_port = 0; /* MACH_PORT_NULL */
         ipc_kmsg_destroy(kmsg);
@@ -739,7 +736,7 @@ crate::kassert!((*kmsg).ikm_header.msgh_remote_port == port as usize as u32, "km
             }
 
             let soright = (*ipr).notify.port;
-crate::kassert!(!soright.is_null(), "soright != IP_NULL");
+            crate::kassert!(!soright.is_null(), "soright != IP_NULL");
             ipc_notify_dead_name(soright, name);
             index += 1;
         }
@@ -766,7 +763,7 @@ pub unsafe extern "C" fn ipc_port_check_circularity(
     port: ipc_port_t,
     dest: ipc_port_t,
 ) -> crate::mach_types::boolean_t {
-crate::kassert!(!port.is_null(), "port != IP_NULL");
+    crate::kassert!(!port.is_null(), "port != IP_NULL");
     crate::kassert!(!dest.is_null(), "dest != IP_NULL");
 
     if port == dest {
@@ -878,12 +875,15 @@ pub unsafe extern "C" fn ipc_port_lookup_notify(
         return null_mut();
     }
 
-let port: ipc_port_t = (*entry).ie_object as ipc_port_t;
+    let port: ipc_port_t = (*entry).ie_object as ipc_port_t;
     crate::kassert!(!port.is_null(), "port != IP_NULL");
 
-ip_lock(port);
+    ip_lock(port);
     crate::kassert!(ip_active(port), "ip_active(port)");
-    crate::kassert!((*port).ip_target.ipt_name == name, "port->ip_receiver_name == name");
+    crate::kassert!(
+        (*port).ip_target.ipt_name == name,
+        "port->ip_receiver_name == name"
+    );
     crate::kassert!((*port).data.receiver == space, "port->ip_receiver == space");
 
     ip_reference(port);
@@ -899,7 +899,10 @@ ip_lock(port);
 
 #[no_mangle]
 pub unsafe extern "C" fn ipc_port_make_send(port: ipc_port_t) -> ipc_port_t {
-    crate::kassert!((port as usize) != 0 && (port as usize) != !0usize, "IP_VALID(port)");
+    crate::kassert!(
+        (port as usize) != 0 && (port as usize) != !0usize,
+        "IP_VALID(port)"
+    );
     ip_lock(port);
     crate::kassert!(ip_active(port), "ip_active(port)");
     (*port).ip_mscount += 1;
@@ -918,7 +921,7 @@ pub unsafe extern "C" fn ipc_port_copy_send(port: ipc_port_t) -> ipc_port_t {
         return port;
     }
 
-ip_lock(port);
+    ip_lock(port);
     let sright: ipc_port_t = if ip_active(port) {
         crate::kassert!((*port).ip_srights > 0, "port->ip_srights > 0");
         ip_reference(port);
@@ -966,7 +969,10 @@ pub unsafe extern "C" fn ipc_port_release_send(port: ipc_port_t) {
     let mut nsrequest: ipc_port_t = null_mut();
     let mut mscount: mach_port_mscount_t = 0;
 
-    crate::kassert!((port as usize) != 0 && (port as usize) != !0usize, "IP_VALID(port)");
+    crate::kassert!(
+        (port as usize) != 0 && (port as usize) != !0usize,
+        "IP_VALID(port)"
+    );
 
     ip_lock(port);
     ip_release(port);
@@ -976,7 +982,7 @@ pub unsafe extern "C" fn ipc_port_release_send(port: ipc_port_t) {
         return;
     }
 
-crate::kassert!((*port).ip_srights > 0, "port->ip_srights > 0");
+    crate::kassert!((*port).ip_srights > 0, "port->ip_srights > 0");
     (*port).ip_srights -= 1;
     if (*port).ip_srights == 0 {
         nsrequest = (*port).ip_nsrequest;
@@ -999,7 +1005,10 @@ crate::kassert!((*port).ip_srights > 0, "port->ip_srights > 0");
 
 #[no_mangle]
 pub unsafe extern "C" fn ipc_port_make_sonce(port: ipc_port_t) -> ipc_port_t {
-    crate::kassert!((port as usize) != 0 && (port as usize) != !0usize, "IP_VALID(port)");
+    crate::kassert!(
+        (port as usize) != 0 && (port as usize) != !0usize,
+        "IP_VALID(port)"
+    );
     ip_lock(port);
     crate::kassert!(ip_active(port), "ip_active(port)");
     (*port).ip_sorights += 1;
@@ -1010,7 +1019,10 @@ pub unsafe extern "C" fn ipc_port_make_sonce(port: ipc_port_t) -> ipc_port_t {
 
 #[no_mangle]
 pub unsafe extern "C" fn ipc_port_release_sonce(port: ipc_port_t) {
-    crate::kassert!((port as usize) != 0 && (port as usize) != !0usize, "IP_VALID(port)");
+    crate::kassert!(
+        (port as usize) != 0 && (port as usize) != !0usize,
+        "IP_VALID(port)"
+    );
     ip_lock(port);
     crate::kassert!((*port).ip_sorights > 0, "port->ip_sorights > 0");
 
@@ -1027,11 +1039,17 @@ pub unsafe extern "C" fn ipc_port_release_sonce(port: ipc_port_t) {
 
 #[no_mangle]
 pub unsafe extern "C" fn ipc_port_release_receive(port: ipc_port_t) {
-    crate::kassert!((port as usize) != 0 && (port as usize) != !0usize, "IP_VALID(port)");
+    crate::kassert!(
+        (port as usize) != 0 && (port as usize) != !0usize,
+        "IP_VALID(port)"
+    );
 
     ip_lock(port);
     crate::kassert!(ip_active(port), "ip_active(port)");
-    crate::kassert!((*port).ip_target.ipt_name == MACH_PORT_NAME_NULL, "port->ip_receiver_name == MACH_PORT_NULL");
+    crate::kassert!(
+        (*port).ip_target.ipt_name == MACH_PORT_NAME_NULL,
+        "port->ip_receiver_name == MACH_PORT_NULL"
+    );
     let dest = (*port).data.destination;
 
     ipc_port_destroy(port); /* consumes ref, unlocks */
@@ -1066,14 +1084,17 @@ pub unsafe extern "C" fn ipc_port_alloc_special(space: ipc_space_t) -> ipc_port_
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ipc_port_dealloc_special(
-    port: ipc_port_t,
-    _space: ipc_space_t,
-) {
-ip_lock(port);
+pub unsafe extern "C" fn ipc_port_dealloc_special(port: ipc_port_t, _space: ipc_space_t) {
+    ip_lock(port);
     crate::kassert!(ip_active(port), "ip_active(port)");
-    crate::kassert!((*port).ip_target.ipt_name != MACH_PORT_NAME_NULL, "port->ip_receiver_name != MACH_PORT_NULL");
-    crate::kassert!((*port).data.receiver == _space, "port->ip_receiver == space");
+    crate::kassert!(
+        (*port).ip_target.ipt_name != MACH_PORT_NAME_NULL,
+        "port->ip_receiver_name != MACH_PORT_NULL"
+    );
+    crate::kassert!(
+        (*port).data.receiver == _space,
+        "port->ip_receiver == space"
+    );
 
     /* simplify the ipc_space_kernel check in ipc_mqueue_send */
     (*port).ip_target.ipt_name = MACH_PORT_NAME_NULL;

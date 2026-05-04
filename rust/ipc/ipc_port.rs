@@ -6,9 +6,7 @@ use core::mem::size_of;
 use core::ptr::{addr_of_mut, null_mut};
 
 use crate::extern_c::{
-    ipc_kobject_destroy,
-    kmem_cache_alloc, kmem_cache_free,
-    rdxtree_lookup_common, thread_go,
+    ipc_kobject_destroy, kmem_cache_alloc, rdxtree_lookup_common, thread_go,
 };
 use crate::ipc_kmsg::{ipc_kmsg_destroy, ipc_kmsg_dequeue};
 use crate::ipc_mqueue::{ipc_mqueue_changed, ipc_mqueue_init};
@@ -22,10 +20,10 @@ use crate::mach_types::{
     ipc_entry_t, ipc_object, ipc_object_bits_t, ipc_port, ipc_port_request,
     ipc_port_request_index_t, ipc_port_request_t, ipc_port_t,
     ipc_port_timestamp_t, ipc_pset_t, ipc_space_t, ipc_table_size_t,
-    ipc_thread_t, kern_return_t, mach_msg_return_t, mach_port_mscount_t,
+    ipc_thread_t, kern_return_t, mach_port_mscount_t,
     mach_port_msgcount_t, mach_port_name_t, mach_port_seqno_t, vm_offset_t,
     IE_BITS_TYPE_MASK, IE_NULL, IKM_NULL, IKOT_NONE, IOT_PORT, IO_BITS_ACTIVE,
-    IO_BITS_KOTYPE, IO_BITS_OTYPE, IO_BITS_PROTECTED_PAYLOAD, IPS_NULL,
+    IO_BITS_KOTYPE, IO_BITS_PROTECTED_PAYLOAD, IPS_NULL,
     ITH_NULL, IS_NULL, KERN_NO_SPACE, KERN_RESOURCE_SHORTAGE, KERN_SUCCESS,
     KERN_INVALID_CAPABILITY, MACH_MSG_SUCCESS, MACH_MSG_TYPE_PORT_SEND,
     MACH_PORT_NAME_DEAD, MACH_PORT_NAME_NULL, MACH_PORT_QLIMIT_DEFAULT,
@@ -50,15 +48,9 @@ pub static mut ipc_port_timestamp_data: ipc_port_timestamp_t = 0;
 // ---------------------------------------------------------------------------
 
 use crate::locks::{
-    io_active, io_check_unlock, io_lock, io_lock_init, io_lock_try, io_reference,
-    io_release, io_unlock, ip_active, ip_check_unlock, ip_lock, ip_lock_init,
+    io_check_unlock, ip_active, ip_check_unlock, ip_lock, ip_lock_init,
     ip_lock_try, ip_reference, ip_release, ip_unlock,
 };
-
-#[inline]
-unsafe fn io_otype(io: *mut ipc_object) -> u32 {
-    ((*io).io_bits & IO_BITS_OTYPE) >> 16
-}
 
 #[inline]
 unsafe fn io_kotype(io: *mut ipc_object) -> u32 {
@@ -75,14 +67,6 @@ fn io_makebits(active: bool, otype: u32, kotype: u32) -> ipc_object_bits_t {
 unsafe fn io_alloc(otype: u32) -> *mut ipc_object {
     kmem_cache_alloc(addr_of_mut!(ipc_object_caches[otype as usize]))
         as *mut ipc_object
-}
-
-#[inline]
-unsafe fn io_free(otype: u32, io: *mut ipc_object) {
-    kmem_cache_free(
-        addr_of_mut!(ipc_object_caches[otype as usize]),
-        io as vm_offset_t,
-    );
 }
 #[inline]
 unsafe fn ip_kotype(port: *mut ipc_port) -> u32 {
@@ -138,11 +122,6 @@ use crate::locks::{
 #[inline]
 unsafe fn ips_check_unlock(pset: ipc_pset_t) {
     io_check_unlock(addr_of_mut!((*pset).ips_target.ipt_object));
-}
-
-#[inline]
-unsafe fn ie_bits_type(bits: u32) -> u32 {
-    bits & IE_BITS_TYPE_MASK
 }
 
 /// `ipc_table_alloc(size)` — Rust ipc_table.rs.
@@ -203,7 +182,6 @@ fn invalid_port_to_name(port: ipc_port_t) -> mach_port_name_t {
         MACH_PORT_NAME_DEAD
     } else {
         crate::kpanic!("invalid_port_to_name() called with a valid name");
-        0
     }
 }
 

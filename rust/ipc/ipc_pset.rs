@@ -4,18 +4,13 @@
 
 use core::ptr::addr_of_mut;
 
-use crate::extern_c::{
-    kmem_cache_free, lock_done,
-};
 use crate::ipc_mqueue::{ipc_mqueue_changed, ipc_mqueue_move};
-use crate::ipc_object::{
-    ipc_object_alloc, ipc_object_alloc_name, ipc_object_caches,
-};
+use crate::ipc_object::{ipc_object_alloc, ipc_object_alloc_name};
 use crate::ipc_target::{ipc_target_init, ipc_target_terminate};
 use crate::mach_types::{
-    ipc_object, ipc_object_bits_t, ipc_port, ipc_port_t, ipc_pset, ipc_pset_t,
-    ipc_space_t, kern_return_t, mach_port_name_t, vm_offset_t, IOT_PORT_SET,
-    IO_BITS_ACTIVE, IO_BITS_OTYPE, IPS_NULL, KERN_NOT_IN_SET, KERN_SUCCESS,
+    ipc_object, ipc_port_t, ipc_pset_t,
+    ipc_space_t, kern_return_t, mach_port_name_t, IOT_PORT_SET,
+    IO_BITS_ACTIVE, IPS_NULL, KERN_NOT_IN_SET, KERN_SUCCESS,
     MACH_PORT_TYPE_PORT_SET, MACH_RCV_PORT_CHANGED, MACH_RCV_PORT_DIED,
 };
 
@@ -24,7 +19,7 @@ use crate::mach_types::{
 // ---------------------------------------------------------------------------
 
 use crate::locks::{
-    imq_lock, imq_unlock, io_active, ip_active, ip_lock, ip_unlock,
+    imq_lock, imq_unlock, ip_active, ip_lock, ip_unlock,
     ips_active, ips_lock, ips_unlock, is_read_unlock,
 };
 

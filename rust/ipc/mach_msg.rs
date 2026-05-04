@@ -14,9 +14,9 @@ use core::ptr::{addr_of_mut, null_mut};
 
 use crate::extern_c::{
     copyinmsg, copyout, copyoutmsg, exception_raise_continue,
-    exception_raise_continue_fast, ipc_kobject_server, kmem_cache_free,
-    lock_done, lock_read, lock_write, percpu_array, thread_exception_return,
-    thread_handoff, thread_set_syscall_return, thread_syscall_return,
+    exception_raise_continue_fast, ipc_kobject_server, percpu_array,
+    thread_exception_return, thread_handoff, thread_set_syscall_return,
+    thread_syscall_return,
 };
 use crate::ipc_kmsg::{
     ipc_kmsg_copyin, ipc_kmsg_copyout, ipc_kmsg_copyout_dest,
@@ -33,17 +33,17 @@ use crate::mach_types::{
     kern_return_t, mach_msg_header_t, mach_msg_option_t, mach_msg_return_t,
     mach_msg_size_t, mach_msg_timeout_t, mach_msg_user_header_t,
     mach_port_name_t, mach_port_seqno_t, vm_map_t, IE_BITS_MAREQUEST,
-    IE_BITS_TYPE_MASK, IE_BITS_UREFS_MASK, IKM_EXPAND_FACTOR, IKM_NULL,
+    IE_BITS_TYPE_MASK, IE_BITS_UREFS_MASK, IKM_EXPAND_FACTOR,
     IKM_SAVED_KMSG_SIZE, IKM_SAVED_MSG_SIZE, IMAR_NULL, IO_BITS_PROTECTED_PAYLOAD,
-    IO_NULL, IPS_NULL, ITH_NULL, KERN_SUCCESS, MACH_MSG_IPC_KERNEL,
-    MACH_MSG_IPC_SPACE, MACH_MSG_MASK, MACH_MSG_OPTION_NONE,
+    IO_NULL, IPS_NULL, ITH_NULL, KERN_SUCCESS,
+    MACH_MSG_MASK, MACH_MSG_OPTION_NONE,
     MACH_MSG_SIZE_MAX, MACH_MSG_SUCCESS, MACH_MSG_TIMEOUT_NONE,
     MACH_MSG_TYPE_COPY_SEND, MACH_MSG_TYPE_MAKE_SEND_ONCE,
     MACH_MSG_TYPE_MOVE_SEND_ONCE, MACH_MSG_TYPE_PORT_SEND,
     MACH_MSG_TYPE_PORT_SEND_ONCE, MACH_MSG_TYPE_PROTECTED_PAYLOAD,
     MACH_PORT_NAME_NULL, MACH_PORT_NULL, MACH_PORT_TYPE_PORT_SET,
     MACH_PORT_TYPE_RECEIVE, MACH_PORT_TYPE_SEND, MACH_PORT_TYPE_SEND_ONCE,
-    MACH_RCV_BODY_ERROR, MACH_RCV_HEADER_ERROR, MACH_RCV_INTERRUPTED,
+    MACH_RCV_BODY_ERROR, MACH_RCV_INTERRUPTED,
     MACH_RCV_INVALID_NOTIFY, MACH_RCV_IN_PROGRESS, MACH_RCV_LARGE,
     MACH_RCV_MSG, MACH_RCV_NOTIFY, MACH_RCV_TIMEOUT, MACH_RCV_TOO_LARGE,
     MACH_SEND_ALWAYS, MACH_SEND_CANCEL, MACH_SEND_INVALID_NOTIFY, MACH_SEND_MSG,
@@ -95,7 +95,6 @@ unsafe fn current_map() -> vm_map_t {
 #[inline]
 unsafe fn ikm_free(kmsg: *mut ipc_kmsg_full) {
     crate::extern_c::kfree(kmsg as crate::mach_types::vm_offset_t, (*kmsg).ikm_size);
-    let _ = kmem_cache_free; /* silence unused */
 }
 
 use crate::locks::{
@@ -1377,7 +1376,7 @@ unsafe fn mach_msg_trap_combined(
 
                 if bits == reply_pat {
                     /* === reply-message case (receiving an RPC reply) === */
-                    let mut dest_name: mach_port_name_t;
+                    let dest_name: mach_port_name_t;
                     let payload: u32;
 
                     ip_lock(dest_port);

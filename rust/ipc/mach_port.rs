@@ -6,8 +6,8 @@ use core::mem::size_of;
 use core::ptr::{addr_of_mut, null_mut};
 
 use crate::extern_c::{
-    ipc_kobject_set_locked, kmem_free, lock_done, percpu_array, printf,
-    rdxtree_walk, vm_allocate, vm_map_copyin, vm_map_pageable, SoftDebugger,
+    ipc_kobject_set_locked, kmem_free, percpu_array, printf, rdxtree_walk,
+    vm_allocate, vm_map_copyin, vm_map_pageable, SoftDebugger,
 };
 use crate::ipc_init::ipc_kernel_map;
 use crate::ipc_object::{
@@ -27,8 +27,8 @@ use crate::ipc_right::{
     ipc_right_info, ipc_right_lookup_write,
 };
 use crate::mach_types::{
-    boolean_t, ipc_entry_bits_t, ipc_entry_num_t, ipc_entry_t, ipc_object,
-    ipc_port_request_t, ipc_port_t, ipc_port_timestamp_t, ipc_pset_t,
+    boolean_t, ipc_entry_num_t, ipc_entry_t, ipc_object,
+    ipc_port_t, ipc_port_timestamp_t, ipc_pset_t,
     ipc_space_t, host_t, ipc_thread_t, kern_return_t, mach_msg_id_t,
     mach_msg_type_name_t, mach_msg_type_number_t, mach_port_delta_t,
     mach_port_ktype_t, mach_port_mscount_t, mach_port_msgcount_t,

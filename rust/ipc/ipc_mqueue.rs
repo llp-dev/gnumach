@@ -17,12 +17,12 @@ use crate::ipc_pset::ipc_pset_remove;
 use crate::ipc_thread::{ipc_thread_dequeue, ipc_thread_enqueue, ipc_thread_rmqueue};
 use crate::mach_types::{
     boolean_t, continuation_t, ipc_entry_t, ipc_kmsg_full, ipc_kmsg_queue,
-    ipc_marequest_t, ipc_mqueue, ipc_object, ipc_object_bits_t, ipc_port,
-    ipc_port_t, ipc_pset, ipc_pset_t, ipc_space_t, ipc_thread_queue,
+    ipc_marequest_t, ipc_mqueue, ipc_object,
+    ipc_port_t, ipc_pset_t, ipc_space_t, ipc_thread_queue,
     ipc_thread_t, long_natural_t, mach_msg_header_t, mach_msg_option_t,
     mach_msg_return_t, mach_msg_size_t, mach_msg_timeout_t, mach_port_name_t,
     mach_port_seqno_t, IE_BITS_TYPE_MASK, IE_NULL, IKM_NULL, IMAR_NULL,
-    IPS_NULL, ITH_NULL, IO_BITS_OTYPE, KERN_SUCCESS, MACH_MSGH_BITS_CIRCULAR,
+    IPS_NULL, ITH_NULL, KERN_SUCCESS, MACH_MSGH_BITS_CIRCULAR,
     MACH_MSG_SUCCESS, MACH_MSG_TYPE_PORT_SEND_ONCE, MACH_PORT_TYPE_PORT_SET,
     MACH_PORT_TYPE_RECEIVE, MACH_RCV_INTERRUPTED, MACH_RCV_INVALID_NAME,
     MACH_RCV_IN_PROGRESS, MACH_RCV_IN_SET, MACH_RCV_PORT_CHANGED,
@@ -39,7 +39,7 @@ use crate::mach_types::{
 // ---------------------------------------------------------------------------
 
 use crate::locks::{
-    imq_lock, imq_lock_init, imq_unlock, io_active, io_reference, io_unlock,
+    imq_lock, imq_lock_init, imq_unlock, io_reference, io_unlock,
     ip_active, ip_check_unlock, ip_lock, ip_release, ip_unlock, ips_active,
     ips_lock, ips_unlock, is_read_lock, is_read_unlock,
 };

@@ -4,7 +4,7 @@
 //! `mach_debug/mach_debug.defs`.
 
 use core::mem::size_of;
-use core::ptr::{addr_of_mut, null_mut};
+use core::ptr::null_mut;
 
 use crate::extern_c::{kmem_alloc_pageable, kmem_free, vm_map_copyin};
 use crate::ipc_init::ipc_kernel_map;

@@ -5,8 +5,7 @@
 use core::ptr::{addr_of, addr_of_mut, null_mut};
 
 use crate::extern_c::{
-    kmem_cache_free, lock_done, lock_write, rdxtree_insert_common,
-    rdxtree_lookup_common, rdxtree_remove,
+    kmem_cache_free, rdxtree_insert_common, rdxtree_lookup_common, rdxtree_remove,
 };
 use crate::ipc_entry::ipc_entry_cache;
 use crate::ipc_marequest::{ipc_marequest_cancel, ipc_marequest_rename};
@@ -14,15 +13,14 @@ use crate::ipc_notify::{
     ipc_notify_dead_name, ipc_notify_no_senders, ipc_notify_port_deleted,
     ipc_notify_send_once,
 };
-use crate::ipc_object::ipc_object_caches;
 use crate::ipc_port::{
     ipc_port_dncancel, ipc_port_dngrow, ipc_port_dnrequest,
     ipc_port_clear_receiver, ipc_port_destroy,
 };
 use crate::ipc_pset::ipc_pset_destroy;
 use crate::mach_types::{
-    boolean_t, ipc_entry, ipc_entry_t, ipc_object, ipc_object_bits_t,
-    ipc_port, ipc_port_request_index_t, ipc_port_request_t, ipc_port_t,
+    boolean_t, ipc_entry_t, ipc_object,
+    ipc_port_request_index_t, ipc_port_request_t, ipc_port_t,
     ipc_pset_t, ipc_space_t, kern_return_t, mach_msg_type_name_t,
     mach_port_delta_t, mach_port_mscount_t, mach_port_name_t,
     mach_port_right_t, mach_port_type_t, mach_port_urefs_t, rdxtree_key_t,
@@ -51,9 +49,8 @@ use crate::mach_types::{
 // ---------------------------------------------------------------------------
 
 use crate::locks::{
-    io_active, io_lock, io_unlock, ip_active, ip_check_unlock, ip_lock,
-    ip_reference, ip_release, ip_unlock, ips_active, ips_lock, ips_unlock,
-    is_write_lock, is_write_unlock,
+    io_active, ip_active, ip_check_unlock, ip_lock, ip_reference, ip_release,
+    ip_unlock, ips_active, ips_lock, ips_unlock, is_write_lock, is_write_unlock,
 };
 
 #[inline]
@@ -301,7 +298,7 @@ pub unsafe extern "C" fn ipc_right_dnrequest(
     notify: ipc_port_t,
     previousp: *mut ipc_port_t,
 ) -> kern_return_t {
-    let mut previous: ipc_port_t = null_mut();
+    let mut previous: ipc_port_t;
 
     loop {
         let mut entry: ipc_entry_t = IE_NULL;
@@ -1039,9 +1036,7 @@ pub unsafe extern "C" fn ipc_right_delta(
         return KERN_SUCCESS;
     }
 
-crate::kpanic!("ipc_right_delta: strange right");
-    is_write_unlock(space);
-    KERN_INVALID_RIGHT
+    crate::kpanic!("ipc_right_delta: strange right");
 }
 
 // ---------------------------------------------------------------------------

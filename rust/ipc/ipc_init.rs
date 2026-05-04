@@ -37,7 +37,7 @@ static mut ipc_kernel_map_store: VmMapStorage =
 /// Global: `vm_map_t ipc_kernel_map = &ipc_kernel_map_store;`
 #[no_mangle]
 pub static mut ipc_kernel_map: vm_map_t =
-    unsafe { addr_of_mut!(ipc_kernel_map_store) as vm_map_t };
+    addr_of_mut!(ipc_kernel_map_store) as vm_map_t;
 
 /// Global: `const vm_size_t ipc_kernel_map_size = 8 * 1024 * 1024;`
 #[no_mangle]

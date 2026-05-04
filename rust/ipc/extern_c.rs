@@ -45,10 +45,8 @@
 use core::ffi::{c_char, c_int};
 
 use crate::mach_types::{
-    boolean_t, ipc_entry_t, ipc_kmsg_full, ipc_mqueue, ipc_object, ipc_port,
-    ipc_port_timestamp_t, ipc_space, ipc_space_t, kern_return_t, kmem_cache,
-    lock_t, mach_msg_option_t, mach_msg_return_t, mach_msg_timeout_t,
-    mach_port_name_t, rdxtree, rdxtree_key_t, vm_map_t, vm_offset_t,
+    boolean_t, ipc_port, kern_return_t, kmem_cache, lock_t,
+    mach_msg_timeout_t, rdxtree, rdxtree_key_t, vm_map_t, vm_offset_t,
     vm_size_t,
 };
 
@@ -310,9 +308,6 @@ extern "C" {
         kobject: crate::mach_types::ipc_kobject_t,
         kotype: u32,
     );
-
-    /// Diagnostic printf-once.  Implemented C-side as a printf with a flag.
-    pub fn printf_once(fmt: *const c_char, ...) -> c_int;
 
     /// `kern/debug.h`: `void SoftDebugger(const char *msg);`
     pub fn SoftDebugger(msg: *const c_char);

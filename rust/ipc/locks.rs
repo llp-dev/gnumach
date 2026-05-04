@@ -6,6 +6,11 @@
 //! `kern/lock.c::lock_{read,write,done}` are real function bodies even at
 //! NCPUS == 1.  This module is the single source of truth so a future
 //! NCPUS > 1 build only needs to touch one file.
+//!
+//! Some primitives (e.g. `io_lock_try`, `imq_lock_init`) are exported here
+//! for completeness even when no current caller uses them, so that the
+//! module is a faithful mirror of the C lock-API surface.
+#![allow(dead_code)]
 
 use core::ptr::addr_of_mut;
 

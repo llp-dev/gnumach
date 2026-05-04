@@ -41,7 +41,7 @@ use crate::mach_types::{
     ipc_kmsg_full, ipc_kmsg_queue, ipc_object, ipc_thread_t,
     mach_msg_return_t, mach_msg_type_long_t, mach_msg_type_t, vm_map_copy_t,
     vm_offset_t, vm_size_t, IKM_EXPAND_FACTOR, IKM_NULL, IKM_OVERHEAD,
-    IKM_OVERHEAD_SIZE, IKM_SAVED_KMSG_SIZE, IKM_SAVED_MSG_SIZE, IMAR_NULL,
+    IKM_SAVED_KMSG_SIZE, IKM_SAVED_MSG_SIZE, IMAR_NULL,
     MACH_MSG_KERNEL_ALIGNMENT, MACH_MSG_SUCCESS, MACH_MSG_TYPE_PORT_ANY,
     MACH_MSG_USER_ALIGNMENT, MACH_RCV_INVALID_DATA, MACH_SEND_INVALID_DATA,
     MACH_SEND_MSG_TOO_SMALL, MACH_SEND_NO_BUFFER,
@@ -1407,7 +1407,7 @@ pub unsafe extern "C" fn ipc_kmsg_copyin_body(
         let dealloc = (*typ_short).msgt_deallocate() != 0;
         let longform = longform_first;
         let name: u32;
-        let mut size: u32;
+        let size: u32;
         let number: u32;
 
         if longform {
@@ -1485,7 +1485,7 @@ pub unsafe extern "C" fn ipc_kmsg_copyin_body(
                                 (core::mem::size_of::<vm_offset_t>() * 8) as u32,
                             );
                         }
-                        size = size; /* unchanged here, kept for parity with C */
+                        /* size unchanged here, kept for parity with C */
                         length = (core::mem::size_of::<vm_offset_t>()
                             * number as usize) as vm_size_t;
                     }

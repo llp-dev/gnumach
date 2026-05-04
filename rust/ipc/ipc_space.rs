@@ -10,7 +10,7 @@ use crate::extern_c::{
 };
 use crate::ipc_right::ipc_right_clean;
 use crate::mach_types::{
-    ipc_entry, ipc_entry_index_u, ipc_entry_t, ipc_space, ipc_space_t,
+    ipc_entry, ipc_entry_index_u, ipc_entry_t, ipc_space_t,
     kern_return_t, kmem_cache, mach_port_name_t, rdxtree, rdxtree_iter,
     rdxtree_key_t, vm_offset_t, IE_BITS_TYPE_MASK, IS_NULL,
     KERN_RESOURCE_SHORTAGE, KERN_SUCCESS, MACH_PORT_NAME_NULL,

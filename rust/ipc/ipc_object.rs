@@ -4,9 +4,7 @@
 
 use core::ptr::{addr_of_mut, null_mut, write_bytes};
 
-use crate::extern_c::{
-    kmem_cache_alloc, kmem_cache_free, lock_done, lock_write, rdxtree_remove,
-};
+use crate::extern_c::{kmem_cache_alloc, kmem_cache_free, rdxtree_remove};
 use crate::ipc_port::{ipc_port_release_receive, ipc_port_release_send};
 use crate::ipc_right::{
     ipc_right_copyin, ipc_right_copyout, ipc_right_inuse,
@@ -18,7 +16,7 @@ use crate::ipc_notify::{
 };
 use crate::ipc_space::ipc_space_kernel;
 use crate::mach_types::{
-    ipc_entry_t, ipc_object, ipc_object_bits_t, ipc_port, ipc_port_t,
+    ipc_entry_t, ipc_object, ipc_object_bits_t, ipc_port,
     ipc_pset, ipc_space_t, kern_return_t, kmem_cache, mach_msg_type_name_t,
     mach_port_mscount_t, mach_port_name_t, mach_port_right_t,
     mach_port_type_t, mach_port_urefs_t, rdxtree_key_t, vm_offset_t,
@@ -659,7 +657,7 @@ pub unsafe extern "C" fn ipc_object_copyout_dest(
     msgt_name: mach_msg_type_name_t,
     namep: *mut mach_port_name_t,
 ) {
-    let mut name: mach_port_name_t;
+    let name: mach_port_name_t;
 
     crate::kassert!((object as usize) != 0 && (object as usize) != !0usize, "IO_VALID(object)");
     crate::kassert!(io_active(object), "io_active(object)");

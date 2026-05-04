@@ -7,16 +7,16 @@ use core::mem::size_of;
 use core::ptr::{addr_of, addr_of_mut};
 
 use crate::extern_c::{
-    kalloc, kmem_cache_alloc, kmem_cache_free, kmem_cache_init, lock_done,
-    lock_write, rdxtree_lookup_common, Assert,
+    kalloc, kmem_cache_alloc, kmem_cache_free, kmem_cache_init,
+    rdxtree_lookup_common, Assert,
 };
 use crate::ipc_right::ipc_right_reverse;
 use crate::ipc_port::ipc_port_lookup_notify;
 use crate::ipc_space::ipc_space_destroy;
 use crate::ipc_notify::ipc_notify_msg_accepted;
 use crate::mach_types::{
-    ipc_entry, ipc_entry_t, ipc_marequest_bucket, ipc_marequest_bucket_t,
-    ipc_marequest_full, ipc_marequest_t, ipc_object, ipc_port,
+    ipc_entry_t, ipc_marequest_bucket, ipc_marequest_bucket_t,
+    ipc_marequest_full, ipc_marequest_t, ipc_object,
     ipc_port_t, ipc_space_t, kmem_cache, mach_port_name_t, mach_msg_return_t,
     rdxtree_key_t, vm_offset_t, vm_size_t, IE_BITS_MAREQUEST, IE_BITS_TYPE_MASK,
     IE_NULL, IMARB_NULL, IMAR_NULL, IPC_MAREQUEST_SIZE, IP_NULL,

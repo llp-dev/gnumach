@@ -132,6 +132,7 @@ nodist_libkernel_a_SOURCES += \
 gnumach_LINKFLAGS += \
 	--defsym _START_MAP=$(_START_MAP) \
 	--defsym _START=_START_MAP+0xC0000000 \
+	--defsym _GLOBAL_OFFSET_TABLE_=0 \
 	-T '$(srcdir)'/i386/ldscript
 
 # We do not support or need position-independent

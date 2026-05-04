@@ -100,6 +100,11 @@ dnl Makerules can make use of these.
 AC_CHECK_PROG([GZIP], [gzip], [gzip], [gzip-not-found])
 AC_CHECK_TOOL([STRIP], [strip])
 
+dnl Rust toolchain (stable rustc).  The Rust port lives under rust/ and is
+dnl built directly with rustc (no cargo).  See rust/ipc/lib.rs.
+AC_CHECK_PROG([RUSTC], [rustc], [rustc], [rustc-not-found])
+AC_ARG_VAR([RUSTC], [Path to the rustc compiler])
+
 dnl See below why we need to patch stuff during build...
 AC_CHECK_PROG([PATCH], [patch], [patch], [patch-not-found])
 

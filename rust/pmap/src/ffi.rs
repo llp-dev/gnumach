@@ -41,11 +41,8 @@ use crate::types::*;
 #[no_mangle] pub extern "C" fn process_pmap_updates(my_pmap: *mut Pmap) { crate::smp::process_pmap_updates(my_pmap); }
 #[cfg(feature = "smp")]
 #[no_mangle] pub extern "C" fn pmap_update_interrupt() { crate::smp::pmap_update_interrupt(); }
-#[cfg(feature = "xen")]
-#[no_mangle] pub extern "C" fn pmap_set_page_readwrite(addr: *mut c_void) { crate::xen::pmap_set_page_readwrite(addr); }
-#[cfg(feature = "xen")]
-#[no_mangle] pub extern "C" fn pmap_set_page_readonly(addr: *mut c_void) { crate::xen::pmap_set_page_readonly(addr); }
-#[cfg(feature = "xen")]
-#[no_mangle] pub extern "C" fn pmap_set_page_readonly_init(addr: *mut c_void) { crate::xen::pmap_set_page_readonly_init(addr); }
-#[cfg(feature = "xen")]
-#[no_mangle] pub extern "C" fn pmap_map_mfn(addr: *mut c_void, mfn: c_ulong) { crate::xen::pmap_map_mfn(addr, mfn); }
+
+/* pmap_map_mfn is defined in C (pmap_bootstrap.c) — Xen PV runtime function.
+ * pmap_set_page_readwrite, pmap_set_page_readonly, pmap_set_page_readonly_init
+ * are also defined in C. The Rust stubs are NOT exported to avoid duplicate symbols. */
+

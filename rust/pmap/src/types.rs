@@ -1,1 +1,255 @@
-// rust/pmap/src/types.rs — Core type definitions (stub)
+// rust/pmap/src/types.rs — Core type definitions for the PMAP module.
+//
+// All structs crossing the C-Rust boundary use #[repr(C)].
+// PTE bit constants match i386/intel/pmap.h definitions.
+
+use core::ffi::{c_char, c_int, c_uint, c_ulong, c_void};
+
+// ─── Type aliases matching C kernel types ────────────────────────
+
+pub type VmOffset = usize;      // vm_offset_t → uintptr_t
+pub type VmSize = usize;        // vm_size_t → uintptr_t
+pub type Integer = c_int;       // integer_t
+pub type Natural = c_uint;      // natural_t
+
+#[cfg(not(feature = "pae"))]
+pub type PhysAddr = u32;        // unsigned long (non-PAE 32-bit)
+#[cfg(all(feature = "pae", not(feature = "x86_64")))]
+pub type PhysAddr = u64;        // unsigned long long (PAE 32-bit)
+#[cfg(feature = "x86_64")]
+pub type PhysAddr = u64;        // unsigned long long (x86_64)
+
+pub type Pte = PhysAddr;        // pt_entry_t ≡ phys_addr_t
+pub type VmProt = c_int;        // vm_prot_t
+pub type CpuSet = c_ulong;      // volatile long bitmap
+pub type KernReturn = c_int;    // kern_return_t
+
+// Opaque C pointers — typed via bindgen in real build, void* for now
+pub type Thread = *mut c_void;
+pub type VmMap = *mut c_void;
+pub type VmObject = *mut c_void;
+pub type VmPage = *mut c_void;
+pub type KmCache = *mut c_void;
+
+// ─── PTE bit definitions (from i386/intel/pmap.h) ────────────────
+
+pub const INTEL_PTE_VALID:  PhysAddr = 0x0000_0001;
+pub const INTEL_PTE_WRITE:  PhysAddr = 0x0000_0002;
+pub const INTEL_PTE_USER:   PhysAddr = 0x0000_0004;
+pub const INTEL_PTE_WTHRU:  PhysAddr = 0x0000_0008;
+pub const INTEL_PTE_NCACHE: PhysAddr = 0x0000_0010;
+pub const INTEL_PTE_REF:    PhysAddr = 0x0000_0020;
+pub const INTEL_PTE_MOD:    PhysAddr = 0x0000_0040;
+pub const INTEL_PTE_PS:     PhysAddr = 0x0000_0080;
+
+#[cfg(not(feature = "xen"))]
+pub const INTEL_PTE_GLOBAL: PhysAddr = 0x0000_0100;
+#[cfg(feature = "xen")]
+pub const INTEL_PTE_GLOBAL: PhysAddr = 0x0000_0000; // not supported under Xen PV
+
+pub const INTEL_PTE_WIRED:  PhysAddr = 0x0000_0200;
+pub const INTEL_PTE_EXECUTE: PhysAddr = 0; // NX handled via separate mechanism on x86_64
+
+#[cfg(not(feature = "pae"))]
+pub const INTEL_PTE_PFN:    PhysAddr = 0x00_FFFF_F000;
+#[cfg(all(feature = "pae", not(feature = "x86_64")))]
+pub const INTEL_PTE_PFN:    PhysAddr = 0x00_7FFF_FFFF_FFFF_F000;
+#[cfg(feature = "x86_64")]
+pub const INTEL_PTE_PFN:    PhysAddr = 0x000F_FFFF_FFFF_F000;
+
+pub const INTEL_OFFMASK:    PhysAddr = 0xFFF;
+
+// ─── Page size constants ─────────────────────────────────────────
+
+pub const I386_PGSHIFT: u32 = 12;
+pub const I386_PGBYTES: usize = 1 << I386_PGSHIFT;
+
+// ─── Page table level shift/mask constants ───────────────────────
+
+#[cfg(not(feature = "pae"))]
+pub const PDESHIFT: u32 = 22;
+#[cfg(not(feature = "pae"))]
+pub const PDEMASK: u32 = 0x3FF;
+#[cfg(not(feature = "pae"))]
+pub const PTEMASK: u32 = 0x3FF;
+
+#[cfg(feature = "pae")]
+pub const PDPSHIFT: u32 = 30;
+#[cfg(all(feature = "pae", not(feature = "x86_64")))]
+pub const PDPMASK: u32 = 3;
+#[cfg(all(feature = "pae", feature = "x86_64"))]
+pub const PDPMASK: u32 = 0x1FF;
+#[cfg(feature = "pae")]
+pub const PDESHIFT: u32 = 21;
+#[cfg(feature = "pae")]
+pub const PDEMASK: u32 = 0x1FF;
+#[cfg(feature = "pae")]
+pub const PTEMASK: u32 = 0x1FF;
+
+pub const PTESHIFT: u32 = 12;
+
+#[cfg(feature = "x86_64")]
+pub const L4SHIFT: u32 = 39;
+#[cfg(feature = "x86_64")]
+pub const L4MASK: u32 = 0x1FF;
+
+// ─── Simple lock type (repr(C), matches decl_simple_lock_data) ───
+
+#[repr(C)]
+#[derive(Default)]
+pub struct SimpleLock {
+    pub lock_data: c_uint,
+}
+
+// ─── Pmap statistics (from mach/vm_statistics.h) ─────────────────
+
+#[repr(C)]
+#[derive(Default)]
+pub struct PmapStatistics {
+    pub resident_count: Integer,
+    pub wired_count: Integer,
+}
+
+// ─── Main Pmap struct (repr(C), matches struct pmap in pmap.h) ───
+
+#[repr(C)]
+pub struct Pmap {
+    #[cfg(not(feature = "pae"))]
+    pub dirbase: *mut Pte,
+
+    #[cfg(all(feature = "pae", not(feature = "x86_64")))]
+    pub pdpbase: *mut Pte,
+
+    #[cfg(feature = "x86_64")]
+    pub l4base: *mut Pte,
+    #[cfg(all(feature = "xen_hyp", feature = "x86_64"))]
+    pub user_l4base: *mut Pte,
+    #[cfg(all(feature = "xen_hyp", feature = "x86_64"))]
+    pub user_pdpbase: *mut Pte,
+
+    pub ref_count: c_int,
+    pub lock: SimpleLock,
+    pub stats: PmapStatistics,
+    pub cpus_using: CpuSet,
+}
+
+// ─── PV entry for reverse mapping table ──────────────────────────
+
+#[repr(C)]
+pub struct PvEntry {
+    pub next: *mut PvEntry,
+    pub pmap: *mut Pmap,
+    pub va: VmOffset,
+}
+
+// ─── Map window structure ────────────────────────────────────────
+
+#[repr(C)]
+pub struct PmapMapwindow {
+    pub entry: *mut Pte,
+    pub vaddr: VmOffset,
+}
+
+// ─── VM protection constants ─────────────────────────────────────
+
+pub const VM_PROT_NONE:    VmProt = 0x00;
+pub const VM_PROT_READ:    VmProt = 0x01;
+pub const VM_PROT_WRITE:   VmProt = 0x02;
+pub const VM_PROT_EXECUTE: VmProt = 0x04;
+pub const VM_PROT_ALL:     VmProt = VM_PROT_READ | VM_PROT_WRITE | VM_PROT_EXECUTE;
+
+// ─── Kernel return codes ─────────────────────────────────────────
+
+pub const KERN_SUCCESS:            KernReturn = 0;
+pub const KERN_INVALID_ADDRESS:    KernReturn = 1;
+pub const KERN_PROTECTION_FAILURE: KernReturn = 2;
+pub const KERN_RESOURCE_SHORTAGE:  KernReturn = 6;
+
+// ─── PTE math utility functions ──────────────────────────────────
+
+/// Convert physical address to PTE value (mask to PFN).
+#[inline]
+pub fn pa_to_pte(pa: PhysAddr) -> PhysAddr {
+    pa & INTEL_PTE_PFN
+}
+
+/// Extract physical address from PTE value.
+#[inline]
+pub fn pte_to_pa(pte: PhysAddr) -> PhysAddr {
+    pte & INTEL_PTE_PFN
+}
+
+/// Increment PTE by one page.
+#[inline]
+pub fn pte_increment_pa(pte: &mut PhysAddr) {
+    *pte += INTEL_OFFMASK + 1;
+}
+
+/// Check if PTE is valid (present).
+#[inline]
+pub fn pte_is_valid(pte: PhysAddr) -> bool {
+    (pte & INTEL_PTE_VALID) != 0
+}
+
+// ─── Page-table index math ───────────────────────────────────────
+
+/// Convert linear address to L4 table index (x86_64 only).
+#[cfg(feature = "x86_64")]
+#[inline]
+pub fn lin2l4num(addr: VmOffset) -> u32 {
+    ((addr >> L4SHIFT) & L4MASK as usize) as u32
+}
+
+/// Convert linear address to page directory pointer index (PAE only).
+#[cfg(feature = "pae")]
+#[inline]
+pub fn lin2pdpnum(addr: VmOffset) -> u32 {
+    ((addr >> PDPSHIFT) & PDPMASK as usize) as u32
+}
+
+/// Convert linear address to page directory entry index.
+#[inline]
+pub fn lin2pdenum(addr: VmOffset) -> u32 {
+    ((addr >> PDESHIFT) & PDEMASK as usize) as u32
+}
+
+/// Convert linear address to page table entry index.
+#[inline]
+pub fn ptenum(addr: VmOffset) -> u32 {
+    ((addr >> PTESHIFT) & PTEMASK as usize) as u32
+}
+
+/// Convert page descriptor entry index to linear address offset.
+#[inline]
+pub fn pdenum2lin(pde_idx: u32) -> VmOffset {
+    (pde_idx as VmOffset) << PDESHIFT
+}
+
+/// PAE-specific: contiguous PDE index (includes PDP offset).
+#[cfg(all(feature = "pae", not(feature = "x86_64")))]
+#[inline]
+pub fn lin2pdenum_cont(addr: VmOffset) -> u32 {
+    ((addr >> PDESHIFT) & 0x7FF) as u32
+}
+
+/// Reconstruct page-aligned linear address from table indices.
+pub fn pagenum2lin(l4: u32, pdp: u32, pde: u32, pte: u32) -> VmOffset {
+    #[cfg(feature = "x86_64")]
+    {
+        ((l4 as VmOffset) << L4SHIFT)
+        + ((pdp as VmOffset) << PDPSHIFT)
+        + ((pde as VmOffset) << PDESHIFT)
+        + ((pte as VmOffset) << PTESHIFT)
+    }
+    #[cfg(all(feature = "pae", not(feature = "x86_64")))]
+    {
+        ((pdp as VmOffset) << PDPSHIFT)
+        + ((pde as VmOffset) << PDESHIFT)
+        + ((pte as VmOffset) << PTESHIFT)
+    }
+    #[cfg(not(feature = "pae"))]
+    {
+        ((pde as VmOffset) << PDESHIFT)
+        + ((pte as VmOffset) << PTESHIFT)
+    }
+}

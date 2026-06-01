@@ -59,3 +59,7 @@ build-aux/
 /doc/mach.toc
 /doc/mach.tp
 /doc/mach.vr
+
+# Rust build artifacts
+rust/pmap/target/
+rust/pmap/Cargo.lock

@@ -1,0 +1,49 @@
+# Makefile fragment for Rust PMAP crate.
+# Copyright (C) 2024 Free Software Foundation, Inc.
+
+RUST_PMAP_DIR = $(top_srcdir)/rust/pmap
+
+# Use the built-in no_std x86_64 target
+RUST_TARGET = x86_64-unknown-none
+
+# Kernel-specific RUSTFLAGS
+RUST_KERNEL_FLAGS = \
+	-C relocation-model=static \
+	-C code-model=kernel \
+	-C link-arg=-nostdlib \
+	-C target-feature=-mmx,-sse,-sse2,-sse3,-ssse3,-sse4.1,-sse4.2,-avx,-avx2,-3dnow
+
+# Feature flags passed to cargo
+RUST_FEATURES =
+
+if enable_pae
+RUST_FEATURES += --features pae
+endif
+if HOST_x86_64
+RUST_FEATURES += --features x86_64
+endif
+if enable_smp
+RUST_FEATURES += --features smp
+endif
+if PLATFORM_xen
+RUST_FEATURES += --features xen
+# MACH_HYP is always set for xen
+RUST_FEATURES += --features xen_hyp
+if enable_pseudo_phys
+RUST_FEATURES += --features pseudo_phys
+endif
+endif
+if enable_kdb
+RUST_FEATURES += --features kdb
+endif
+
+# The static library produced by cargo
+RUST_LIB = $(RUST_PMAP_DIR)/target/$(RUST_TARGET)/release/libpmap.a
+
+$(RUST_LIB): $(RUST_PMAP_DIR)/Cargo.toml $(shell find $(RUST_PMAP_DIR)/src -name '*.rs')
+	cd $(RUST_PMAP_DIR) && \
+	RUSTFLAGS="$(RUST_KERNEL_FLAGS)" \
+	cargo build --release --target $(RUST_TARGET) $(RUST_FEATURES)
+
+# Add the Rust staticlib to the kernel library
+gnumach_o_LDADD += $(RUST_LIB)

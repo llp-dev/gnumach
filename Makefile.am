@@ -156,6 +156,9 @@ include Makefrag.am
 # Test suite.
 include tests/Makefrag.am
 
+# Rust components.
+include rust/Makefrag.am
+
 # Documentation.
 include doc/Makefrag.am
 

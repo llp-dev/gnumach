@@ -1,0 +1,54 @@
+# Makefile fragment for the Rust kernel sources.  Included from Makefile.am.
+#
+# Builds the #![no_std] Rust crate (crate root rust/lib.rs) into a static
+# library libkernel-rust.a, which is linked into gnumach.o in place of the
+# C i386/intel/pmap.c.
+
+# Rust compiler, detected by configure (AC_CHECK_PROG([RUSTC], ...)).
+RUSTC = @RUSTC@
+
+# Flags for compiling the freestanding kernel crate.
+#  * i586-unknown-linux-gnu: Pentium baseline, no SSE — matches the kernel's
+#    -mno-sse -mno-sse2 -mno-mmx -mno-3dnow.
+#  * staticlib: bundle our code plus the core/compiler-builtins symbols we use
+#    so the C link sees no dangling Rust references.
+#  * relocation-model=static, panic=abort: kernel environment, no PIC, no unwind.
+RUSTFLAGS = \
+	--edition 2021 \
+	--crate-type staticlib \
+	--target i586-unknown-linux-gnu \
+	-C relocation-model=static \
+	-C panic=abort \
+	-C debug-assertions=off \
+	-C overflow-checks=off \
+	-C force-frame-pointers=yes
+
+# Silent-rule support.
+AM_V_RUSTC = $(AM_V_RUSTC_$(V))
+AM_V_RUSTC_ = $(AM_V_RUSTC_$(AM_DEFAULT_VERBOSITY))
+AM_V_RUSTC_0 = @echo "  RUSTC  $@";
+
+# Build rust/lib.rs -> rust/libkernel-rust.a.  After rustc emits the staticlib
+# we strip the unwinding metadata sections (panic=abort -> never used), which
+# otherwise leave undefined references to rust_eh_personality.
+$(builddir)/rust/libkernel-rust.a: $(srcdir)/rust/lib.rs $(srcdir)/rust/panic.rs $(srcdir)/rust/i386/pmap.rs
+	@mkdir -p rust
+	$(AM_V_RUSTC)$(RUSTC) $(RUSTFLAGS) -o $@.tmp $(srcdir)/rust/lib.rs
+	@rm -rf $@.tmpdir && mkdir -p $@.tmpdir
+	@cd $@.tmpdir && $(AR) x ../$(notdir $@.tmp)
+	@for obj in $@.tmpdir/*.o; do \
+		$(OBJCOPY) --remove-section=.eh_frame \
+		           --remove-section=.gnu.linkonce.eh_frame \
+		           --remove-section=.data.DW.ref.rust_eh_personality \
+		           $$obj 2>/dev/null || true; \
+	done
+	@$(AR) cru $@ $@.tmpdir/*.o
+	@$(RANLIB) $@
+	@rm -rf $@.tmpdir $@.tmp
+
+MOSTLYCLEANFILES += $(builddir)/rust/libkernel-rust.a
+
+EXTRA_DIST += \
+	rust/lib.rs \
+	rust/panic.rs \
+	rust/i386/pmap.rs

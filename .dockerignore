@@ -1,0 +1,22 @@
+# Build output directories
+build-*/
+
+# Autotools cache
+autom4te.cache/
+
+# Version control
+.git/
+.gitignore
+.gitattributes
+
+# CI pipeline
+.forgejo/
+
+# Documentation
+doc/
+
+# Editor / OS junk
+*.swp
+*.swo
+*~
+.DS_Store

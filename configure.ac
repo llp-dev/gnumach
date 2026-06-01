@@ -120,6 +120,13 @@ dnl Makerules can make use of these.
 AC_CHECK_PROG([GZIP], [gzip], [gzip], [gzip-not-found])
 AC_CHECK_TOOL([STRIP], [strip])
 
+dnl Rust toolchain — required for the kernel sources written in Rust
+dnl (currently the i386 pmap, built as a static library and linked into
+dnl gnumach in place of i386/intel/pmap.c).
+AC_CHECK_PROG([RUSTC], [rustc], [rustc], [no])
+AS_IF([test "x$RUSTC" = "xno"],
+  [AC_MSG_ERROR([rustc not found but required for the Rust kernel sources])])
+
 dnl See below why we need to patch stuff during build...
 AC_CHECK_PROG([PATCH], [patch], [patch], [patch-not-found])
 

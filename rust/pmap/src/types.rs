@@ -3,7 +3,7 @@
 // All structs crossing the C-Rust boundary use #[repr(C)].
 // PTE bit constants match i386/intel/pmap.h definitions.
 
-use core::ffi::{c_char, c_int, c_uint, c_ulong, c_void};
+use core::ffi::{c_int, c_uint, c_ulong, c_void};
 
 // ─── Type aliases matching C kernel types ────────────────────────
 
@@ -233,17 +233,17 @@ pub fn lin2pdenum_cont(addr: VmOffset) -> u32 {
 }
 
 /// Reconstruct page-aligned linear address from table indices.
-pub fn pagenum2lin(l4: u32, pdp: u32, pde: u32, pte: u32) -> VmOffset {
+pub fn pagenum2lin(_l4: u32, _pdp: u32, pde: u32, pte: u32) -> VmOffset {
     #[cfg(feature = "x86_64")]
     {
-        ((l4 as VmOffset) << L4SHIFT)
-        + ((pdp as VmOffset) << PDPSHIFT)
+        ((_l4 as VmOffset) << L4SHIFT)
+        + ((_pdp as VmOffset) << PDPSHIFT)
         + ((pde as VmOffset) << PDESHIFT)
         + ((pte as VmOffset) << PTESHIFT)
     }
     #[cfg(all(feature = "pae", not(feature = "x86_64")))]
     {
-        ((pdp as VmOffset) << PDPSHIFT)
+        ((_pdp as VmOffset) << PDPSHIFT)
         + ((pde as VmOffset) << PDESHIFT)
         + ((pte as VmOffset) << PTESHIFT)
     }

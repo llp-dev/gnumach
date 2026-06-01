@@ -350,3 +350,48 @@ mod tests {
         assert_eq!(INTEL_OFFMASK + 1, I386_PGBYTES as PhysAddr);
     }
 }
+
+// ─── Global state from C bootstrap ───────────────────────────────
+//
+// These are allocated and initialized in C's pmap_bootstrap.c
+// and accessed read-only or via the lock protocol from Rust.
+
+extern "C" {
+    /// The kernel's address space pmap. Initialized by pmap_bootstrap().
+    pub static mut kernel_pmap: *mut Pmap;
+
+    /// Kernel page directory base. Initialized by pmap_bootstrap().
+    pub static mut kernel_page_dir: *mut Pte;
+
+    /// Start/end of kernel virtual address range (beyond direct-mapped RAM).
+    pub static mut kernel_virtual_start: VmOffset;
+    pub static mut kernel_virtual_end: VmOffset;
+
+    /// Set to 1 (TRUE) after pmap_init() completes.
+    pub static mut pmap_initialized: c_int;
+
+    /// PV head table: one PvEntry per vm_page.
+    pub static mut pv_head_table: *mut PvEntry;
+
+    /// Lock-bit table for pv_head entries.
+    pub static mut pv_lock_table: *mut u8;
+
+    /// Physical page attribute bytes (MOD/REF bits).
+    pub static mut pmap_phys_attributes: *mut u8;
+
+    /// Number of CPUs (set at compile time).
+    pub static NCPUS: c_int;
+}
+
+/// Get a reference to the kernel pmap. Only valid after pmap_bootstrap().
+///
+/// # Safety
+/// Must not be called before pmap_bootstrap() initializes kernel_pmap.
+pub unsafe fn kernel_pmap_ref() -> &'static Pmap {
+    unsafe { &*kernel_pmap }
+}
+
+/// Check if pmap_init() has completed.
+pub fn is_pmap_initialized() -> bool {
+    unsafe { pmap_initialized != 0 }
+}

@@ -1,0 +1,32 @@
+[package]
+name = "pmap"
+version = "0.1.0"
+edition = "2021"
+description = "GNU Mach physical map (PMAP) module"
+
+[lib]
+crate-type = ["staticlib"]
+
+[features]
+default = []
+pae = []
+x86_64 = ["pae"]
+smp = []
+xen = []
+xen_hyp = ["xen"]
+pseudo_phys = []
+kdb = []
+debug_pte = []
+host-test = []
+
+[profile.release]
+lto = true
+opt-level = "s"
+panic = "abort"
+codegen-units = 1
+
+[profile.dev]
+panic = "abort"
+
+[build-dependencies]
+bindgen = "0.69"

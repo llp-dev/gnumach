@@ -24,9 +24,7 @@ use crate::types::*;
 #[no_mangle] pub extern "C" fn pmap_is_modified(phys: PhysAddr) -> c_int { crate::page_attr::pmap_is_modified(phys) as c_int }
 #[no_mangle] pub extern "C" fn pmap_clear_reference(phys: PhysAddr) { crate::page_attr::pmap_clear_reference(phys); }
 #[no_mangle] pub extern "C" fn pmap_is_referenced(phys: PhysAddr) -> c_int { crate::page_attr::pmap_is_referenced(phys) as c_int }
-#[no_mangle] pub extern "C" fn kvtophys(va: VmOffset) -> PhysAddr { crate::phys_ops::kvtophys(va) }
-#[no_mangle] pub extern "C" fn copy_to_phys(src: VmOffset, dst: PhysAddr, count: c_int) { crate::phys_ops::copy_to_phys(src, dst, count); }
-#[no_mangle] pub extern "C" fn copy_from_phys(src: PhysAddr, dst: VmOffset, count: c_int) { crate::phys_ops::copy_from_phys(src, dst, count); }
+/* copy_to_phys, copy_from_phys, kvtophys are defined in i386/i386/phys.c */
 #[no_mangle] pub extern "C" fn pmap_get_mapwindow(entry: PhysAddr) -> *mut PmapMapwindow { crate::mapwindow::pmap_get_mapwindow(entry) }
 #[no_mangle] pub extern "C" fn pmap_put_mapwindow(map: *mut PmapMapwindow) { crate::mapwindow::pmap_put_mapwindow(map); }
 #[no_mangle] pub extern "C" fn pmap_activate(pmap: *mut Pmap, thread: Thread, cpu: c_int) { crate::activation::pmap_activate(pmap, thread, cpu); }

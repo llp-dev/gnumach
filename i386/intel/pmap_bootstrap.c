@@ -617,8 +617,8 @@ vm_offset_t pmap_map_bd(
 	return(virt);
 }
 
-#ifdef PAE
 #endif  /* Rust provides pmap_map_bd */
+#ifdef PAE
 static void pmap_bootstrap_pae(void)
 {
 	vm_offset_t addr;
@@ -1035,11 +1035,11 @@ void pmap_clear_bootstrap_pagetable(pt_entry_t *base) {
 }
 #endif	/* MACH_PV_PAGETABLES */
 
+#if 0  /* Rust provides pmap_get_mapwindow/pmap_put_mapwindow/pmap_virtual_space */
 /*
  * Create a temporary mapping for a given physical entry
  *
  * This can be used to access physical pages which are not mapped 1:1 by
-#if 0  /* Rust provides pmap_get_mapwindow/pmap_put_mapwindow/pmap_virtual_space */
  * phystokv().
  */
 pmap_mapwindow_t *pmap_get_mapwindow(pt_entry_t entry)
@@ -1085,8 +1085,8 @@ void pmap_virtual_space(
 {
 	*startp = kernel_virtual_start;
 	*endp = kernel_virtual_end - MAPWINDOW_SIZE;
-#endif  /* Rust provides pmap_get_mapwindow/pmap_put_mapwindow/pmap_virtual_space */
 }
+#endif  /* Rust provides pmap_get_mapwindow/pmap_put_mapwindow/pmap_virtual_space */
 
 /*
  *	Initialize the pmap module.

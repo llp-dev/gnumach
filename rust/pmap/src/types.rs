@@ -370,8 +370,8 @@ extern "C" {
     /// Set to 1 (TRUE) after pmap_init() completes.
     pub static mut pmap_initialized: c_int;
 
-    /// PV head table: one PvEntry per vm_page.
-    pub static mut pv_head_table: *mut PvEntry;
+    /// PV head table: one *mut PvEntry per vm_page.
+    pub static mut pv_head_table: *mut *mut PvEntry;
 
     /// Lock-bit table for pv_head entries.
     pub static mut pv_lock_table: *mut u8;

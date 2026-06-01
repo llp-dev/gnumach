@@ -253,3 +253,100 @@ pub fn pagenum2lin(l4: u32, pdp: u32, pde: u32, pte: u32) -> VmOffset {
         + ((pte as VmOffset) << PTESHIFT)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pte_to_pa_roundtrip() {
+        let test_pas = &[0u64, 0x1000, 0x12345000, 0xFFFFF000];
+        for &pa in test_pas {
+            let pa = pa as PhysAddr;
+            let pte = pa_to_pte(pa);
+            let back = pte_to_pa(pte);
+            assert_eq!(back, pa, "round-trip failed for pa {:#x}", pa);
+        }
+    }
+
+    #[test]
+    fn test_pte_bit_constants_no_overlap() {
+        let flags = INTEL_PTE_VALID
+                  | INTEL_PTE_WRITE
+                  | INTEL_PTE_USER
+                  | INTEL_PTE_WTHRU
+                  | INTEL_PTE_NCACHE
+                  | INTEL_PTE_REF
+                  | INTEL_PTE_MOD
+                  | INTEL_PTE_PS
+                  | INTEL_PTE_GLOBAL
+                  | INTEL_PTE_WIRED;
+
+        assert_eq!(flags & 0xFFF, flags);
+        assert_eq!(flags & INTEL_PTE_PFN, 0);
+    }
+
+    #[test]
+    fn test_page_size_constants() {
+        assert_eq!(I386_PGBYTES, 4096);
+        assert_eq!(1 << I386_PGSHIFT, I386_PGBYTES);
+    }
+
+    #[test]
+    fn test_pte_increment() {
+        let mut pte: PhysAddr = 0x1000;
+        let orig = pte;
+        pte_increment_pa(&mut pte);
+        assert_eq!(pte, orig + 0x1000);
+        assert_eq!(pte_to_pa(pte), 0x2000);
+    }
+
+    #[test]
+    fn test_pte_valid() {
+        assert!(pte_is_valid(INTEL_PTE_VALID));
+        assert!(pte_is_valid(0x1001));
+        assert!(!pte_is_valid(0x1000));
+        assert!(!pte_is_valid(0));
+    }
+
+    #[test]
+    fn test_pte_to_pa_masks_correctly() {
+        let pte: PhysAddr = 0x12345000 | INTEL_PTE_VALID | INTEL_PTE_WRITE | INTEL_PTE_MOD;
+        assert_eq!(pte_to_pa(pte), 0x12345000);
+    }
+
+    #[test]
+    fn test_pa_to_pte_masks_correctly() {
+        let pa: PhysAddr = 0x12345FFF;
+        let pte = pa_to_pte(pa);
+        assert_eq!(pte, 0x12345000);
+        assert_eq!(pte & 0xFFF, 0);
+    }
+
+    #[test]
+    fn test_ptenum() {
+        assert_eq!(ptenum(0x0000_0000), 0);
+        assert_eq!(ptenum(0x0000_1000), 1);
+        assert_eq!(ptenum(0x0000_2000), 2);
+        assert_eq!(ptenum(0x003F_F000), 0x3FF);
+    }
+
+    #[test]
+    fn test_lin2pdenum_default() {
+        let addr: VmOffset = 0x0040_0000;
+        assert_eq!(lin2pdenum(addr), 1);
+        assert_eq!(lin2pdenum(0), 0);
+    }
+
+    #[test]
+    fn test_pdenum2lin() {
+        assert_eq!(pdenum2lin(1), 1_usize << PDESHIFT);
+        assert_eq!(pdenum2lin(0), 0);
+    }
+
+    #[test]
+    fn test_offset_mask() {
+        assert_eq!(INTEL_OFFMASK, 0xFFF);
+        assert_eq!(INTEL_OFFMASK + 1, I386_PGBYTES as PhysAddr);
+    }
+}

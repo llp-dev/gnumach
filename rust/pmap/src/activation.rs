@@ -25,10 +25,10 @@ pub fn pmap_deactivate(pmap: *mut Pmap, _thread: Thread, _cpu: c_int) {
 }
 
 unsafe fn set_pmap(pmap: &Pmap) {
-    extern "C" { fn set_cr3(value: PhysAddr); fn kvtophys(va: VmOffset) -> PhysAddr; }
-    #[cfg(feature = "x86_64")] { set_cr3(kvtophys((*pmap).l4base as VmOffset)); }
-    #[cfg(all(feature = "pae", not(feature = "x86_64")))] { set_cr3(kvtophys((*pmap).pdpbase as VmOffset)); }
-    #[cfg(not(feature = "pae"))] { set_cr3(kvtophys((*pmap).dirbase as VmOffset)); }
+    extern "C" { fn set_cr3_fn(value: PhysAddr); fn kvtophys(va: VmOffset) -> PhysAddr; }
+    #[cfg(feature = "x86_64")] { set_cr3_fn(kvtophys((*pmap).l4base as VmOffset)); }
+    #[cfg(all(feature = "pae", not(feature = "x86_64")))] { set_cr3_fn(kvtophys((*pmap).pdpbase as VmOffset)); }
+    #[cfg(not(feature = "pae"))] { set_cr3_fn(kvtophys((*pmap).dirbase as VmOffset)); }
 }
 
 use core::ffi::c_int;

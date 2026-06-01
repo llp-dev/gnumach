@@ -3367,3 +3367,36 @@ pmap_remove_temporary_mapping(void)
 
 	flush_tlb();
 }
+
+/*
+ * C wrappers for Rust PMAP extern calls.
+ * These provide function symbols for kernel macros/inlines that
+ * the Rust code references via extern "C".
+ */
+
+int valid_page_c(phys_addr_t pa) {
+    return valid_page(pa);
+}
+
+void phys_attribute_set_c(phys_addr_t pa, phys_addr_t bits) {
+    /* Set the attribute byte for a physical page.
+     * pmap_phys_attributes is allocated by pmap_init. */
+    if (pmap_phys_attributes) {
+        int idx = pa_index(pa);
+        pmap_phys_attributes[idx] |= (char)bits;
+    }
+}
+
+phys_addr_t pmap_page_table_page_alloc_c(void) {
+    /* Allocate a new physical page for page table use.
+     * This is a simple wrapper that uses vm_page_grab. */
+    vm_page_t m;
+    vm_page_grab(TRUE);
+    while (!(m = vm_page_grab(FALSE)))
+        continue;
+    vm_page_lock_queues();
+    vm_page_wire(m);
+    vm_page_unlock_queues();
+    return (phys_addr_t)(m->phys_addr);
+}
+

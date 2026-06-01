@@ -5,7 +5,7 @@ use crate::types::*;
 extern "C" {
     fn kmem_cache_alloc(cache: *mut c_void) -> *mut c_void;
     fn kmem_cache_free(cache: *mut c_void, ptr: *mut c_void);
-    fn pmap_page_table_page_alloc() -> *mut Pte;
+    fn pmap_page_table_page_alloc_c() -> *mut Pte;
     fn phystokv(pa: PhysAddr) -> usize;
 
     static mut pmap_cache: *mut c_void;
@@ -21,7 +21,7 @@ pub fn pmap_create(_size: VmSize) -> *mut Pmap {
         core::ptr::write_bytes(pmap, 0, 1);
         #[cfg(feature = "x86_64")]
         {
-            (*pmap).l4base = pmap_page_table_page_alloc();
+            (*pmap).l4base = pmap_page_table_page_alloc_c();
             if (*pmap).l4base.is_null() { kmem_cache_free(pmap_cache, pmap as *mut c_void); return core::ptr::null_mut(); }
             let kernel_l4 = (*kernel_pmap).l4base;
             let start = lin2l4num(kernel_virtual_start) as usize;
@@ -30,12 +30,12 @@ pub fn pmap_create(_size: VmSize) -> *mut Pmap {
         }
         #[cfg(all(feature = "pae", not(feature = "x86_64")))]
         {
-            (*pmap).pdpbase = pmap_page_table_page_alloc();
+            (*pmap).pdpbase = pmap_page_table_page_alloc_c();
             if (*pmap).pdpbase.is_null() { kmem_cache_free(pmap_cache, pmap as *mut c_void); return core::ptr::null_mut(); }
         }
         #[cfg(not(feature = "pae"))]
         {
-            (*pmap).dirbase = pmap_page_table_page_alloc();
+            (*pmap).dirbase = pmap_page_table_page_alloc_c();
             if (*pmap).dirbase.is_null() { kmem_cache_free(pmap_cache, pmap as *mut c_void); return core::ptr::null_mut(); }
         }
         (*pmap).ref_count = 1;

@@ -7,8 +7,8 @@ use crate::expand::{pmap_pte, pmap_expand, pmap_pde};
 extern "C" {
     static mut kernel_virtual_start: VmOffset;
     static mut kernel_virtual_end: VmOffset;
-    fn phystokv(pa: PhysAddr) -> usize;
-    fn phys_attribute_set(pa: PhysAddr, bit: PhysAddr);
+    fn phystokv_fn(pa: PhysAddr) -> usize;
+    fn phys_attribute_set_c(pa: PhysAddr, bit: PhysAddr);
 }
 
 // ─── PTE Helpers ─────────────────────────────────────────────────
@@ -93,7 +93,7 @@ pub fn pmap_remove(pmap: &mut Pmap, s: VmOffset, e: VmOffset) {
             if va == 0 { break; }
             continue;
         }
-        let pt = unsafe { phystokv(pte_to_pa(unsafe { *pde_ptr })) as *mut Pte };
+        let pt = unsafe { phystokv_fn(pte_to_pa(unsafe { *pde_ptr })) as *mut Pte };
         let start_idx = ptenum(va) as isize;
         let end_idx = core::cmp::min(ptenum(e.saturating_sub(1)) as isize + 1, (I386_PGBYTES / core::mem::size_of::<Pte>()) as isize);
         for i in start_idx..end_idx {
@@ -101,8 +101,8 @@ pub fn pmap_remove(pmap: &mut Pmap, s: VmOffset, e: VmOffset) {
             let old_pte = unsafe { *pte_ptr };
             if !pte_is_valid(old_pte) { continue; }
             let pa = pte_to_pa(old_pte);
-            if (old_pte & INTEL_PTE_MOD) != 0 { unsafe { phys_attribute_set(pa, INTEL_PTE_MOD); } }
-            if (old_pte & INTEL_PTE_REF) != 0 { unsafe { phys_attribute_set(pa, INTEL_PTE_REF); } }
+            if (old_pte & INTEL_PTE_MOD) != 0 { unsafe { phys_attribute_set_c(pa, INTEL_PTE_MOD); } }
+            if (old_pte & INTEL_PTE_REF) != 0 { unsafe { phys_attribute_set_c(pa, INTEL_PTE_REF); } }
             if crate::pv_list::valid_page(pa) {
                 let pai = crate::pv_list::pa_index(pa);
                 let _pv_lock = crate::pv_list::lock_pvh(pai);

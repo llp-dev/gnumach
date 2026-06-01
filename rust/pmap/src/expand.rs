@@ -15,10 +15,10 @@ use crate::types::*;
 
 extern "C" {
     /// Convert physical address to kernel virtual address via direct map.
-    fn phystokv(pa: PhysAddr) -> usize;
+    fn phystokv_fn(pa: PhysAddr) -> usize;
 
     /// Allocate a new physical page for a page-table page.
-    fn pmap_page_table_page_alloc() -> *mut Pte;
+    fn pmap_page_table_page_alloc_c() -> *mut Pte;
 }
 
 /// Check if a PTE has the Valid (Present) bit set.
@@ -58,7 +58,7 @@ pub fn pmap_pte(pmap: &Pmap, addr: VmOffset) -> *mut Pte {
 
         // PDP lookup
         let pdp_idx = lin2pdpnum(addr) as usize;
-        let pdp_table = unsafe { phystokv(pte_to_pa(l4e)) as *mut Pte };
+        let pdp_table = unsafe { phystokv_fn(pte_to_pa(l4e)) as *mut Pte };
         let pdpe = unsafe { *pdp_table.add(pdp_idx) };
         if !pte_is_valid(pdpe) {
             return core::ptr::null_mut();
@@ -66,7 +66,7 @@ pub fn pmap_pte(pmap: &Pmap, addr: VmOffset) -> *mut Pte {
 
         // PD lookup
         let pde_idx = lin2pdenum(addr) as usize;
-        let pd_table = unsafe { phystokv(pte_to_pa(pdpe)) as *mut Pte };
+        let pd_table = unsafe { phystokv_fn(pte_to_pa(pdpe)) as *mut Pte };
         let pde = unsafe { *pd_table.add(pde_idx) };
         if !pte_is_valid(pde) {
             return core::ptr::null_mut();
@@ -79,7 +79,7 @@ pub fn pmap_pte(pmap: &Pmap, addr: VmOffset) -> *mut Pte {
 
         // PT lookup — leaf PTE
         let pte_idx = ptenum(addr) as usize;
-        let pt_table = unsafe { phystokv(pte_to_pa(pde)) as *mut Pte };
+        let pt_table = unsafe { phystokv_fn(pte_to_pa(pde)) as *mut Pte };
         return unsafe { pt_table.add(pte_idx) };
     }
 
@@ -96,7 +96,7 @@ pub fn pmap_pte(pmap: &Pmap, addr: VmOffset) -> *mut Pte {
             return core::ptr::null_mut();
         }
 
-        let pd_table = unsafe { phystokv(pte_to_pa(pdpe)) as *mut Pte };
+        let pd_table = unsafe { phystokv_fn(pte_to_pa(pdpe)) as *mut Pte };
         let pde_idx = lin2pdenum_cont(addr) as usize;
         let pde = unsafe { *pd_table.add(pde_idx) };
         if !pte_is_valid(pde) {
@@ -107,7 +107,7 @@ pub fn pmap_pte(pmap: &Pmap, addr: VmOffset) -> *mut Pte {
             return unsafe { pd_table.add(pde_idx) };
         }
 
-        let pt_table = unsafe { phystokv(pte_to_pa(pde)) as *mut Pte };
+        let pt_table = unsafe { phystokv_fn(pte_to_pa(pde)) as *mut Pte };
         let pte_idx = ptenum(addr) as usize;
         return unsafe { pt_table.add(pte_idx) };
     }
@@ -125,7 +125,7 @@ pub fn pmap_pte(pmap: &Pmap, addr: VmOffset) -> *mut Pte {
             return core::ptr::null_mut();
         }
 
-        let pt_table = unsafe { phystokv(pte_to_pa(pde)) as *mut Pte };
+        let pt_table = unsafe { phystokv_fn(pte_to_pa(pde)) as *mut Pte };
         let pte_idx = ptenum(addr) as usize;
         return unsafe { pt_table.add(pte_idx) };
     }
@@ -148,14 +148,14 @@ pub fn pmap_pde(pmap: &Pmap, addr: VmOffset) -> *mut Pte {
         }
 
         let pdp_idx = lin2pdpnum(addr) as usize;
-        let pdp_table = unsafe { phystokv(pte_to_pa(l4e)) as *mut Pte };
+        let pdp_table = unsafe { phystokv_fn(pte_to_pa(l4e)) as *mut Pte };
         let pdpe = unsafe { *pdp_table.add(pdp_idx) };
         if !pte_is_valid(pdpe) {
             return core::ptr::null_mut();
         }
 
         let pde_idx = lin2pdenum(addr) as usize;
-        let pd_table = unsafe { phystokv(pte_to_pa(pdpe)) as *mut Pte };
+        let pd_table = unsafe { phystokv_fn(pte_to_pa(pdpe)) as *mut Pte };
         unsafe { pd_table.add(pde_idx) }
     }
 
@@ -171,7 +171,7 @@ pub fn pmap_pde(pmap: &Pmap, addr: VmOffset) -> *mut Pte {
         }
 
         let pde_idx = lin2pdenum_cont(addr) as usize;
-        let pd_table = unsafe { phystokv(pte_to_pa(pdpe)) as *mut Pte };
+        let pd_table = unsafe { phystokv_fn(pte_to_pa(pdpe)) as *mut Pte };
         unsafe { pd_table.add(pde_idx) }
     }
 
@@ -199,7 +199,7 @@ pub fn pmap_expand(pmap: &mut Pmap, v: VmOffset) -> *mut Pte {
         // Expand L4 → PDP if needed
         let l4_idx = lin2l4num(v) as usize;
         if !pte_is_valid(unsafe { *pmap.l4base.add(l4_idx) }) {
-            let new_pdp = unsafe { pmap_page_table_page_alloc() };
+            let new_pdp = unsafe { pmap_page_table_page_alloc_c() };
             if new_pdp.is_null() {
                 panic!("pmap_expand: PDP alloc failed");
             }
@@ -217,9 +217,9 @@ pub fn pmap_expand(pmap: &mut Pmap, v: VmOffset) -> *mut Pte {
         // Expand PDP → PD if needed
         let pdp_idx = lin2pdpnum(v) as usize;
         let l4e = unsafe { *pmap.l4base.add(l4_idx) };
-        let pdp_table = unsafe { phystokv(pte_to_pa(l4e)) as *mut Pte };
+        let pdp_table = unsafe { phystokv_fn(pte_to_pa(l4e)) as *mut Pte };
         if !pte_is_valid(unsafe { *pdp_table.add(pdp_idx) }) {
-            let new_pd = unsafe { pmap_page_table_page_alloc() };
+            let new_pd = unsafe { pmap_page_table_page_alloc_c() };
             if new_pd.is_null() {
                 panic!("pmap_expand: PD alloc failed");
             }
@@ -235,9 +235,9 @@ pub fn pmap_expand(pmap: &mut Pmap, v: VmOffset) -> *mut Pte {
         // Expand PD → PT if needed
         let pde_idx = lin2pdenum(v) as usize;
         let pdpe = unsafe { *pdp_table.add(pdp_idx) };
-        let pd_table = unsafe { phystokv(pte_to_pa(pdpe)) as *mut Pte };
+        let pd_table = unsafe { phystokv_fn(pte_to_pa(pdpe)) as *mut Pte };
         if !pte_is_valid(unsafe { *pd_table.add(pde_idx) }) {
-            let new_pt = unsafe { pmap_page_table_page_alloc() };
+            let new_pt = unsafe { pmap_page_table_page_alloc_c() };
             if new_pt.is_null() {
                 panic!("pmap_expand: PT alloc failed");
             }
@@ -255,7 +255,7 @@ pub fn pmap_expand(pmap: &mut Pmap, v: VmOffset) -> *mut Pte {
     {
         let pdp_idx = lin2pdpnum(v) as usize;
         if !pte_is_valid(unsafe { *pmap.pdpbase.add(pdp_idx) }) {
-            let new_pd = unsafe { pmap_page_table_page_alloc() };
+            let new_pd = unsafe { pmap_page_table_page_alloc_c() };
             if new_pd.is_null() {
                 panic!("pmap_expand: PD alloc failed");
             }
@@ -269,11 +269,11 @@ pub fn pmap_expand(pmap: &mut Pmap, v: VmOffset) -> *mut Pte {
         }
 
         let pd_table = unsafe {
-            phystokv(pte_to_pa(unsafe { *pmap.pdpbase.add(pdp_idx) })) as *mut Pte
+            phystokv_fn(pte_to_pa(unsafe { *pmap.pdpbase.add(pdp_idx) })) as *mut Pte
         };
         let pde_idx = lin2pdenum_cont(v) as usize;
         if !pte_is_valid(unsafe { *pd_table.add(pde_idx) }) {
-            let new_pt = unsafe { pmap_page_table_page_alloc() };
+            let new_pt = unsafe { pmap_page_table_page_alloc_c() };
             if new_pt.is_null() {
                 panic!("pmap_expand: PT alloc failed");
             }
@@ -291,7 +291,7 @@ pub fn pmap_expand(pmap: &mut Pmap, v: VmOffset) -> *mut Pte {
     {
         let pde_idx = lin2pdenum(v) as usize;
         if !pte_is_valid(unsafe { *pmap.dirbase.add(pde_idx) }) {
-            let new_pt = unsafe { pmap_page_table_page_alloc() };
+            let new_pt = unsafe { pmap_page_table_page_alloc_c() };
             if new_pt.is_null() {
                 panic!("pmap_expand: PT alloc failed");
             }

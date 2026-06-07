@@ -81,15 +81,9 @@
 
 #define LB(x,n) n
 #ifdef	__STDC__
-#ifndef __ELF__
-#define EXT(x) _ ## x
-#define LEXT(x) _ ## x ## :
-#define SEXT(x) "_"#x
-#else
 #define EXT(x) x
 #define LEXT(x) x ## :
 #define SEXT(x) #x
-#endif
 #define LCLL(x) x ## :
 #define gLB(n)  n ## :
 #define LBb(x,n) n ## b

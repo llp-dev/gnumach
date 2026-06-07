@@ -21,9 +21,6 @@ dnl USE OF THIS SOFTWARE.
   i?86)]
     AM_CONDITIONAL([HOST_ix86], [true])
 
-    # Some of the i386-specific code checks for these.
-    AC_DEFINE([__ELF__], [1], [__ELF__])
-
     # Determines the size of the CPU cache line.
     AC_DEFINE([CPU_L1_SHIFT], [6], [CPU_L1_SHIFT])
 

@@ -21,9 +21,6 @@ dnl USE OF THIS SOFTWARE.
   x86_64)]
     AM_CONDITIONAL([HOST_x86_64], [true])
 
-    # Some of the x86_64-specific code checks for these.
-    AC_DEFINE([__ELF__], [1], [__ELF__])
-
     # Determines the size of the CPU cache line.
     AC_DEFINE([CPU_L1_SHIFT], [6], [CPU_L1_SHIFT])
 

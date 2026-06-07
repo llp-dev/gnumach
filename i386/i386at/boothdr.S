@@ -8,12 +8,7 @@
 #define BOOT_CS 0x8
 #define BOOT_DS 0x10
 
-#ifdef __ELF__
-#define AOUT_KLUDGE	0
-#else
-#define AOUT_KLUDGE	MULTIBOOT_AOUT_KLUDGE
-#endif /* __ELF__ */
-#define MULTIBOOT_FLAGS	MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_VIDEO_MODE | AOUT_KLUDGE
+#define MULTIBOOT_FLAGS	MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO | MULTIBOOT_VIDEO_MODE
 
 	/*
 	 * This section will be put first into .text.  See also	i386/ldscript.
@@ -36,19 +31,11 @@ boot_hdr:
 		 * XX this works OK until we need at least the 30th bit.
 		 */
 	.long	- (MULTIBOOT_MAGIC+MULTIBOOT_FLAGS)
-#ifndef __ELF__	/* a.out kludge */
-	.long	boot_hdr	/* header_addr */
-	.long	_start		/* load_addr */
-	.long	_edata		/* load_end_addr */
-	.long	_end		/* bss_end_addr */
-	.long	boot_entry	/* entry */
-#else
         .long	0
         .long	0
         .long	0
         .long	0
         .long	0
-#endif /* __ELF__ */
         .long	MULTIBOOT_VIDEO_MODE_TYPE_EGA_TEXT
         .long	80
         .long	25

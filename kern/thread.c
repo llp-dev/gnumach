@@ -83,12 +83,6 @@ def_simple_lock_data(static,	reaper_lock)
 /* private */
 struct thread	thread_template;
 
-#if	MACH_DEBUG
-#define	STACK_MARKER	0xdeadbeefU
-boolean_t		stack_check_usage = FALSE;
-def_simple_lock_data(static,	stack_usage_lock)
-vm_size_t		stack_max_usage = 0;
-#endif	/* MACH_DEBUG */
 
 /*
  *	Machine-dependent code must define:
@@ -107,8 +101,6 @@ vm_size_t		stack_max_usage = 0;
  *		stack_free
  *		stack_handoff
  *		stack_collect
- *	and if MACH_DEBUG:
- *		stack_statistics
  */
 #else	/* MACHINE_STACK */
 /*
@@ -203,9 +195,6 @@ kern_return_t stack_alloc(
 	if (stack == 0) {
 		stack = kmem_cache_alloc(&thread_stack_cache);
 		assert(stack != 0);
-#if	MACH_DEBUG
-		stack_init(stack);
-#endif	/* MACH_DEBUG */
 	}
 
 	stack_attach(thread, stack, resume);
@@ -260,9 +249,6 @@ void stack_collect(void)
 		stack_unlock();
 		(void) splx(s);
 
-#if	MACH_DEBUG
-		stack_finalize(stack);
-#endif	/* MACH_DEBUG */
 		kmem_cache_free(&thread_stack_cache, stack);
 
 		s = splsched();
@@ -392,9 +378,6 @@ void thread_init(void)
 	simple_lock_init(&stack_lock_data);
 #endif	/* MACHINE_STACK */
 
-#if	MACH_DEBUG
-	simple_lock_init(&stack_usage_lock);
-#endif	/* MACH_DEBUG */
 
 	/*
 	 *	Initialize any machine-dependent
@@ -2385,266 +2368,6 @@ void consider_thread_collect(void)
 	}
 }
 
-#if	MACH_DEBUG
-
-static vm_size_t stack_usage(vm_offset_t stack)
-{
-	unsigned i;
-
-	for (i = 0; i < KERNEL_STACK_SIZE/sizeof(unsigned int); i++)
-	    if (((unsigned int *)stack)[i] != STACK_MARKER)
-		break;
-
-	return KERNEL_STACK_SIZE - i * sizeof(unsigned int);
-}
-
-/*
- *	Machine-dependent code should call stack_init
- *	before doing its own initialization of the stack.
- */
-
-void stack_init(
-	vm_offset_t stack)
-{
-	if (stack_check_usage) {
-	    unsigned i;
-
-	    for (i = 0; i < KERNEL_STACK_SIZE/sizeof(unsigned int); i++)
-		((unsigned int *)stack)[i] = STACK_MARKER;
-	}
-}
-
-/*
- *	Machine-dependent code should call stack_finalize
- *	before releasing the stack memory.
- */
-
-void stack_finalize(
-	vm_offset_t stack)
-{
-	if (stack_check_usage) {
-	    vm_size_t used = stack_usage(stack);
-
-	    simple_lock(&stack_usage_lock);
-	    if (used > stack_max_usage)
-		stack_max_usage = used;
-	    simple_unlock(&stack_usage_lock);
-	}
-}
-
-#ifndef	MACHINE_STACK
-/*
- *	stack_statistics:
- *
- *	Return statistics on cached kernel stacks.
- *	*maxusagep must be initialized by the caller.
- */
-
-static void stack_statistics(
-	natural_t *totalp,
-	vm_size_t *maxusagep)
-{
-	spl_t	s;
-
-	s = splsched();
-	stack_lock();
-	if (stack_check_usage) {
-		vm_offset_t stack;
-
-		/*
-		 *	This is pretty expensive to do at splsched,
-		 *	but it only happens when someone makes
-		 *	a debugging call, so it should be OK.
-		 */
-
-		for (stack = stack_free_list; stack != 0;
-		     stack = stack_next(stack)) {
-			vm_size_t usage = stack_usage(stack);
-
-			if (usage > *maxusagep)
-				*maxusagep = usage;
-		}
-	}
-
-	*totalp = stack_free_count;
-	stack_unlock();
-	(void) splx(s);
-}
-#endif	/* MACHINE_STACK */
-
-kern_return_t host_stack_usage(
-	host_t		host,
-	vm_size_t	*reservedp,
-	unsigned int	*totalp,
-	vm_size_t	*spacep,
-	vm_size_t	*residentp,
-	vm_size_t	*maxusagep,
-	vm_offset_t	*maxstackp)
-{
-	natural_t total;
-	vm_size_t maxusage;
-
-	if (host == HOST_NULL)
-		return KERN_INVALID_HOST;
-
-	simple_lock(&stack_usage_lock);
-	maxusage = stack_max_usage;
-	simple_unlock(&stack_usage_lock);
-
-	stack_statistics(&total, &maxusage);
-
-	*reservedp = 0;
-	*totalp = total;
-	*spacep = *residentp = total * round_page(KERNEL_STACK_SIZE);
-	*maxusagep = maxusage;
-	*maxstackp = 0;
-	return KERN_SUCCESS;
-}
-
-kern_return_t processor_set_stack_usage(
-	processor_set_t	pset,
-	unsigned int	*totalp,
-	vm_size_t	*spacep,
-	vm_size_t	*residentp,
-	vm_size_t	*maxusagep,
-	vm_offset_t	*maxstackp)
-{
-	unsigned int total;
-	vm_size_t maxusage;
-	vm_offset_t maxstack;
-
-	thread_t *threads;
-	thread_t tmp_thread;
-
-	unsigned int actual;	/* this many things */
-	unsigned int i;
-
-	vm_size_t size, size_needed;
-	vm_offset_t addr;
-
-	if (pset == PROCESSOR_SET_NULL)
-		return KERN_INVALID_ARGUMENT;
-
-	size = 0; addr = 0;
-
-	for (;;) {
-		pset_lock(pset);
-		if (!pset->active) {
-			pset_unlock(pset);
-			return KERN_INVALID_ARGUMENT;
-		}
-
-		actual = pset->thread_count;
-
-		/* do we have the memory we need? */
-
-		size_needed = actual * sizeof(thread_t);
-		if (size_needed <= size)
-			break;
-
-		/* unlock the pset and allocate more memory */
-		pset_unlock(pset);
-
-		if (size != 0)
-			kfree(addr, size);
-
-		assert(size_needed > 0);
-		size = size_needed;
-
-		addr = kalloc(size);
-		if (addr == 0)
-			return KERN_RESOURCE_SHORTAGE;
-	}
-
-	/* OK, have memory and the processor_set is locked & active */
-
-	threads = (thread_t *) addr;
-	for (i = 0, tmp_thread = (thread_t) queue_first(&pset->threads);
-	     i < actual;
-	     i++,
-	     tmp_thread = (thread_t) queue_next(&tmp_thread->pset_threads)) {
-		thread_reference(tmp_thread);
-		threads[i] = tmp_thread;
-	}
-	assert(queue_end(&pset->threads, (queue_entry_t) tmp_thread));
-
-	/* can unlock processor set now that we have the thread refs */
-	pset_unlock(pset);
-
-	/* calculate maxusage and free thread references */
-
-	total = 0;
-	maxusage = 0;
-	maxstack = 0;
-	for (i = 0; i < actual; i++) {
-		thread_t thread = threads[i];
-		vm_offset_t stack = 0;
-
-		/*
-		 *	thread->kernel_stack is only accurate if the
-		 *	thread isn't swapped and is not executing.
-		 *
-		 *	Of course, we don't have the appropriate locks
-		 *	for these shenanigans.
-		 */
-
-		if ((thread->state & TH_SWAPPED) == 0) {
-			int cpu;
-
-			stack = thread->kernel_stack;
-
-			for (cpu = 0; cpu < smp_get_numcpus(); cpu++)
-				if (percpu_array[cpu].active_thread == thread) {
-					stack = percpu_array[cpu].active_stack;
-					break;
-				}
-		}
-
-		if (stack != 0) {
-			total++;
-
-			if (stack_check_usage) {
-				vm_size_t usage = stack_usage(stack);
-
-				if (usage > maxusage) {
-					maxusage = usage;
-					maxstack = (vm_offset_t) thread;
-				}
-			}
-		}
-
-		thread_deallocate(thread);
-	}
-
-	if (size != 0)
-		kfree(addr, size);
-
-	*totalp = total;
-	*residentp = *spacep = total * round_page(KERNEL_STACK_SIZE);
-	*maxusagep = maxusage;
-	*maxstackp = maxstack;
-	return KERN_SUCCESS;
-}
-
-/*
- *	Useful in the debugger:
- */
-void
-thread_stats(void)
-{
-	thread_t thread;
-	int total = 0, rpcreply = 0;
-
-	queue_iterate(&default_pset.threads, thread, thread_t, pset_threads) {
-		total++;
-		if (thread->ith_rpc_reply != IP_NULL)
-			rpcreply++;
-	}
-
-	printf("%d total threads.\n", total);
-	printf("%d using rpc_reply.\n", rpcreply);
-}
-#endif	/* MACH_DEBUG */
 
 /*
  *	thread_set_name

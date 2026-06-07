@@ -103,22 +103,9 @@ skip;	/* vm_mapped_pages_info */
  *		maxstack	Address in the kernel of the largest stack.
  */
 
-routine host_stack_usage(
-		host		: host_t;
-	out	reserved	: vm_size_t;
-	out	total		: unsigned;
-	out	space		: vm_size_t;
-	out	resident	: vm_size_t;
-	out	maxusage	: vm_size_t;
-	out	maxstack	: vm_offset_t);
+skip;	/* host_stack_usage */
 
-routine processor_set_stack_usage(
-		pset		: processor_set_name_t;
-	out	total		: unsigned;
-	out	space		: vm_size_t;
-	out	resident	: vm_size_t;
-	out	maxusage	: vm_size_t;
-	out	maxstack	: vm_offset_t);
+skip;	/* processor_set_stack_usage */
 
 #if	!defined(MACH_VM_DEBUG) || MACH_VM_DEBUG
 
@@ -193,13 +180,7 @@ skip;	/* mach_vm_object_info */
 skip;	/* mach_vm_object_pages */
 #endif	/* !defined(MACH_VM_DEBUG) || MACH_VM_DEBUG */
 
-/*
- *	Returns information about the memory allocation caches.
- */
-routine host_slab_info(
-		host		: host_t;
-	out	info		: cache_info_array_t,
-					CountInOut, Dealloc);
+skip;	/* host_slab_info */
 
 skip;	/* host_load_symbol_table */
 

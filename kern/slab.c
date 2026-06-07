@@ -87,9 +87,6 @@
 #include <vm/vm_types.h>
 #include <sys/types.h>
 
-#ifdef MACH_DEBUG
-#include <mach_debug/slab_info.h>
-#endif
 
 /*
  * Minimum required alignment.
@@ -1481,97 +1478,3 @@ void slab_info(void)
 {
     _slab_info(printf);
 }
-
-#if MACH_DEBUG
-kern_return_t host_slab_info(host_t host, cache_info_array_t *infop,
-                             unsigned int *infoCntp)
-{
-    struct kmem_cache *cache;
-    cache_info_t *info;
-    unsigned int i, nr_caches;
-    vm_size_t info_size;
-    kern_return_t kr;
-
-    if (host == HOST_NULL)
-        return KERN_INVALID_HOST;
-
-    /* Assume the cache list is mostly unaltered once the kernel is ready */
-
-retry:
-    /* Harmless unsynchronized access, real value checked later */
-    nr_caches = kmem_nr_caches;
-    info_size = nr_caches * sizeof(*info);
-    info = (cache_info_t *)kalloc(info_size);
-
-    if (info == NULL)
-        return KERN_RESOURCE_SHORTAGE;
-
-    i = 0;
-
-    simple_lock(&kmem_cache_list_lock);
-
-    if (nr_caches != kmem_nr_caches) {
-        simple_unlock(&kmem_cache_list_lock);
-        kfree((vm_offset_t)info, info_size);
-        goto retry;
-    }
-
-    list_for_each_entry(&kmem_cache_list, cache, node) {
-        simple_lock(&cache->lock);
-        info[i].flags = cache->flags;
-#if SLAB_USE_CPU_POOLS
-        info[i].cpu_pool_size = cache->cpu_pool_type->array_size;
-#else /* SLAB_USE_CPU_POOLS */
-        info[i].cpu_pool_size = 0;
-#endif /* SLAB_USE_CPU_POOLS */
-        info[i].obj_size = cache->obj_size;
-        info[i].align = cache->align;
-        info[i].buf_size = cache->buf_size;
-        info[i].slab_size = cache->slab_size;
-        info[i].bufs_per_slab = cache->bufs_per_slab;
-        info[i].nr_objs = cache->nr_objs;
-        info[i].nr_bufs = cache->nr_bufs;
-        info[i].nr_slabs = cache->nr_slabs;
-        info[i].nr_free_slabs = cache->nr_free_slabs;
-        strncpy(info[i].name, cache->name, sizeof(info[i].name));
-        info[i].name[sizeof(info[i].name) - 1] = '\0';
-        simple_unlock(&cache->lock);
-
-        i++;
-    }
-
-    simple_unlock(&kmem_cache_list_lock);
-
-    if (nr_caches <= *infoCntp) {
-        memcpy(*infop, info, info_size);
-    } else {
-        vm_offset_t info_addr;
-        vm_size_t total_size;
-        vm_map_copy_t copy;
-
-        kr = kmem_alloc_pageable(ipc_kernel_map, &info_addr, info_size);
-
-        if (kr != KERN_SUCCESS)
-            goto out;
-
-        memcpy((char *)info_addr, info, info_size);
-        total_size = round_page(info_size);
-
-        if (info_size < total_size)
-            memset((char *)(info_addr + info_size),
-                   0, total_size - info_size);
-
-        kr = vm_map_copyin(ipc_kernel_map, info_addr, info_size, TRUE, &copy);
-        assert(kr == KERN_SUCCESS);
-        *infop = (cache_info_t *)copy;
-    }
-
-    *infoCntp = nr_caches;
-    kr = KERN_SUCCESS;
-
-out:
-    kfree((vm_offset_t)info, info_size);
-
-    return kr;
-}
-#endif /* MACH_DEBUG */

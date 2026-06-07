@@ -49,9 +49,6 @@ AC_DEFINE([HW_FOOTPRINT], [0], [HW_FOOTPRINT])
 # Counters.
 AC_DEFINE([MACH_COUNTERS], [0], [MACH_COUNTERS])
 
-# IPC debugging interface.
-AC_DEFINE([MACH_DEBUG], [1], [MACH_DEBUG])
-
 # Fixed priority threads.
 AC_DEFINE([MACH_FIXPRI], [1], [MACH_FIXPRI])
 

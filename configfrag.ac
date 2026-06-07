@@ -77,9 +77,6 @@ mach_machine_routines=${mach_machine_routines-0}
 AC_DEFINE_UNQUOTED([MACH_MACHINE_ROUTINES], [$mach_machine_routines],
   [MACH_MACHINE_ROUTINES])
 
-# MP debugging.  Use alternate locking routines to detect deadlocks.  Used in
-# `kern/lock_mon.c'.
-AC_DEFINE([MACH_MP_DEBUG], [0], [MACH_MP_DEBUG])
 
 # Paged-out page map hints.
 AC_DEFINE([MACH_PAGEMAP], [1], [MACH_PAGEMAP])

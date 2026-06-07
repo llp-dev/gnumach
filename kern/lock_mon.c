@@ -30,9 +30,6 @@
  */
 
 /*
- * 	Support For MP Debugging
- *		if MACH_MP_DEBUG is on, we use alternate locking
- *		routines do detect dealocks
  *	Support for MP lock monitoring (MACH_LOCK_MON).
  *		Registers use of locks, contention.
  *		Depending on hardware also records time spent with locks held
@@ -207,39 +204,3 @@ void time_lock(int loops)
 #endif	/* MACH_LOCK_MON */
 }
 #endif	/* TIME_STAMP */
-
-#if	MACH_MP_DEBUG
-
-/*
- *	Arrange in the lock routines to call the following
- *	routines. This way, when locks are free there is no performance
- *	penalty
- */
-
-void
-retry_simple_lock(lock)
-decl_simple_lock_data(, *lock)
-{
-	count = 0;
-
-	while(!simple_lock_try(lock))
-		if (count++ > 1000000 && lock != &kdb_lock) {
-			if (lock == &printf_lock)
-				return;
-			SoftDebugger("simple_lock timeout");
-			count = 0;
-		}
-}
-
-void
-retry_bit_lock(index, addr)
-{
-	count = 0;
-
-	while(!bit_lock_try(index, addr))
-		if (count++ > 1000000) {
-			SoftDebugger("bit_lock timeout");
-			count = 0;
-		}
-}
-#endif	/* MACH_MP_DEBUG */

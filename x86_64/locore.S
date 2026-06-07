@@ -910,18 +910,12 @@ ENTRY(all_intrs)
 	TIME_INT_ENTRY			/* do timing */
 #endif
 
-#ifdef MACH_LDEBUG
-	incq	CX8(EXT(in_interrupt),%rdx)
-#endif
 
 	call	EXT(interrupt)		/* call generic interrupt routine */
 	.globl	EXT(return_to_iret)	/* ( label for hardclock */
 LEXT(return_to_iret)			/* to find the return from calling interrupt) */
 
 	CPU_NUMBER(%edx)
-#ifdef MACH_LDEBUG
-	decq	CX8(EXT(in_interrupt),%rdx)
-#endif
 
 #if	STAT_TIME
 #else

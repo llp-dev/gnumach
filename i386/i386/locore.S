@@ -755,18 +755,12 @@ ENTRY(all_intrs)
 	TIME_INT_ENTRY			/* do timing */
 #endif
 
-#ifdef MACH_LDEBUG
-	incl	CX(EXT(in_interrupt),%edx)
-#endif
 
 	call	EXT(interrupt)		/* call generic interrupt routine */
 	.globl	EXT(return_to_iret)	/* ( label for hardclock */
 LEXT(return_to_iret)			/* to find the return from calling interrupt) */
 
 	CPU_NUMBER(%edx)
-#ifdef MACH_LDEBUG
-	decl	CX(EXT(in_interrupt),%edx)
-#endif
 
 #if	STAT_TIME
 #else

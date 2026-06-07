@@ -102,9 +102,4 @@ ipc_entry_alloc(ipc_space_t space, mach_port_name_t *namep, ipc_entry_t *entryp)
 extern kern_return_t
 ipc_entry_alloc_name(ipc_space_t space, mach_port_name_t name, ipc_entry_t *entryp);
 
-ipc_entry_t
-db_ipc_object_by_name(
-       task_t        	  task,
-       mach_port_name_t   name);
-
 #endif	/* _IPC_IPC_ENTRY_H_ */

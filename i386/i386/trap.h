@@ -43,9 +43,6 @@ i386_exception(
 	int	code,
 	long	subcode) __attribute__ ((noreturn));
 
-extern void
-thread_kdb_return(void);
-
 /*
  * Trap from kernel mode.  Only page-fault errors are recoverable,
  * and then only in special circumstances.  All other errors are

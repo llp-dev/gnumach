@@ -367,18 +367,3 @@ thread_depress_abort(thread_t thread)
     (void) splx(s);
     return(KERN_SUCCESS);
 }
-
-/*
- *	mach_print
- *
- *	Display a null-terminated character string on the Mach console.
- *	This system call is meant as a debugging tool useful to circumvent
- *	messaging altogether.
- */
-#ifdef MACH_KDB
-void
-mach_print(const char *s)
-{
-	printf("%s", s);
-}
-#endif /* MACH_KDB */

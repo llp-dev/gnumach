@@ -48,8 +48,6 @@
 #include <kern/printf.h>
 #include <kern/mach_clock.h>
 #include <machine/ipl.h>
-#include <ddb/db_sym.h>
-#include <ddb/db_output.h>
 
 def_simple_lock_data(, kdb_lock)
 def_simple_lock_data(, printf_lock)
@@ -80,8 +78,6 @@ struct lock_info_bucket {
 	struct lock_info info[LOCK_INFO_PER_BUCKET];
 };
 
-static void print_lock_info(struct lock_info *li);
-
 struct lock_info_bucket lock_info[LOCK_INFO_HASH_COUNT];
 struct lock_info default_lock_info;
 unsigned default_lock_stack = 0;
@@ -106,7 +102,6 @@ decl_simple_lock_data(, **lock)
 			li->caller = *((vm_offset_t *)lock - 1);
 			return(li);
 		}
-	db_printf("out of lock_info slots\n");
 	li = &default_lock_info;
 	return(li);
 }
@@ -167,86 +162,6 @@ decl_simple_lock_data(, *lock)
 	}
 }
 
-static void lock_info_sort(int arg, int abs, int count)
-{
-	struct lock_info *li, mean;
-	int bucket = 0;
-	int i;
-	unsigned max_val;
-	unsigned old_val = (unsigned)-1;
-	struct lock_info *target_li = &lock_info[0].info[0];
-	unsigned sum;
-	unsigned empty, total;
-	unsigned curval;
-
-	printf("\nSUCCESS	FAIL	MASKED	STACK	TIME	LOCK/CALLER\n");
-	if (!count)
-		count = 8 ;
-	while (count && target_li) {
-		empty = LOCK_INFO_HASH_COUNT;
-		target_li = 0;
-		total = 0;
-		max_val = 0;
-		mean.success = 0;
-		mean.fail = 0;
-		mean.masked = 0;
-		mean.stack = 0;
-		mean.time = 0;
-		mean.lock = (simple_lock_data_t *) &lock_info;
-		mean.caller = (vm_offset_t) &lock_info;
-		for (bucket = 0; bucket < LOCK_INFO_HASH_COUNT; bucket++) {
-			li = &lock_info[bucket].info[0];
-			if (li->lock)
-				empty--;
-			for (i= 0; i< LOCK_INFO_PER_BUCKET && li->lock; i++, li++) {
-				if (li->lock == &kdb_lock || li->lock == &printf_lock)
-					continue;
-				total++;
-				curval = *((int *)li + arg);
-				sum = li->success + li->fail;
-				if(!sum && !abs)
-					continue;
-				if (!abs) switch(arg) {
-				case 0:
-					break;
-				case 1:
-				case 2:
-					curval = (curval*100) / sum;
-					break;
-				case 3:
-				case 4:
-					curval = curval / sum;
-					break;
-				}
-				if (curval > max_val && curval < old_val) {
-					max_val = curval;
-					target_li = li;
-				}
-				if (curval == old_val && count != 0) {
-					print_lock_info(li);
-					count--;
-				}
-				mean.success += li->success;
-				mean.fail += li->fail;
-				mean.masked += li->masked;
-				mean.stack += li->stack;
-				mean.time += li->time;
-			}
-		}
-		if (target_li)
-		        old_val = max_val;
-	}
-	db_printf("\n%d total locks, %d empty buckets", total, empty );
-	if (default_lock_info.success)
-		db_printf(", default: %d", default_lock_info.success + default_lock_info.fail);
-	db_printf("\n");
-	print_lock_info(&mean);
-}
-
-void lip(void) {
-	lock_info_sort(4, 1, 0);
-}
-
 #define lock_info_clear lic
 
 void lock_info_clear(void)
@@ -263,25 +178,6 @@ void lock_info_clear(void)
 	memset(&default_lock_info, 0, sizeof(struct lock_info));
 }
 
-static void print_lock_info(struct lock_info *li)
-{
-	db_addr_t off;
-	int sum = li->success + li->fail;
-	db_printf("%d	%d/%d	%d/%d	%d/%d	%d/%d	", li->success,
-		   li->fail, (li->fail*100)/sum,
-		   li->masked, (li->masked*100)/sum,
-		   li->stack, li->stack/sum,
-		   li->time, li->time/sum);
-	db_free_symbol(db_search_symbol((db_addr_t) li->lock, 0, &off));
-	if (off < 1024)
-		db_printsym((db_addr_t) li->lock, 0);
-	else {
-		db_printsym(li->caller, 0);
-		db_printf("(%X)", li->lock);
-	}
-	db_printf("\n");
-}
-
 #endif	/* NCPUS > 1 && MACH_LOCK_MON */
 
 #if	TIME_STAMP
@@ -293,28 +189,21 @@ static void print_lock_info(struct lock_info *li)
 void time_lock(int loops)
 {
 	decl_simple_lock_data(, lock)
-	time_stamp_t stamp;
 	int i;
 
 
 	if (!loops)
 		loops = 1000;
 	simple_lock_init(&lock);
-	stamp = time_stamp;
 	for (i = 0; i < loops; i++) {
 		simple_lock(&lock);
 		simple_unlock(&lock);
 	}
-	stamp = time_stamp - stamp;
-	db_printf("%d stamps for simple_locks\n", stamp/loops);
 #if	MACH_LOCK_MON
-	stamp = time_stamp;
 	for (i = 0; i < loops; i++) {
 		_simple_lock(&lock);
 		_simple_unlock(&lock);
         }
-	stamp = time_stamp - stamp;
-	db_printf("%d stamps for _simple_locks\n", stamp/loops);
 #endif	/* MACH_LOCK_MON */
 }
 #endif	/* TIME_STAMP */
@@ -337,8 +226,6 @@ decl_simple_lock_data(, *lock)
 		if (count++ > 1000000 && lock != &kdb_lock) {
 			if (lock == &printf_lock)
 				return;
-			db_printf("cpu %d looping on simple_lock(%x) called by %x\n",
-				cpu_number(), lock, *(((int *)&lock) -1));
 			SoftDebugger("simple_lock timeout");
 			count = 0;
 		}
@@ -351,8 +238,6 @@ retry_bit_lock(index, addr)
 
 	while(!bit_lock_try(index, addr))
 		if (count++ > 1000000) {
-			db_printf("cpu %d looping on bit_lock(%x, %x) called by %x\n",
-				cpu_number(), index, addr, *(((int *)&index) -1));
 			SoftDebugger("bit_lock timeout");
 			count = 0;
 		}

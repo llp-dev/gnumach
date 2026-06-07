@@ -53,12 +53,6 @@
 #include <kern/macros.h>
 #include <mach/machine/vm_types.h>
 
-#if	MACH_KDB
-#include <machine/trap.h>
-#include <ddb/db_output.h>
-
-boolean_t debug_user_with_kdb = FALSE;
-#endif	/* MACH_KDB */
 
 #ifdef	KEEP_STACKS
 /*
@@ -78,7 +72,7 @@ boolean_t debug_user_with_kdb = FALSE;
  *	Conditions:
  *		Nothing locked and no resources held.
  *		Called from an exception context, so
- *		thread_exception_return and thread_kdb_return
+ *		thread_exception_return
  *		are possible.
  *	Returns:
  *		Doesn't return.
@@ -150,7 +144,7 @@ exception(
  *	Conditions:
  *		Nothing locked and no resources held.
  *		Called from an exception context, so
- *		thread_exception_return and thread_kdb_return
+ *		thread_exception_return
  *		are possible.
  *	Returns:
  *		Doesn't return.
@@ -218,7 +212,7 @@ exception_try_task(
  *	Conditions:
  *		Nothing locked and no resources held.
  *		Called from an exception context, so
- *		thread_kdb_return is possible.
+ *		thread_exception_return is possible.
  *	Returns:
  *		Doesn't return.
  */
@@ -240,19 +234,6 @@ exception_no_server(void)
 	if (thread_suspend (self) == KERN_SUCCESS)
 	  thread_exception_return ();
 #endif
-
-#if	MACH_KDB
-	if (debug_user_with_kdb) {
-		/*
-		 *	Debug the exception with kdb.
-		 *	If kdb handles the exception,
-		 *	then thread_kdb_return won't return.
-		 */
-
-		db_printf("No exception server, calling kdb...\n");
-		thread_kdb_return();
-	}
-#endif	/* MACH_KDB */
 
 	/*
 	 *	All else failed; terminate task.

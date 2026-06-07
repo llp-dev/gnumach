@@ -93,9 +93,6 @@ boolean_t	vm_fault_interruptible = TRUE;
 
 boolean_t	software_reference_bits = TRUE;
 
-#if	MACH_KDB
-extern struct db_watchpoint *db_watchpoint_list;
-#endif	/* MACH_KDB */
 
 /*
  *	Routine:	vm_fault_init
@@ -261,17 +258,7 @@ vm_fault_return_t vm_fault_page(
 	vm_page_unlock_queues();			\
 	MACRO_END
 
-	if (vm_fault_dirty_handling
-#if	MACH_KDB
-		/*
-		 *	If there are watchpoints set, then
-		 *	we don't want to give away write permission
-		 *	on a read fault.  Make the task write fault,
-		 *	so that the watchpoint code notices the access.
-		 */
-	    || db_watchpoint_list
-#endif	/* MACH_KDB */
-	    ) {
+	if (vm_fault_dirty_handling) {
 		/*
 		 *	If we aren't asking for write permission,
 		 *	then don't give it away.  We're using write

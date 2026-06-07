@@ -112,11 +112,11 @@ void xprbootstrap(void)
 	if (xprenable) {
 		/*
 		 *	If xprenable is set (the default) then we zero
-		 *	the buffer so xpr_dump doesn't encounter bad pointers.
-		 *	If xprenable isn't set, then we preserve
+		 *	the buffer so stale entries aren't mistaken for
+		 *	valid ones.  If xprenable isn't set, then we preserve
 		 *	the original contents of the buffer.  This is useful
-		 *	if memory survives reboots, so xpr_dump can show
-		 *	the previous buffer contents.
+		 *	if memory survives reboots, so the previous buffer
+		 *	contents can be inspected.
 		 */
 
 		memset((void *) addr, 0, size);
@@ -134,64 +134,3 @@ void xprinit(void)
 	xprflags |= xprinitial;
 }
 
-#if	MACH_KDB
-#include <machine/setjmp.h>
-#include <ddb/db_output.h>
-
-extern jmp_buf_t *db_recover;
-
-/*
- *	Print current content of xpr buffers (KDB's sake)
- *	Use stack order to make it understandable.
- *
- *	Called as "!xpr_dump" this dumps the kernel's xpr buffer.
- *	Called with arguments, it can dump xpr buffers in user tasks,
- *	assuming they use the same format as the kernel.
- */
-void xpr_dump(
-	struct xprbuf 	*base,
-	int 		nbufs)
-{
-	jmp_buf_t db_jmpbuf;
-	jmp_buf_t *prev;
-	struct xprbuf *last, *ptr;
-	struct xprbuf *x;
-	int i;
-	spl_t s = s;
-
-	if (base == 0) {
-		base = xprbase;
-		nbufs = nxprbufs;
-	}
-
-	if (nbufs == 0)
-		return;
-
-	if (base == xprbase) {
-		s = splhigh();
-		simple_lock(&xprlock);
-	}
-
-	last = base + nbufs;
-	ptr = * (struct xprbuf **) last;
-
-	prev = db_recover;
-	if (_setjmp(db_recover = &db_jmpbuf) == 0)
-	    for (x = ptr, i = 0; i < nbufs; i++) {
-		if (--x < base)
-			x = last - 1;
-
-		if (x->msg == 0)
-			break;
-
-		db_printf("<%d:%x:%x> ", x - base, x->cpuinfo, x->timestamp);
-		db_printf(x->msg, x->arg1,x->arg2,x->arg3,x->arg4,x->arg5);
-	    }
-	db_recover = prev;
-
-	if (base == xprbase) {
-		simple_unlock(&xprlock);
-		(void) splx(s);
-	}
-}
-#endif	/* MACH_KDB */

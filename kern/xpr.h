@@ -90,7 +90,6 @@ struct xprbuf {
 };
 
 extern void xpr(char *, int, int, int, int, int);
-extern void xpr_dump(struct xprbuf *, int);
 extern void xprinit(void);
 extern void xprbootstrap(void);
 

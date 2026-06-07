@@ -69,43 +69,12 @@ Assert(const char *exp, const char *file, int line, const char *fun)
 void SoftDebugger(const char *message)
 {
 	printf("Debugger invoked: %s\n", message);
-
-#if	!MACH_KDB
 	printf("But no debugger, continuing.\n");
-	return;
-#endif
-
-#if	defined(vax) || defined(PC532)
-	asm("bpt");
-#endif	/* vax */
-
-#ifdef	sun3
-	current_thread()->pcb->flag |= TRACE_KDB;
-	asm("orw  #0x00008000,sr");
-#endif	/* sun3 */
-#ifdef	sun4
-	current_thread()->pcb->pcb_flag |= TRACE_KDB;
-	asm("ta 0x81");
-#endif	/* sun4 */
-
-#if	defined(mips ) || defined(i860) || defined(alpha)
-	gimmeabreak();
-#endif
-
-#if defined(__i386__) || defined(__x86_64__)
-	asm("int3");
-#endif
 }
 
 void Debugger(const char *message)
 {
-#if	!MACH_KDB
 	panic("Debugger invoked, but there isn't one!");
-#endif
-
-	SoftDebugger(message);
-
-	panic("Debugger returned!");
 }
 
 /* Be prepared to panic anytime,
@@ -126,9 +95,7 @@ panic_init(void)
 	simple_lock_init_irq(&panic_lock);
 }
 
-#if ! MACH_KBD
 extern boolean_t reboot_on_panic;
-#endif
 
 /*VARARGS1*/
 void
@@ -162,9 +129,6 @@ Panic(const char *file, int line, const char *fun, const char *s, ...)
 	va_end(listp);
 	printf("\n");
 
-#if	MACH_KDB
-	Debugger("panic");
-#else
 # ifdef	MACH_HYP
 	hyp_crash();
 # else
@@ -177,7 +141,6 @@ Panic(const char *file, int line, const char *fun, const char *s, ...)
 
 	halt_all_cpus (reboot_on_panic);
 # endif	/* MACH_HYP */
-#endif
 }
 
 /*

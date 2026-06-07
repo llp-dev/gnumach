@@ -54,33 +54,7 @@
 
 #include <machine/xpr.h>
 
-#if	XPR_DEBUG
-
-#define XPR(flags,xprargs) if(xprflags&flags) xpr xprargs
-
-extern int xprflags;
-/*
- * flags for message types.
- */
-#define XPR_SYSCALLS	0x00000001
-#define XPR_TRAPS	0x00000002
-#define XPR_SCHED	0x00000004
-#define XPR_NPTCP	0x00000008
-#define XPR_NP		0x00000010
-#define XPR_TCP		0x00000020
-
-#define	XPR_VM_OBJECT		(1 << 8)
-#define	XPR_VM_OBJECT_CACHE	(1 << 9)
-#define	XPR_VM_PAGE		(1 << 10)
-#define	XPR_VM_PAGEOUT		(1 << 11)
-#define	XPR_MEMORY_OBJECT	(1 << 12)
-#define	XPR_VM_FAULT		(1 << 13)
-#define	XPR_INODE_PAGER		(1 << 14)
-#define	XPR_INODE_PAGER_DATA	(1 << 15)
-
-#else	/* XPR_DEBUG */
 #define XPR(flags,xprargs)
-#endif	/* XPR_DEBUG */
 
 struct xprbuf {
 	char 	*msg;

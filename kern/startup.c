@@ -112,10 +112,6 @@ void setup_main(void)
 	init_timers();
 	init_timeout();
 
-#if	XPR_DEBUG
-	xprbootstrap();
-#endif	/* XPR_DEBUG */
-
 	machine_init();
 
 	mapable_time_init();
@@ -250,10 +246,6 @@ void start_kernel_threads(void)
 	 *	Start the user bootstrap.
 	 */
 	bootstrap_create();
-
-#if	XPR_DEBUG
-	xprinit();		/* XXX */
-#endif	/* XPR_DEBUG */
 
 	/*
 	 *	Become the pageout daemon.

@@ -37,7 +37,6 @@
 #include <vm/vm_fault.h>
 #include <mach/kern_return.h>
 #include <mach/message.h>	/* for error codes */
-#include <kern/counters.h>
 #include <kern/debug.h>
 #include <kern/thread.h>
 #include <kern/sched_prim.h>
@@ -353,11 +352,9 @@ vm_fault_return_t vm_fault_page(
 						access_required;
 					state->vmf_prot = *protection;
 
-					counter(c_vm_fault_page_block_busy_user++);
 					thread_block(continuation);
 				} else
 				{
-					counter(c_vm_fault_page_block_busy_kernel++);
 					thread_block((void (*)()) 0);
 				}
 			    after_thread_block:
@@ -1064,11 +1061,9 @@ vm_fault_return_t vm_fault_page(
 		state->vmfp_backoff = TRUE;
 		state->vmf_prot = *protection;
 
-		counter(c_vm_fault_page_block_backoff_user++);
 		thread_block(continuation);
 	} else
 	{
-		counter(c_vm_fault_page_block_backoff_kernel++);
 		thread_block((void (*)()) 0);
 	}
     after_block_and_backoff:

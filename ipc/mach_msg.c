@@ -40,7 +40,6 @@
 #include <mach/port.h>
 #include <mach/message.h>
 #include <kern/assert.h>
-#include <kern/counters.h>
 #include <kern/debug.h>
 #include <kern/lock.h>
 #include <kern/printf.h>
@@ -778,7 +777,6 @@ mach_msg_trap(
 		} else if ((receiver->swap_func ==
 				exception_raise_continue) &&
 			   thread_handoff(self, mach_msg_continue, receiver)) {
-			counter(c_mach_msg_trap_block_exc++);
 
 			/*
 			 *	We are a reply message coming back through
@@ -812,7 +810,6 @@ mach_msg_trap(
 				 *	We can still use the optimized code.
 				 */
 			} else {
-				counter(c_mach_msg_trap_block_slow++);
 				/*
 				 *	We are running as the receiver,
 				 *	but we can't use the optimized code.
@@ -853,7 +850,6 @@ mach_msg_trap(
 			imq_unlock(dest_mqueue);
 			goto abort_send_receive;
 		}
-		counter(c_mach_msg_trap_block_fast++);
 
 		/*
 		 *	Safe to unlock dest_port now that we are

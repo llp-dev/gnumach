@@ -38,7 +38,6 @@
 #include <machine/spl.h>	/* For def'n of splsched() */
 #include <machine/model_dep.h>
 #include <kern/ast.h>
-#include <kern/counters.h>
 #include <kern/cpu_number.h>
 #include <kern/debug.h>
 #include <kern/lock.h>
@@ -738,7 +737,6 @@ boolean_t thread_invoke(
 		     *	running out of stack.
 		     */
 
-		    counter(c_thread_invoke_hits++);
 		    (void) spl0();
 		    call_continuation(new_thread->swap_func);
 		    /*NOTREACHED*/
@@ -750,7 +748,6 @@ boolean_t thread_invoke(
 		     */
 		    thread_swapin(new_thread);
 		    thread_unlock(new_thread);
-		    counter(c_thread_invoke_misses++);
 		    return FALSE;
 
 		case 0:
@@ -771,7 +768,6 @@ boolean_t thread_invoke(
 		{
 		    thread_swapin(new_thread);
 		    thread_unlock(new_thread);
-		    counter(c_thread_invoke_misses++);
 		    return FALSE;
 		}
 	    }
@@ -800,7 +796,6 @@ boolean_t thread_invoke(
 	 *	changing address spaces.  It updates active_thread.
 	 *	It returns only if a continuation is not supplied.
 	 */
-	counter(c_thread_invoke_csw++);
 	old_thread = switch_context(old_thread, continuation, new_thread);
 
 	/*
@@ -1708,7 +1703,6 @@ retry:
 			}
 #endif	/* MACH_FIXPRI */
 			myprocessor->first_quantum = TRUE;
-			counter(c_idle_thread_handoff++);
 			thread_run(idle_thread_continue, new_thread);
 		}
 		else if (state == PROCESSOR_IDLE) {
@@ -1733,7 +1727,6 @@ retry:
 				processor_t, processor_queue);
 			myprocessor->state = PROCESSOR_RUNNING;
 			pset_idle_unlock();
-			counter(c_idle_thread_block++);
 			thread_block(idle_thread_continue);
 		}
 		else if ((state == PROCESSOR_ASSIGN) ||
@@ -1750,7 +1743,6 @@ retry:
 				thread_unlock(new_thread);
 			}
 
-			counter(c_idle_thread_block++);
 			thread_block(idle_thread_continue);
 		}
 		else {
@@ -1786,7 +1778,6 @@ void idle_thread(void)
 	current_processor()->idle_thread = self;
 	(void) splx(s);
 
-	counter(c_idle_thread_block++);
 	thread_block(idle_thread_continue);
 	idle_thread_continue();
 	/*NOTREACHED*/
@@ -1813,7 +1804,6 @@ static void sched_thread_continue(void)
 	    	do_thread_scan();
 
 	assert_wait((event_t) 0, FALSE);
-	counter(c_sched_thread_block++);
 	thread_block(sched_thread_continue);
     }
 }
@@ -1827,7 +1817,6 @@ void sched_thread(void)
      *	us by calling clear_wait().
      */
     assert_wait((event_t) 0, FALSE);
-    counter(c_sched_thread_block++);
     thread_block(sched_thread_continue);
     sched_thread_continue();
     /*NOTREACHED*/

@@ -33,7 +33,6 @@
 #include <mach/exec/exec.h>
 
 #include "vm_param.h"
-#include <kern/counters.h>
 #include <kern/debug.h>
 #include <kern/thread.h>
 #include <kern/sched_prim.h>
@@ -75,8 +74,6 @@ void stack_attach(
 	vm_offset_t 	stack,
 	void 		(*continuation)(thread_t))
 {
-	counter(if (++c_stacks_current > c_stacks_max)
-			c_stacks_max = c_stacks_current);
 
 	thread->kernel_stack = stack;
 
@@ -109,8 +106,6 @@ vm_offset_t stack_detach(thread_t thread)
 {
 	vm_offset_t	stack;
 
-	counter(if (--c_stacks_current < c_stacks_min)
-			c_stacks_min = c_stacks_current);
 
 	stack = thread->kernel_stack;
 	thread->kernel_stack = 0;
@@ -351,8 +346,6 @@ void pcb_init(task_t parent_task, thread_t thread)
 	if (pcb == 0)
 		panic("pcb_init");
 
-	counter(if (++c_threads_current > c_threads_max)
-			c_threads_max = c_threads_current);
 
 	/*
 	 *	We can't let random values leak out to the user.
@@ -380,8 +373,6 @@ void pcb_terminate(thread_t thread)
 {
 	pcb_t		pcb = thread->pcb;
 
-	counter(if (--c_threads_current < c_threads_min)
-			c_threads_min = c_threads_current);
 
 	if (pcb->ims.ifps != 0)
 		fp_free(pcb->ims.ifps);

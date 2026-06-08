@@ -43,7 +43,6 @@
 #include <mach/vm_inherit.h>
 #include <machine/vm_param.h>
 #include <kern/ast.h>
-#include <kern/counters.h>
 #include <kern/debug.h>
 #include <kern/eventcount.h>
 #include <kern/gnumach.server.h>
@@ -154,10 +153,8 @@ boolean_t stack_alloc_try(
 
 	if (stack != 0) {
 		stack_attach(thread, stack, resume);
-		counter(c_stack_alloc_hits++);
 		return TRUE;
 	} else {
-		counter(c_stack_alloc_misses++);
 		return FALSE;
 	}
 }
@@ -1166,7 +1163,6 @@ void	thread_halt_self(continuation_t continuation)
 		(void) splx(s);
 
 		thread_wakeup((event_t)&reaper_queue);
-		counter(c_thread_halt_self_block++);
 		thread_block(walking_zombie);
 		/*NOTREACHED*/
 	} else {
@@ -1180,7 +1176,6 @@ void	thread_halt_self(continuation_t continuation)
 		thread_ast_clear(thread, AST_HALT);
 		thread_unlock(thread);
 		splx(s);
-		counter(c_thread_halt_self_block++);
 		thread_block(continuation);
 		/*
 		 *	thread_release resets TH_HALTED.
@@ -1759,7 +1754,6 @@ static void __attribute__((noreturn)) reaper_thread_continue(void)
 		assert_wait((event_t) &reaper_queue, FALSE);
 		simple_unlock(&reaper_lock);
 		(void) splx(s);
-		counter(c_reaper_thread_block++);
 		thread_block(reaper_thread_continue);
 	}
 }

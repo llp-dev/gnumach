@@ -54,17 +54,9 @@
 #include <device/device_port.h>
 
 
-#if OSKIT_MACH
-#include <stddef.h>
-#include <oskit/machine/base_multiboot.h>
-#include <oskit/exec/exec.h>
-#include <oskit/c/stdio.h>
-#define safe_gets(s, n) fgets((s),(n),stdin)
-#else
 #include <mach/machine/multiboot.h>
 #include <mach/exec/exec.h>
 extern struct multiboot_raw_info boot_info;	/* XXX put this in a header! */
-#endif
 
 #include "boot_script.h"
 
@@ -206,28 +198,6 @@ void bootstrap_create(void)
 		 "root-device", boot_script_error_string (losers));
       }
 
-#if OSKIT_MACH
-      {
-	/* The oskit's "environ" array contains all the words from
-	   the multiboot command line that looked like VAR=VAL.
-	   We set each of these as boot-script variables, which
-	   can be used for things like ${root}.  */
-
-	extern char **environ;
-	char **ep;
-	for (ep = environ; *ep != 0; ++ep)
-	  {
-	    size_t len = strlen (*ep) + 1;
-	    char *var = memcpy (alloca (len), *ep, len);
-	    char *val = strchr (var, '=');
-	    *val++ = '\0';
-	    losers = boot_script_set_variable (var, VAL_STR, (long) val);
-	    if (losers)
-	      panic ("cannot set boot-script variable %s: %s",
-		     var, boot_script_error_string (losers));
-	  }
-      }
-#else  /* GNUmach, not oskit-mach */
       {
 	/* Turn each `FOO=BAR' word in the command line into a boot script
 	   variable ${FOO} with value BAR.  This matches what we get from
@@ -248,7 +218,6 @@ void bootstrap_create(void)
 		     word, boot_script_error_string (losers));
 	  }
       }
-#endif
 
       for (i = 0; i < boot_info.mods_count; ++i)
 	{

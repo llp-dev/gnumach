@@ -88,18 +88,6 @@ ipc_mqueue_receive(ipc_mqueue_t, mach_msg_option_t,
 
 #include <kern/assert.h>
 
-#if	MACH_ASSERT
-
-#define	ipc_mqueue_send_always(kmsg)					\
-MACRO_BEGIN								\
-	mach_msg_return_t mr;						\
-									\
-	mr = ipc_mqueue_send((kmsg), MACH_SEND_ALWAYS,			\
-			     MACH_MSG_TIMEOUT_NONE);			\
-	assert(mr == MACH_MSG_SUCCESS);					\
-MACRO_END
-
-#else	/* MACH_ASSERT */
 
 #define	ipc_mqueue_send_always(kmsg)					\
 MACRO_BEGIN								\
@@ -107,6 +95,5 @@ MACRO_BEGIN								\
 			       MACH_MSG_TIMEOUT_NONE);			\
 MACRO_END
 
-#endif	/* MACH_ASSERT */
 
 #endif	/* _IPC_IPC_MQUEUE_H_ */

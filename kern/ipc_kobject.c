@@ -212,11 +212,7 @@ ipc_kobject_server(ipc_kmsg_t request)
 		break;
 
 		default:
-#if MACH_ASSERT
-		assert(!"ipc_object_destroy: strange destination rights");
-#else
 		panic("ipc_object_destroy: strange destination rights");
-#endif
 	}
 	*destp = IP_NULL;
 
@@ -331,10 +327,6 @@ ipc_kobject_destroy(
 		break;
 
 	    default:
-#if	MACH_ASSERT
-		printf("ipc_kobject_destroy: port 0x%p, kobj 0x%zd, type %d\n",
-		       port, port->ip_kobject, ip_kotype(port));
-#endif	/* MACH_ASSERT */
 		break;
 	}
 }

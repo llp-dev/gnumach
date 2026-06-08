@@ -294,11 +294,7 @@ ipc_mqueue_send(
 
 		    case THREAD_RESTART:
 		    default:
-#if MACH_ASSERT
-			assert(!"ipc_mqueue_send");
-#else
 			panic("ipc_mqueue_send");
-#endif
 		}
 	}
 
@@ -631,20 +627,12 @@ ipc_mqueue_receive(
 
 			    case THREAD_RESTART:
 			    default:
-#if MACH_ASSERT
-				assert(!"ipc_mqueue_receive");
-#else
 				panic("ipc_mqueue_receive");
-#endif
 			}
 			break;
 
 		    default:
-#if MACH_ASSERT
-			assert(!"ipc_mqueue_receive: strange ith_state");
-#else
 			panic("ipc_mqueue_receive: strange ith_state");
-#endif
 		}
 	}
 

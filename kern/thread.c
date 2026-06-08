@@ -219,10 +219,6 @@ void stack_free(
 		stack_next(stack) = stack_free_list;
 		stack_free_list = stack;
 		stack_free_count += 1;
-#if	MACH_COUNTERS
-		if (stack_free_count > c_stack_alloc_max)
-			c_stack_alloc_max = stack_free_count;
-#endif	/* MACH_COUNTERS */
 		stack_unlock();
 	}
 }

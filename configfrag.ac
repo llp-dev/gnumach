@@ -37,10 +37,6 @@ AC_DEFINE_UNQUOTED([NLPR], [$nlpr], [NLPR])
 AC_DEFINE([PAE], [1], [PAE support])
 AM_CONDITIONAL([enable_pae], [true])
 
-# When set, the bootstrap task symbols are preserved by the kernel debugger.
-# Used in `kern/bootstrap.c'.
-AC_DEFINE([BOOTSTRAP_SYMBOLS], [0], [BOOTSTRAP_SYMBOLS])
-
 # Counters.
 
 # Fixed priority threads.

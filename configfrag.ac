@@ -59,10 +59,6 @@ AC_DEFINE([MACH_FIXPRI], [1], [MACH_FIXPRI])
 # Testing code/printfs.
 AC_DEFINE([MACH_IPC_TEST], [0], [MACH_IPC_TEST])
 
-# MP lock monitoring.  Registers use of locks, contention.  Depending on
-# hardware also records time spent with locks held.  Used in `kern/lock_mon.c'.
-AC_DEFINE([MACH_LOCK_MON], [0], [MACH_LOCK_MON])
-
 # Does the architecture provide machine-specific interfaces?
 mach_machine_routines=${mach_machine_routines-0}
 AC_DEFINE_UNQUOTED([MACH_MACHINE_ROUTINES], [$mach_machine_routines],

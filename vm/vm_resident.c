@@ -54,11 +54,6 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_resident.h>
 
-#if	MACH_VM_DEBUG
-#include <mach/kern_return.h>
-#include <mach_debug/hash_info.h>
-#include <vm/vm_user.h>
-#endif
 
 
 
@@ -1060,44 +1055,5 @@ void vm_page_copy(
 	pmap_copy_page(src_m->phys_addr, dest_m->phys_addr);
 }
 
-#if	MACH_VM_DEBUG
-/*
- *	Routine:	vm_page_info
- *	Purpose:
- *		Return information about the global VP table.
- *		Fills the buffer with as much information as possible
- *		and returns the desired size of the buffer.
- *	Conditions:
- *		Nothing locked.  The caller should provide
- *		possibly-pageable memory.
- */
-
-unsigned int
-vm_page_info(
-	hash_info_bucket_t *info,
-	unsigned int	count)
-{
-	int i;
-
-	if (vm_page_bucket_count < count)
-		count = vm_page_bucket_count;
-
-	for (i = 0; i < count; i++) {
-		vm_page_bucket_t *bucket = &vm_page_buckets[i];
-		unsigned int bucket_count = 0;
-		vm_page_t m;
-
-		simple_lock(&bucket->lock);
-		for (m = bucket->pages; m != VM_PAGE_NULL; m = m->next)
-			bucket_count++;
-		simple_unlock(&bucket->lock);
-
-		/* don't touch pageable memory while holding locks */
-		info[i].hib_count = bucket_count;
-	}
-
-	return vm_page_bucket_count;
-}
-#endif	/* MACH_VM_DEBUG */
 
 

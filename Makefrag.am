@@ -195,7 +195,6 @@ libkernel_a_SOURCES += \
 	vm/memory_object.c \
 	vm/memory_object.h \
 	vm/pmap.h \
-	vm/vm_debug.c \
 	vm/vm_external.c \
 	vm/vm_external.h \
 	vm/vm_fault.c \

@@ -68,73 +68,19 @@ skip;	/* host_stack_usage */
 
 skip;	/* processor_set_stack_usage */
 
-#if	!defined(MACH_VM_DEBUG) || MACH_VM_DEBUG
-
-/*
- *	Returns information about the global VP table.
- */
-
-routine host_virtual_physical_table_info(
-		host		: host_t;
-	out	info		: hash_info_bucket_array_t,
-					CountInOut, Dealloc);
-
-#else	/* !defined(MACH_VM_DEBUG) || MACH_VM_DEBUG */
 skip;	/* host_virtual_physical_table_info */
-#endif	/* !defined(MACH_VM_DEBUG) || MACH_VM_DEBUG */
 
 /* The old host_load_symbol_table with a different ABI for symtab_name_t */
 skip;
 
 skip;	/* mach_port_kernel_object */
 
-#if	!defined(MACH_VM_DEBUG) || MACH_VM_DEBUG
-
-/*
- *	Returns information about a region of memory.
- */
-
-routine mach_vm_region_info(
-		task		: vm_task_t;
-		address		: vm_address_t;
-	out	region		: vm_region_info_t;
-	/* avoid out-translation of the argument */
-	out	object		: memory_object_name_t =
-					MACH_MSG_TYPE_MOVE_SEND
-					ctype: mach_port_t);
-
-routine mach_vm_object_info(
-		object		: memory_object_name_t;
-	out	info		: vm_object_info_t;
-	/* avoid out-translation of the argument */
-	out	shadow		: memory_object_name_t =
-					MACH_MSG_TYPE_MOVE_SEND
-					ctype: mach_port_t;
-	/* avoid out-translation of the argument */
-	out	copy		: memory_object_name_t =
-					MACH_MSG_TYPE_MOVE_SEND
-					ctype: mach_port_t);
-
-routine mach_vm_object_pages(
-		object		: memory_object_name_t;
-	out	pages		: vm_page_info_array_t,
-					CountInOut, Dealloc);
-
-#else	/* !defined(MACH_VM_DEBUG) || MACH_VM_DEBUG */
 skip;	/* mach_vm_region_info */
 skip;	/* mach_vm_object_info */
 skip;	/* mach_vm_object_pages */
-#endif	/* !defined(MACH_VM_DEBUG) || MACH_VM_DEBUG */
 
 skip;	/* host_slab_info */
 
 skip;	/* host_load_symbol_table */
 
-#if	!defined(MACH_VM_DEBUG) || MACH_VM_DEBUG
-routine mach_vm_object_pages_phys(
-		object		: memory_object_name_t;
-	out	pages		: vm_page_phys_info_array_t,
-					CountInOut, Dealloc);
-#else	/* !defined(MACH_VM_DEBUG) || MACH_VM_DEBUG */
 skip;	/* mach_vm_object_pages_phys */
-#endif	/* !defined(MACH_VM_DEBUG) || MACH_VM_DEBUG */

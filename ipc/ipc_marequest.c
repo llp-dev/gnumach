@@ -48,13 +48,6 @@
 #include <ipc/ipc_marequest.h>
 #include <ipc/ipc_notify.h>
 
-#if	MACH_IPC_DEBUG
-#include <mach/kern_return.h>
-#include <mach_debug/hash_info.h>
-#include <vm/vm_map.h>
-#include <vm/vm_kern.h>
-#include <vm/vm_user.h>
-#endif
 
 
 struct kmem_cache ipc_marequest_cache;
@@ -389,49 +382,3 @@ ipc_marequest_destroy(ipc_marequest_t marequest)
 	ipc_notify_msg_accepted(soright, name);
 }
 
-#if	MACH_IPC_DEBUG
-
-
-/*
- *	Routine:	ipc_marequest_info
- *	Purpose:
- *		Return information about the marequest hash table.
- *		Fills the buffer with as much information as possible
- *		and returns the desired size of the buffer.
- *	Conditions:
- *		Nothing locked.  The caller should provide
- *		possibly-pageable memory.
- */
-
-unsigned int
-ipc_marequest_info(
-	unsigned int 		*maxp,
-	hash_info_bucket_t 	*info,
-	unsigned int 		count)
-{
-	ipc_marequest_index_t i;
-
-	if (ipc_marequest_size < count)
-		count = ipc_marequest_size;
-
-	for (i = 0; i < count; i++) {
-		ipc_marequest_bucket_t bucket = &ipc_marequest_table[i];
-		unsigned int bucket_count = 0;
-		ipc_marequest_t marequest;
-
-		imarb_lock(bucket);
-		for (marequest = bucket->imarb_head;
-		     marequest != IMAR_NULL;
-		     marequest = marequest->imar_next)
-			bucket_count++;
-		imarb_unlock(bucket);
-
-		/* don't touch pageable memory while holding locks */
-		info[i].hib_count = bucket_count;
-	}
-
-	*maxp = (unsigned int)-1;
-	return ipc_marequest_size;
-}
-
-#endif	/* MACH_IPC_DEBUG */

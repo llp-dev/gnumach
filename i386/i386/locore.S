@@ -37,7 +37,6 @@
 #include <i386/ldt.h>
 #include <i386/i386asm.h>
 #include <i386/cpu_number.h>
-#include <i386/xen.h>
 
 /* finish filling i386_interrupt_state */
 #define PUSH_REGS_ISR	\
@@ -318,11 +317,7 @@ ENTRY(t_debug)
 ENTRY(t_page_fault)
 	pushl	$(T_PAGE_FAULT)		/* mark a page fault trap */
 	pusha				/* save the general registers */
-#ifdef	MACH_PV_PAGETABLES
-	movl	%ss:hyp_shared_info+CR2,%eax
-#else	/* MACH_PV_PAGETABLES */
 	movl	%cr2,%eax		/* get the faulting address */
-#endif	/* MACH_PV_PAGETABLES */
 	movl	%eax,R_CR2-R_EDI(%esp)	/* save in esp save slot */
 	jmp	trap_push_segs		/* continue fault */
 
@@ -854,13 +849,9 @@ ENTRY(discover_x86_cpu_type)
 
 #if 0
 /* Seems to hang with kvm linux 4.3.0 */
-#ifdef	MACH_HYP
-#warning Assuming not Cyrix CPU
-#else	/* MACH_HYP */
 	inb	$0xe8,%al		/* Enable ID flag for Cyrix CPU ... */
 	andb	$0x80,%al		/* ... in CCR4 reg bit7 */
 	outb	%al,$0xe8
-#endif	/* MACH_HYP */
 #endif
 
 	pushfl				/* Fetch flags ... */

@@ -13,8 +13,6 @@ jobs:
           "--disable-apic --enable-ncpus=1",
           "--enable-apic --enable-ncpus=1",
           "--enable-apic --enable-ncpus=8",
-          "--enable-platform=xen --enable-ncpus=1"
-          #"--enable-platform=xen --enable-ncpus=8"
         ]
     steps:
       - name: Checkout code
@@ -54,8 +52,6 @@ jobs:
           "--disable-apic --enable-ncpus=1",
           "--enable-apic --enable-ncpus=1",
           "--enable-apic --enable-ncpus=8",
-          "--enable-platform=xen --enable-ncpus=1"
-          #"--enable-platform=xen --enable-ncpus=8"
         ]
         user32: ["--enable-user32", "--disable-user32"]
     steps:

@@ -39,11 +39,7 @@
  */
 
 /* Note: the value of KERNEL_RING is handled by hand in locore.S */
-#ifdef	MACH_RING1
-#define	KERNEL_RING	1
-#else	/* MACH_RING1 */
 #define	KERNEL_RING	0
-#endif	/* MACH_RING1 */
 
 #ifndef __ASSEMBLER__
 
@@ -147,7 +143,6 @@ struct real_gate {
 #ifndef __ASSEMBLER__
 
 #include <mach/inline.h>
-#include <mach/xen.h>
 
 
 /* Format of a "pseudo-descriptor", used for loading the IDT and GDT.  */
@@ -185,12 +180,8 @@ static inline void
 fill_descriptor(struct real_descriptor *_desc, vm_offset_t base, vm_offset_t limit,
 		unsigned char access, unsigned char sizebits)
 {
-	/* TODO: when !MACH_PV_DESCRIPTORS, setting desc and just memcpy isn't simpler actually */
-#ifdef	MACH_PV_DESCRIPTORS
-	struct real_descriptor __desc, *desc = &__desc;
-#else	/* MACH_PV_DESCRIPTORS */
+	/* TODO: setting desc and just memcpy isn't simpler actually */
 	struct real_descriptor *desc = _desc;
-#endif	/* MACH_PV_DESCRIPTORS */
 	if (limit > 0xfffff)
 	{
 		limit >>= 12;
@@ -203,10 +194,6 @@ fill_descriptor(struct real_descriptor *_desc, vm_offset_t base, vm_offset_t lim
 	desc->limit_high = limit >> 16;
 	desc->granularity = sizebits;
 	desc->base_high = base >> 24;
-#ifdef	MACH_PV_DESCRIPTORS
-	if (hyp_do_update_descriptor(kv_to_ma(_desc), *(uint64_t*)desc))
-		panic("couldn't update descriptor(%zu to %08lx%08lx)\n", (vm_offset_t) kv_to_ma(_desc), *(((unsigned long*)desc)+1), *(unsigned long *)desc);
-#endif	/* MACH_PV_DESCRIPTORS */
 }
 
 #ifdef __x86_64__
@@ -214,12 +201,8 @@ static inline void
 fill_descriptor64(struct real_descriptor64 *_desc, unsigned long base, unsigned limit,
 		  unsigned char access, unsigned char sizebits)
 {
-	/* TODO: when !MACH_PV_DESCRIPTORS, setting desc and just memcpy isn't simpler actually */
-#ifdef	MACH_PV_DESCRIPTORS
-	struct real_descriptor64 __desc, *desc = &__desc;
-#else	/* MACH_PV_DESCRIPTORS */
+	/* TODO: setting desc and just memcpy isn't simpler actually */
 	struct real_descriptor64 *desc = _desc;
-#endif	/* MACH_PV_DESCRIPTORS */
 	if (limit > 0xfffff)
 	{
 		limit >>= 12;
@@ -236,10 +219,6 @@ fill_descriptor64(struct real_descriptor64 *_desc, unsigned long base, unsigned 
 	desc->reserved1 = 0;
 	desc->zero = 0;
 	desc->reserved2 = 0;
-#ifdef	MACH_PV_DESCRIPTORS
-	if (hyp_do_update_descriptor(kv_to_ma(_desc), *(uint64_t*)desc))
-		panic("couldn't update descriptor(%lu to %08lx%08lx)\n", (vm_offset_t) kv_to_ma(_desc), *(((unsigned long*)desc)+1), *(unsigned long *)desc);
-#endif	/* MACH_PV_DESCRIPTORS */
 }
 #endif
 

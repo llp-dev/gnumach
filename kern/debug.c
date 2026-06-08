@@ -24,7 +24,6 @@
  * the rights to redistribute these changes.
  */
 
-#include <mach/xen.h>
 
 #include <kern/printf.h>
 #include <stdarg.h>
@@ -106,9 +105,6 @@ Panic(const char *file, int line, const char *fun, const char *s, ...)
 	va_end(listp);
 	printf("\n");
 
-# ifdef	MACH_HYP
-	hyp_crash();
-# else
 	/* Give the user time to see the message */
 	{
 	  int i = 1000;		/* seconds */
@@ -117,7 +113,6 @@ Panic(const char *file, int line, const char *fun, const char *s, ...)
 	}
 
 	halt_all_cpus (reboot_on_panic);
-# endif	/* MACH_HYP */
 }
 
 /*

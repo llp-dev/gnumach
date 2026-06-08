@@ -20,7 +20,6 @@
 #include <mach/machine/asm.h>
 #include <i386/i386/ipl.h>
 #include <i386/i386/i386asm.h>
-#include <i386/i386/xen.h>
 #include <i386/cpu_number.h>
 
 #if NCPUS > 1
@@ -29,21 +28,6 @@
 #define mb
 #endif
 
-/*
- * Program XEN evt masks from %eax.
- */
-#define XEN_SETMASK()				\
-	pushq	%rbx;				\
-	movl	%eax,%ebx;			\
-	xchgl	%eax,hyp_shared_info+EVTMASK;	\
-	notl	%ebx;				\
-	andl	%eax,%ebx;			/* Get unmasked events */ \
-	testl	hyp_shared_info+PENDING, %ebx;	\
-	popq	%rbx;				\
-	jz	9f;				/* Check whether there was some pending */ \
-lock	orl	$1,hyp_shared_info+CPU_PENDING_SEL; /* Yes, activate it */ \
-	movb	$1,hyp_shared_info+CPU_PENDING; \
-9:
 
 ENTRY(spl0)
 	mb;
@@ -62,11 +46,6 @@ ENTRY(spl0)
 	cmpl	$(SPL0),CX(EXT(curr_ipl),%rdx)	/* are we at spl0? */
 	je	1f				/* yes, all done */
 	movl	$(SPL0),CX(EXT(curr_ipl),%rdx)	/* set ipl */
-#ifdef MACH_XEN
-	movl	EXT(int_mask)+SPL0*4,%eax
-					/* get xen mask */
-	XEN_SETMASK()			/* program xen evts */
-#endif
 1:
 	sti				/* enable interrupts */
 	popq	%rax			/* return previous mask */
@@ -149,12 +128,6 @@ splx_cli:
 	cmpl	CX(EXT(curr_ipl),%rax),%edx	/* same ipl as current? */
 	je	1f				/* yes, all done */
 	movl	%edx,CX(EXT(curr_ipl),%rax)	/* set ipl */
-#ifdef MACH_XEN
-	movl	EXT(int_mask),%eax
-	movl	(%eax,%edx,4),%eax
-					/* get int mask */
-	XEN_SETMASK()			/* program xen evts with new mask */
-#endif
 1:
 	ret
 
@@ -168,17 +141,9 @@ spl:
 	CPU_NUMBER(%eax)
 	cmpl	$SPL7,%edx		/* spl7? */
 	je	EXT(spl7)		/* yes, handle specially */
-#ifdef MACH_XEN
-	movl	EXT(int_mask),%eax
-	movl	(%eax,%edx,4),%eax
-					/* get int mask */
-#endif
 	cli				/* disable interrupts */
 	CPU_NUMBER(%eax)
 	xchgl	CX(EXT(curr_ipl),%rax),%edx	/* set ipl */
-#ifdef MACH_XEN
-	XEN_SETMASK()			/* program PICs with new mask */
-#endif
 	sti				/* enable interrupts */
 	movl	%edx,%eax		/* return previous ipl */
 	ret

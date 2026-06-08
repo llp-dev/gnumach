@@ -20,7 +20,6 @@
 # Tests.
 #
 
-if !PLATFORM_xen
 
 # Let user specify a kernel to test
 GNUMACH ?= gnumach
@@ -51,4 +50,3 @@ EXTRA_DIST += \
 clean-local: $(USER_TESTS_CLEAN)
 	rm -fr tests/include-mach tests/test-multiboot tests/errlist.c tests/mig-out
 
-endif # !PLATFORM_xen

@@ -53,10 +53,6 @@
 #include <kern/macros.h>
 #include <kern/slab.h>
 
-#if	MACH_PCSAMPLE
-#include <kern/pc_sample.h>
-#endif
-
 
 
 /*
@@ -137,26 +133,6 @@ vm_fault_cleanup(
 }
 
 
-#if	MACH_PCSAMPLE
-/*
- *	Do PC sampling on current thread, assuming
- *	that it is the thread taking this page fault.
- *
- *	Must check for THREAD_NULL, since faults
- *	can occur before threads are running.
- */
-
-#define	vm_stat_sample(flavor) \
-    MACRO_BEGIN \
-      thread_t _thread_ = current_thread(); \
- \
-      if (_thread_ != THREAD_NULL) \
-	  take_pc_sample_macro(_thread_, (flavor), 1, 0); \
-    MACRO_END
-
-#else
-#define	vm_stat_sample(x)
-#endif	/* MACH_PCSAMPLE */
 
 
 
@@ -240,7 +216,6 @@ vm_fault_return_t vm_fault_page(
 		goto after_thread_block;
 	}
 
-	vm_stat_sample(SAMPLED_PC_VM_FAULTS_ANY);
 	vm_stat.faults++;		/* needs lock XXX */
 	current_task()->faults++;
 
@@ -443,7 +418,6 @@ vm_fault_return_t vm_fault_page(
 
 					vm_page_zero_fill(m);
 
-					vm_stat_sample(SAMPLED_PC_VM_ZFILL_FAULTS);
 
 					vm_stat.zero_fill_count++;
 					current_task()->zero_fills++;
@@ -526,7 +500,6 @@ vm_fault_return_t vm_fault_page(
 			if (!software_reference_bits) {
 				vm_page_lock_queues();
 				if (m->inactive)  {
-				    	vm_stat_sample(SAMPLED_PC_VM_REACTIVATION_FAULTS);
 					vm_stat.reactivations++;
 					current_task()->reactivations++;
 				}
@@ -623,7 +596,6 @@ vm_fault_return_t vm_fault_page(
 			 */
 
 			vm_stat.pageins++;
-		    	vm_stat_sample(SAMPLED_PC_VM_PAGEIN_FAULTS);
 			current_task()->pageins++;
 
 			if ((rc = memory_object_data_request(object->pager,
@@ -709,7 +681,6 @@ vm_fault_return_t vm_fault_page(
 
 			vm_object_unlock(object);
 			vm_page_zero_fill(m);
-			vm_stat_sample(SAMPLED_PC_VM_ZFILL_FAULTS);
 			vm_stat.zero_fill_count++;
 			current_task()->zero_fills++;
 			vm_object_lock(object);
@@ -819,7 +790,6 @@ vm_fault_return_t vm_fault_page(
 			vm_object_unlock(object);
 
 			vm_stat.cow_faults++;
-			vm_stat_sample(SAMPLED_PC_VM_COW_FAULTS);
 			current_task()->cow_faults++;
 			object = first_object;
 			offset = first_offset;

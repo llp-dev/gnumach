@@ -144,22 +144,10 @@ void switch_ktss(pcb_t pcb)
 	 *	won`t save the v86 segments, so we leave room.
 	 */
 
-#if !defined(__x86_64__) || defined(USER32)
-	pcb_stack_top = (pcb->iss.efl & EFL_VM)
-			? (long) (&pcb->iss + 1)
-			: (long) (&pcb->iss.v86_segs);
-#else
 	pcb_stack_top = (vm_offset_t) (&pcb->iss + 1);
-#endif
 
-#ifdef __x86_64__
-#endif
 
-#ifdef __x86_64__
 	curr_ktss(mycpu)->tss.rsp0 = pcb_stack_top;
-#else /* __x86_64__ */
-	curr_ktss(mycpu)->tss.esp0 = pcb_stack_top;
-#endif /* __x86_64__ */
     }
 
     {
@@ -190,10 +178,8 @@ void switch_ktss(pcb_t pcb)
     memcpy (gdt_desc_p (mycpu, USER_GDT),
         pcb->ims.user_gdt, sizeof pcb->ims.user_gdt);
 
-#if defined(__x86_64__) && !defined(USER32)
 	wrmsr(MSR_REG_FSBASE, pcb->ims.sbs.fsbase);
 	wrmsr(MSR_REG_KGSBASE, pcb->ims.sbs.gsbase);
-#endif
 
 	db_load_context(pcb);
 
@@ -380,12 +366,6 @@ void pcb_init(task_t parent_task, thread_t thread)
 	 */
 	pcb->iss.cs = USER_CS;
 	pcb->iss.ss = USER_DS;
-#if !defined(__x86_64__) || defined(USER32)
-	pcb->iss.ds = USER_DS;
-	pcb->iss.es = USER_DS;
-	pcb->iss.fs = USER_DS;
-	pcb->iss.gs = USER_DS;
-#endif
 	pcb->iss.efl = EFL_USER_SET;
 
 	thread->pcb = pcb;
@@ -455,12 +435,6 @@ kern_return_t thread_setstatus(
 		     */
 		    state->cs &= 0xffff;
 		    state->ss &= 0xffff;
-#if !defined(__x86_64__) || defined(USER32)
-		    state->ds &= 0xffff;
-		    state->es &= 0xffff;
-		    state->fs &= 0xffff;
-		    state->gs &= 0xffff;
-#endif
 
 		    if (state->cs == 0 || (state->cs & SEL_PL) != SEL_PL_U
 		     || state->ss == 0 || (state->ss & SEL_PL) != SEL_PL_U)
@@ -472,7 +446,6 @@ kern_return_t thread_setstatus(
 		/*
 		 * General registers
 		 */
-#if defined(__x86_64__) && !defined(USER32)
 		saved_state->r8 = state->r8;
 		saved_state->r9 = state->r9;
 		saved_state->r10 = state->r10;
@@ -492,52 +465,7 @@ kern_return_t thread_setstatus(
 		saved_state->eip = state->rip;
 		saved_state->efl = (state->rfl & ~EFL_USER_CLEAR)
 				    | EFL_USER_SET;
-#else
-		saved_state->edi = state->edi;
-		saved_state->esi = state->esi;
-		saved_state->ebp = state->ebp;
-		saved_state->uesp = state->uesp;
-		saved_state->ebx = state->ebx;
-		saved_state->edx = state->edx;
-		saved_state->ecx = state->ecx;
-		saved_state->eax = state->eax;
-		saved_state->eip = state->eip;
-		saved_state->efl = (state->efl & ~EFL_USER_CLEAR)
-				    | EFL_USER_SET;
-#endif /* __x86_64__ && !USER32 */
 
-#if !defined(__x86_64__) || defined(USER32)
-		/*
-		 * Segment registers.  Set differently in V8086 mode.
-		 */
-		if (saved_state->efl & EFL_VM) {
-		    /*
-		     * Set V8086 mode segment registers.
-		     */
-		    saved_state->cs = state->cs & 0xffff;
-		    saved_state->ss = state->ss & 0xffff;
-		    saved_state->v86_segs.v86_ds = state->ds & 0xffff;
-		    saved_state->v86_segs.v86_es = state->es & 0xffff;
-		    saved_state->v86_segs.v86_fs = state->fs & 0xffff;
-		    saved_state->v86_segs.v86_gs = state->gs & 0xffff;
-
-		    /*
-		     * Zero protected mode segment registers.
-		     */
-		    saved_state->ds = 0;
-		    saved_state->es = 0;
-		    saved_state->fs = 0;
-		    saved_state->gs = 0;
-
-		    if (thread->pcb->ims.v86s.int_table) {
-			/*
-			 * Hardware assist on.
-			 */
-			thread->pcb->ims.v86s.flags =
-			    saved_state->efl & (EFL_TF | EFL_IF);
-		    }
-		} else
-#endif
 		if (flavor == i386_THREAD_STATE) {
 		    /*
 		     * 386 mode.  Set segment registers for flat
@@ -545,12 +473,6 @@ kern_return_t thread_setstatus(
 		     */
 		    saved_state->cs = USER_CS;
 		    saved_state->ss = USER_DS;
-#if !defined(__x86_64__) || defined(USER32)
-		    saved_state->ds = USER_DS;
-		    saved_state->es = USER_DS;
-		    saved_state->fs = USER_DS;
-		    saved_state->gs = USER_DS;
-#endif
 		}
 		else {
 		    /*
@@ -561,12 +483,6 @@ kern_return_t thread_setstatus(
 		     */
 		    saved_state->cs = state->cs;
 		    saved_state->ss = state->ss;
-#if !defined(__x86_64__) || defined(USER32)
-		    saved_state->ds = state->ds;
-		    saved_state->es = state->es;
-		    saved_state->fs = state->fs;
-		    saved_state->gs = state->gs;
-#endif
 		}
 		break;
 	    }
@@ -622,34 +538,6 @@ kern_return_t thread_setstatus(
 #endif
 		break;
 	    }
-#if !defined(__x86_64__) || defined(USER32)
-	    case i386_V86_ASSIST_STATE:
-	    {
-		struct i386_v86_assist_state *state;
-		vm_offset_t	int_table;
-		int		int_count;
-
-		if (count < i386_V86_ASSIST_STATE_COUNT)
-		    return KERN_INVALID_ARGUMENT;
-
-		state = (struct i386_v86_assist_state *) tstate;
-		int_table = state->int_table;
-		int_count = state->int_count;
-
-		if (int_table >= VM_MAX_USER_ADDRESS ||
-		    int_table +
-			int_count * sizeof(struct v86_interrupt_table)
-			    > VM_MAX_USER_ADDRESS)
-		    return KERN_INVALID_ARGUMENT;
-
-		thread->pcb->ims.v86s.int_table = int_table;
-		thread->pcb->ims.v86s.int_count = int_count;
-
-		thread->pcb->ims.v86s.flags =
-			USER_REGS(thread)->efl & (EFL_TF | EFL_IF);
-		break;
-	    }
-#endif
 	    case i386_DEBUG_STATE:
 	    {
 		struct i386_debug_state *state;
@@ -664,7 +552,6 @@ kern_return_t thread_setstatus(
 			return ret;
 		break;
 	    }
-#if defined(__x86_64__) && !defined(USER32)
 	    case i386_FSGS_BASE_STATE:
             {
                     struct i386_fsgs_base_state *state;
@@ -682,7 +569,6 @@ kern_return_t thread_setstatus(
                     }
                     break;
             }
-#endif
 	    default:
 		return(KERN_INVALID_ARGUMENT);
 	}
@@ -705,19 +591,12 @@ kern_return_t thread_getstatus(
 	switch (flavor)  {
 	    case THREAD_STATE_FLAVOR_LIST:
 	    {
-#if !defined(__x86_64__) || defined(USER32)
-		unsigned int ncount = 4;
-#else
 		unsigned int ncount = 3;
-#endif
 		if (*count < ncount)
 		    return (KERN_INVALID_ARGUMENT);
 		tstate[0] = i386_THREAD_STATE;
 		tstate[1] = i386_FLOAT_STATE;
 		tstate[2] = i386_ISA_PORT_MAP_STATE;
-#if !defined(__x86_64__) || defined(USER32)
-		tstate[3] = i386_V86_ASSIST_STATE;
-#endif
 		*count = ncount;
 		break;
 	    }
@@ -737,7 +616,6 @@ kern_return_t thread_getstatus(
 		/*
 		 * General registers.
 		 */
-#if defined(__x86_64__) && !defined(USER32)
 		state->r8 = saved_state->r8;
 		state->r9 = saved_state->r9;
 		state->r10 = saved_state->r10;
@@ -757,51 +635,9 @@ kern_return_t thread_getstatus(
 		state->ursp = saved_state->uesp;
 		state->rfl = saved_state->efl;
 		state->rsp = 0;	/* unused */
-#else
-		state->edi = saved_state->edi;
-		state->esi = saved_state->esi;
-		state->ebp = saved_state->ebp;
-		state->ebx = saved_state->ebx;
-		state->edx = saved_state->edx;
-		state->ecx = saved_state->ecx;
-		state->eax = saved_state->eax;
-		state->eip = saved_state->eip;
-		state->uesp = saved_state->uesp;
-		state->efl = saved_state->efl;
-		state->esp = 0;	/* unused */
-#endif /* __x86_64__ && !USER32 */
 
 		state->cs = saved_state->cs;
 		state->ss = saved_state->ss;
-#if !defined(__x86_64__) || defined(USER32)
-		if (saved_state->efl & EFL_VM) {
-		    /*
-		     * V8086 mode.
-		     */
-		    state->ds = saved_state->v86_segs.v86_ds & 0xffff;
-		    state->es = saved_state->v86_segs.v86_es & 0xffff;
-		    state->fs = saved_state->v86_segs.v86_fs & 0xffff;
-		    state->gs = saved_state->v86_segs.v86_gs & 0xffff;
-
-		    if (thread->pcb->ims.v86s.int_table) {
-			/*
-			 * Hardware assist on
-			 */
-			if ((thread->pcb->ims.v86s.flags &
-					(EFL_IF|V86_IF_PENDING))
-				== 0)
-			    saved_state->efl &= ~EFL_IF;
-		    }
-		} else {
-		    /*
-		     * 386 mode.
-		     */
-		    state->ds = saved_state->ds & 0xffff;
-		    state->es = saved_state->es & 0xffff;
-		    state->fs = saved_state->fs & 0xffff;
-		    state->gs = saved_state->gs & 0xffff;
-		}
-#endif
 		*count = i386_THREAD_STATE_COUNT;
 		break;
 	    }
@@ -854,22 +690,6 @@ kern_return_t thread_getstatus(
 		*count = i386_ISA_PORT_MAP_STATE_COUNT;
 		break;
 	    }
-#if !defined(__x86_64__) || defined(USER32)
-	    case i386_V86_ASSIST_STATE:
-	    {
-		struct i386_v86_assist_state *state;
-
-		if (*count < i386_V86_ASSIST_STATE_COUNT)
-		    return KERN_INVALID_ARGUMENT;
-
-		state = (struct i386_v86_assist_state *) tstate;
-		state->int_table = thread->pcb->ims.v86s.int_table;
-		state->int_count = thread->pcb->ims.v86s.int_count;
-
-		*count = i386_V86_ASSIST_STATE_COUNT;
-		break;
-	    }
-#endif
 	    case i386_DEBUG_STATE:
 	    {
 		struct i386_debug_state *state;
@@ -883,7 +703,6 @@ kern_return_t thread_getstatus(
 		*count = i386_DEBUG_STATE_COUNT;
 		break;
 	    }
-#if defined(__x86_64__) && !defined(USER32)
 	    case i386_FSGS_BASE_STATE:
             {
                     struct i386_fsgs_base_state *state;
@@ -896,7 +715,6 @@ kern_return_t thread_getstatus(
                     *count = i386_FSGS_BASE_STATE_COUNT;
                     break;
             }
-#endif
 	    default:
 		return(KERN_INVALID_ARGUMENT);
 	}

@@ -22,7 +22,7 @@
 #include <mach.user.h>
 #include <mach_port.user.h>
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__x86_64__)
 #include <mach_i386.user.h>
 
 static void printx(struct i386_xfloat_state *state, int size)
@@ -241,7 +241,7 @@ static void test_xfp_state_getset()
 
 int main(int argc, char *argv[], int envc, char *envp[])
 {
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__x86_64__)
   test_fp_state_getset();
   test_xfp_state_getset();
 #else

@@ -196,31 +196,13 @@ dump_ss(regs);
 		 */
 		result = vm_fault(map,
 				  trunc_page((vm_offset_t)subcode),
-#if (__i386__ && !(__i486__ || __i586__ || __i686__))
-				  VM_PROT_READ|VM_PROT_WRITE,
-#else
 				  (code & T_PF_WRITE)
 				    ? VM_PROT_READ|VM_PROT_WRITE
 				    : VM_PROT_READ,
-#endif
 				  FALSE,
 				  FALSE,
 				  vm_fault_no_continuation);
-#if (__i386__ && !(__i486__ || __i586__ || __i686__))
-		if ((code & T_PF_WRITE) == 0 &&
-		    result == KERN_PROTECTION_FAILURE)
-		{
-		    /*
-		     *	Must expand vm_fault by hand,
-		     *	so that we can ask for read-only access
-		     *	but enter a (kernel)writable mapping.
-		     */
-		    result = intel_read_fault(map,
-					  trunc_page((vm_offset_t)subcode));
-		}
-#else
 		;
-#endif
 
 		if (result == KERN_SUCCESS) {
 		    /*
@@ -306,8 +288,6 @@ int user_trap(struct i386_saved_state *regs)
 	unsigned long	type;
 	thread_t thread = current_thread();
 
-#ifdef __x86_64__
-#endif
 
 	type = regs->trapno;
 	code = 0;
@@ -400,7 +380,6 @@ int user_trap(struct i386_saved_state *regs)
 				return 1;
 			}
 		}
-#ifdef __x86_64__
 		{
 			unsigned char opcode, addr[4], seg[2];
 			int i;
@@ -416,7 +395,6 @@ int user_trap(struct i386_saved_state *regs)
 				return 1;
 			}
 		}
-#endif
 		exc = EXC_BAD_INSTRUCTION;
 		code = EXC_I386_GPFLT;
 		subcode = regs->err & 0xffff;

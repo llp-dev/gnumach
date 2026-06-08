@@ -35,7 +35,6 @@
 /*
  *	x86 Task State Segment
  */
-#ifdef __x86_64__
 struct i386_tss {
   uint32_t _reserved0;
   uint64_t rsp0;
@@ -53,41 +52,6 @@ struct i386_tss {
   uint16_t _reserved3;
   uint16_t io_bit_map_offset;
 } __attribute__((__packed__));
-#else /* ! __x86_64__ */
-struct i386_tss {
-	int		back_link;	/* segment number of previous task,
-					   if nested */
-	int		esp0;		/* initial stack pointer ... */
-	int		ss0;		/* and segment for ring 0 */
-	int		esp1;		/* initial stack pointer ... */
-	int		ss1;		/* and segment for ring 1 */
-	int		esp2;		/* initial stack pointer ... */
-	int		ss2;		/* and segment for ring 2 */
-	int		cr3;		/* CR3 - page table directory
-						 physical address */
-	int		eip;
-	int		eflags;
-	int		eax;
-	int		ecx;
-	int		edx;
-	int		ebx;
-	int		esp;		/* current stack pointer */
-	int		ebp;
-	int		esi;
-	int		edi;
-	int		es;
-	int		cs;
-	int		ss;		/* current stack segment */
-	int		ds;
-	int		fs;
-	int		gs;
-	int		ldt;		/* local descriptor table segment */
-	unsigned short	trace_trap;	/* trap on switch to this task */
-	unsigned short	io_bit_map_offset;
-					/* offset to start of IO permission
-					   bit map */
-};
-#endif /* __x86_64__ */
 
 /* The structure extends the above TSS structure by an I/O permission bitmap
    and the barrier.  */

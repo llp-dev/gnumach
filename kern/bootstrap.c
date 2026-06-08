@@ -115,7 +115,6 @@ void bootstrap_create(void)
 {
   int compat;
   unsigned n = 0;
-#ifdef __x86_64__
   struct multiboot_raw_module *bmods32 = ((struct multiboot_raw_module *)
                                           phystokv(boot_info.mods_addr));
   struct multiboot_module *bmods=NULL;
@@ -130,10 +129,6 @@ void bootstrap_create(void)
           bmods[i].string = bmods32[i].string;
         }
     }
-#else
-  struct multiboot_module *bmods = ((struct multiboot_module *)
-				    phystokv(boot_info.mods_addr));
-#endif
   if (!(boot_info.flags & MULTIBOOT_MODS)
       || (boot_info.mods_count == 0))
     panic ("No bootstrap code loaded with the kernel!");

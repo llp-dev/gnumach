@@ -44,7 +44,6 @@ void test_many(void)
   msleep(6000);
 }
 
-#ifdef __x86_64__
 void test_fsgs_base_thread(void* tid)
 {
   int err;
@@ -81,18 +80,15 @@ void test_fsgs_base_thread(void* tid)
   thread_terminate(mach_thread_self());
   FAILURE("thread_terminate");
 }
-#endif
 
 void test_fsgs_base(void)
 {
-#ifdef __x86_64__
   int err;
   for (long tid=0; tid<10; tid++)
     {
       test_thread_start(mach_task_self(), test_fsgs_base_thread, (void*)tid);
     }
   msleep(1000);  // TODO: wait for threads
-#endif
 }
 
 

@@ -59,11 +59,9 @@ AC_ARG_ENABLE([platform],
   [host_platform=default])
 [# Supported configurations.
 case $host_platform:$host_cpu in
-  default:i?86)
-    host_platform=at;;
   default:x86_64)]
     [host_platform=at;;
-  at:i?86 | at:x86_64)
+  at:x86_64)
     :;;
   *:aarch64)
     ;;
@@ -74,12 +72,7 @@ esac]
 AC_SUBST([host_platform])
 
 [# This is used in a few places.
-case $host_cpu in
-  i?86)
-    systype=i386;;
-  *)
-    systype=$host_cpu;;
-esac]
+systype=$host_cpu]
 AC_SUBST([systype])
 
 #
@@ -145,14 +138,6 @@ AC_ARG_ENABLE([device-drivers],
     [;;
 esac]
 
-AC_ARG_ENABLE([user32],
-AS_HELP_STRING([--enable-user32], [enable 32-bit user space on a 64-bit kernel]))
-[if [ x"$enable_user32" = xyes ]; then]
-  AC_DEFINE([USER32], [], [enable 32-bit user on 64-bit kernel])
-  AM_CONDITIONAL([enable_user32], [true])
-[else]
-  AM_CONDITIONAL([enable_user32], [false])
-[fi]
 
 
 # Platform-specific configuration.

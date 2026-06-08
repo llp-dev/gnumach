@@ -58,31 +58,18 @@ void test_syscall_bad_arg_on_stack(void *arg)
   /* mach_msg() has 7 arguments, so the last one should be always
      passed on the stack on x86. Here we make ESP/RSP point to the
      wrong place to test the access check */
-#ifdef __x86_64__
   asm volatile("movq	$0x123,%rsp;"			\
                "movq	$-25,%rax;"                     \
                "syscall;"                               \
                );
-#else
-  asm volatile("mov	$0x123,%esp;"			\
-               "mov	$-25,%eax;"                     \
-               "lcall	$0x7,$0x0;"                     \
-               );
-#endif
   FAILURE("we shouldn't be here!");
 }
 
 void test_bad_syscall_num(void *arg)
 {
-#ifdef __x86_64__
   asm volatile("movq	$0x123456,%rax;"                \
                "syscall;"                               \
                );
-#else
-  asm volatile("mov	$0x123456,%eax;"                \
-               "lcall	$0x7,$0x0;"                     \
-               );
-#endif
   FAILURE("we shouldn't be here!");
 }
 

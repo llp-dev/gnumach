@@ -22,7 +22,7 @@
 #include <mach.user.h>
 #include <mach_port.user.h>
 
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__)
 #define THREAD_STATE_FLAVOR	i386_THREAD_STATE
 #define THREAD_STATE_COUNT	i386_THREAD_STATE_COUNT
 #elif defined(__aarch64__)
@@ -83,7 +83,7 @@ kern_return_t catch_exception_raise(
 {
 	kern_return_t			kr;
 	vm_offset_t			off;
-#if defined(__x86_64__) || defined(__i386__)
+#if defined(__x86_64__)
 	struct i386_thread_state	state;
 #elif defined(__aarch64__)
 	struct aarch64_thread_state	state;
@@ -123,20 +123,6 @@ kern_return_t catch_exception_raise(
 	state.rip = (vm_offset_t) fault_handler;
 	state.rdi = (vm_offset_t) subcode;
 	state.rsi = off;
-#elif defined(__i386__)
-	/*
-	 *	Place a copy of the state on the thread's stack.
-	 */
-	off = state.uesp - sizeof(state);
-	memcpy((void *) off, &state, sizeof(state));
-
-	/*
-	 *	Make it call fault_handler(subcode, off).
-	 */
-	*(vm_offset_t *) (off - 4) = off;
-	*(vm_offset_t *) (off - 8) = (vm_offset_t) subcode;
-	state.uesp = off - 12;
-	state.eip = (vm_offset_t) fault_handler;
 #elif defined(__aarch64__)
 	/*
 	 *	Place a copy of the state on the thread's stack.

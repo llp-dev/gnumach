@@ -18,14 +18,8 @@
 
         .global _start
 _start:
-#ifdef __i386__
-        pushl   %esp
-        call    c_start
-#endif /* __i386__ */
-#ifdef __x86_64__
         movq    %rsp,%rdi
         callq   c_start
-#endif /* __x86_64__ */
 #ifdef __aarch64__
         /*
          * Kernel hands us argc/argv/envp on the stack (sysv-style);

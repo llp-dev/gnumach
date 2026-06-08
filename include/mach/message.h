@@ -402,11 +402,7 @@ typedef integer_t mach_msg_option_t;
 #define MACH_SEND_ALWAYS	0x00010000	/* internal use only */
 
 #ifdef __LP64__
-#if defined(KERNEL) && defined(USER32)
-#define MACH_MSG_USER_ALIGNMENT 4
-#else
 #define MACH_MSG_USER_ALIGNMENT 8
-#endif
 #else
 #define MACH_MSG_USER_ALIGNMENT 4
 #endif

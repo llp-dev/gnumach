@@ -43,11 +43,7 @@
 
 struct real_descriptor ldt[LDTSZ];
 
-#if defined(__x86_64__) && ! defined(USER32)
 #define USER_SEGMENT_SIZEBITS SZ_64
-#else
-#define USER_SEGMENT_SIZEBITS SZ_32
-#endif
 
 static void
 ldt_fill(struct real_descriptor *myldt, struct real_descriptor *mygdt)
@@ -58,7 +54,6 @@ ldt_fill(struct real_descriptor *myldt, struct real_descriptor *mygdt)
 			        ACC_PL_K|ACC_LDT, 0);
 
 	/* Initialize the syscall entry point */
-#if defined(__x86_64__) && ! defined(USER32)
         if (!CPU_HAS_FEATURE(CPU_FEATURE_SEP))
             panic("syscall support is missing on 64 bit");
         /* Enable 64-bit syscalls with interrupts disabled on entry */
@@ -66,11 +61,6 @@ ldt_fill(struct real_descriptor *myldt, struct real_descriptor *mygdt)
         wrmsr(MSR_REG_LSTAR, (vm_offset_t)syscall64);
         wrmsr(MSR_REG_STAR, ((((long)USER_CS - 16) << 16) | (long)KERNEL_CS) << 32);
         wrmsr(MSR_REG_FMASK, EFL_IF | EFL_IOPL_USER);
-#else /* defined(__x86_64__) && ! defined(USER32) */
-	fill_ldt_gate(myldt, USER_SCALL,
-		      (vm_offset_t)&syscall, KERNEL_CS,
-		      ACC_PL_U|ACC_CALL_GATE, 0);
-#endif /* defined(__x86_64__) && ! defined(USER32) */
 
 	/* Initialize the 32bit LDT descriptors.  */
 	fill_ldt_descriptor(myldt, USER_CS,

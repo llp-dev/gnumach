@@ -176,16 +176,10 @@ void machine_init(void)
 	 * Patch the realmode gdt with the correct offset and the first jmp to
 	 * protected mode with the correct target.
 	 */
-#ifdef __i386__
-	gdt_descr_tmp.linear_base += apboot_addr;
-	apboot_jmp_offset += apboot_addr;
-#endif
-#ifdef __x86_64__
 	/* Section .boot.text is located at a 32 bit offset.
 	 * To access it here, we need to add KERNEL_MAP_BASE to pointers. */
 	*(uint32_t *)phystokv(&gdt_descr_tmp.linear_base) += apboot_addr;
 	*(uint32_t *)phystokv(&apboot_jmp_offset) += apboot_addr;
-#endif
 #endif
 
 #ifdef APIC
@@ -456,28 +450,7 @@ void c_boot_entry(vm_offset_t bi)
 	machine_slot[0].is_cpu = TRUE;
 	machine_slot[0].cpu_subtype = CPU_SUBTYPE_AT386;
 
-#if defined(__x86_64__) && !defined(USER32)
 	machine_slot[0].cpu_type = CPU_TYPE_X86_64;
-#else
-	switch (cpu_type)
-	  {
-	  default:
-	    printf("warning: unknown cpu type %d, assuming i386\n", cpu_type);
-	  case 3:
-	    machine_slot[0].cpu_type = CPU_TYPE_I386;
-	    break;
-	  case 4:
-	    machine_slot[0].cpu_type = CPU_TYPE_I486;
-	    break;
-	  case 5:
-	    machine_slot[0].cpu_type = CPU_TYPE_PENTIUM;
-	    break;
-	  case 6:
-	  case 15:
-	    machine_slot[0].cpu_type = CPU_TYPE_PENTIUMPRO;
-	    break;
-	  }
-#endif
 
 	/*
 	 * Start the system.

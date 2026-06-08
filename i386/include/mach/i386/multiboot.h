@@ -91,7 +91,6 @@ struct multiboot_module
 	unsigned		reserved;
 };
 
-#ifdef __x86_64__
 /* The mods_addr field above contains the physical address of the first
    of 'mods_count' multiboot_module structures.  */
 struct multiboot32_module
@@ -106,7 +105,6 @@ struct multiboot32_module
 	/* Boot loader must set to 0; OS must ignore.  */
 	unsigned		reserved;
 };
-#endif
 
 /* usable memory "Type", all others are reserved.  */
 #define MB_ARD_MEMORY       1

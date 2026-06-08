@@ -17,20 +17,7 @@ dnl USE OF THIS SOFTWARE.
 # Definitions.
 #
 
-[case $host_cpu in
-  i?86)]
-    AM_CONDITIONAL([HOST_ix86], [true])
-
-    # Determines the size of the CPU cache line.
-    AC_DEFINE([CPU_L1_SHIFT], [6], [CPU_L1_SHIFT])
-
-    [# Does the architecture provide machine-specific interfaces?
-    mach_machine_routines=1;;
-  *)]
-    AM_CONDITIONAL([HOST_ix86], [false])[;;
-esac
-
-case $host_platform in
+[case $host_platform in
   at)]
     AM_CONDITIONAL([PLATFORM_at], [true])[;;
   *)]

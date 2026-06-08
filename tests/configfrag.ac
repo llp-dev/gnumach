@@ -23,11 +23,7 @@ dnl 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
 AC_CONFIG_FILES([tests/test-multiboot], [chmod +x tests/test-multiboot])
 
 
-[if test x"$enable_user32" = xyes ; then
-    ac_miguser=$user32_cpu-gnu-mig
-else
-    ac_miguser=$host_cpu-gnu-mig
-fi]
+[ac_miguser=$host_cpu-gnu-mig]
 
 AC_CHECK_PROG([USER_MIG], [$ac_miguser], [$ac_miguser])
 

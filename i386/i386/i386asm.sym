@@ -75,25 +75,15 @@ offset	eml_dispatch		eml	disp_vector	DISP_VECTOR
 expr	&STACK_IKS(0)->k_ebx				KSS_EBX
 expr	&STACK_IKS(0)->k_esp				KSS_ESP
 expr	&STACK_IKS(0)->k_ebp				KSS_EBP
-#ifdef __i386__
-expr	&STACK_IKS(0)->k_esi				KSS_ESI
-expr	&STACK_IKS(0)->k_edi				KSS_EDI
-#endif
 expr	&STACK_IKS(0)->k_eip				KSS_EIP
-#ifdef __x86_64__
 expr	&STACK_IKS(0)->k_r12				KSS_R12
 expr	&STACK_IKS(0)->k_r13				KSS_R13
 expr	&STACK_IKS(0)->k_r14				KSS_R14
 expr	&STACK_IKS(0)->k_r15				KSS_R15
-#endif
 size	i386_kernel_state	iks
 
 size	i386_exception_link	iel
 
-#if !defined(__x86_64__) || defined(USER32)
-offset	i386_saved_state	r	gs
-offset	i386_saved_state	r	fs
-#endif
 offset	i386_saved_state	r	cs
 offset	i386_saved_state	r	uesp
 offset	i386_saved_state	r	eax
@@ -108,7 +98,6 @@ offset	i386_saved_state	r	eip
 offset	i386_saved_state	r	cr2
 offset	i386_saved_state	r	edi
 offset	i386_saved_state	r	esi
-#ifdef __x86_64__
 offset	i386_saved_state	r	r8
 offset	i386_saved_state	r	r9
 offset	i386_saved_state	r	r10
@@ -116,18 +105,12 @@ offset	i386_saved_state	r	r12
 offset	i386_saved_state	r	r13
 offset	i386_saved_state	r	r14
 offset	i386_saved_state	r	r15
-#endif
 
 offset	i386_interrupt_state	i	eip
 offset	i386_interrupt_state	i	cs
 offset	i386_interrupt_state	i	efl
 
-#ifdef __x86_64__
 offset	i386_tss		tss	rsp0
-#else
-offset	i386_tss		tss	esp0
-offset	i386_tss		tss	ss0
-#endif
 
 offset	machine_slot		sub_type	cpu_type
 

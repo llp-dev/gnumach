@@ -351,7 +351,7 @@ typedef struct {
 #define DT_TEXTREL	22
 #define DT_JMPREL	23
 
-#if defined(__LP64__) && ! defined(USER32)
+#if defined(__LP64__)
 typedef Elf64_Ehdr Elf_Ehdr;
 typedef Elf64_Phdr Elf_Phdr;
 #else

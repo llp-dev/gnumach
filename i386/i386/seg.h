@@ -59,7 +59,6 @@ typedef struct real_descriptor real_descriptor_t;
 typedef real_descriptor_t *real_descriptor_list_t;
 typedef const real_descriptor_list_t const_real_descriptor_list_t;
 
-#ifdef __x86_64__
 struct real_descriptor64 {
 	unsigned int	limit_low:16,	/* limit 0..15 */
 			base_low:16,	/* base  0..15 */
@@ -73,7 +72,6 @@ struct real_descriptor64 {
 			zero:5,
 			reserved2:19;
 };
-#endif
 
 struct real_gate {
 	unsigned int	offset_low:16,	/* offset 0..15 */
@@ -81,10 +79,8 @@ struct real_gate {
 			word_count:8,
 			access:8,
 			offset_high:16;	/* offset 16..31 */
-#ifdef __x86_64__
 	unsigned int	offset_ext:32,	/* offset 32..63 */
 			reserved:32;
-#endif
 };
 
 #endif /* !__ASSEMBLER__ */
@@ -196,7 +192,6 @@ fill_descriptor(struct real_descriptor *_desc, vm_offset_t base, vm_offset_t lim
 	desc->base_high = base >> 24;
 }
 
-#ifdef __x86_64__
 static inline void
 fill_descriptor64(struct real_descriptor64 *_desc, unsigned long base, unsigned limit,
 		  unsigned char access, unsigned char sizebits)
@@ -220,7 +215,6 @@ fill_descriptor64(struct real_descriptor64 *_desc, unsigned long base, unsigned 
 	desc->zero = 0;
 	desc->reserved2 = 0;
 }
-#endif
 
 /* Fill a gate with particular values.  */
 static inline void
@@ -232,10 +226,8 @@ fill_gate(struct real_gate *gate, unsigned long offset, unsigned short selector,
 	gate->word_count = word_count;
 	gate->access = access | ACC_P;
 	gate->offset_high = (offset >> 16) & 0xffff;
-#ifdef __x86_64__
 	gate->offset_ext = offset >> 32;
 	gate->reserved = 0;
-#endif
 }
 
 #endif /* !__ASSEMBLER__ */

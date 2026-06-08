@@ -65,7 +65,6 @@
  * i386_THREAD_STATE and i386_REGS_SEGS_STATE.
  */
 struct i386_thread_state {
-#if defined(__x86_64__) && !defined(USER32)
 	uint64_t	r8;
 	uint64_t	r9;
 	uint64_t	r10;
@@ -83,31 +82,10 @@ struct i386_thread_state {
 	uint64_t	rcx;
 	uint64_t	rax;
 	uint64_t	rip;
-#else
-	unsigned int	gs;
-	unsigned int	fs;
-	unsigned int	es;
-	unsigned int	ds;
-
-	unsigned int	edi;
-	unsigned int	esi;
-	unsigned int	ebp;
-	unsigned int	esp;
-	unsigned int	ebx;
-	unsigned int	edx;
-	unsigned int	ecx;
-	unsigned int	eax;
-	unsigned int	eip;
-#endif  /* __x86_64__ && !USER32 */
 
 	unsigned int	cs;
-#if defined(__x86_64__) && !defined(USER32)
 	uint64_t	rfl;
 	uint64_t	ursp;
-#else
-	unsigned int	efl;
-	unsigned int	uesp;
-#endif  /* __x86_64__ and !USER32 */
 
 	unsigned int	ss;
 };

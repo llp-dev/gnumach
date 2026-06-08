@@ -117,72 +117,19 @@
  * registers for copyin/copyout.
  * (XXX Would it be smarter just to use fs or gs for that?)
  */
-#ifdef USER32
-#define PUSH_SEGMENTS(reg)	\
-	movq	%ds,reg		;\
-	pushq	reg		;\
-	movq	%es,reg		;\
-	pushq	reg		;\
-	pushq	%fs		;\
-	pushq	%gs
-#else
 #define PUSH_SEGMENTS(reg)
-#endif
 
-#ifdef USER32
-#define POP_SEGMENTS(reg)	\
-	popq	%gs		;\
-	popq	%fs		;\
-	popq	reg		;\
-	movq	reg,%es		;\
-	popq	reg		;\
-	movq	reg,%ds
-#else
 #define POP_SEGMENTS(reg)
-#endif
 
-#ifdef USER32
-#define PUSH_SEGMENTS_ISR(reg)	\
-	movq	%ds,reg		;\
-	pushq	reg		;\
-	movq	%es,reg		;\
-	pushq	reg		;\
-	pushq	%fs		;\
-	pushq	%gs
-#else
 #define PUSH_SEGMENTS_ISR(reg)
-#endif
 
-#ifdef USER32
-#define POP_SEGMENTS_ISR(reg)	\
-	popq	%gs		;\
-	popq	%fs		;\
-	popq	reg		;\
-	movq	reg,%es		;\
-	popq	reg		;\
-	movq	reg,%ds
-#else
 #define POP_SEGMENTS_ISR(reg)
-#endif
 
-#ifdef USER32
-#define SET_KERNEL_SEGMENTS(reg)	\
-       mov	%ss,reg /* switch to kernel segments */ ;\
-       mov	reg,%ds	/* (same as kernel stack segment) */ ;\
-       mov	reg,%es			;\
-       mov	reg,%fs			;\
-       mov	reg,%gs
-#else
 #define SET_KERNEL_SEGMENTS(reg)
-#endif
 
 #define RETURN_TO_KERN	0x7eadbeef
 #define RETURN_TO_USER	0x66666666
 
-#ifdef USER32
-# define SWAPGS_ENTRY_IF_NEEDED_R12
-# define SWAPGS_EXIT_IF_NEEDED_R12
-#else
 /* Keeps %r12 (callee-saved) value throughout interrupt context */
 # define SWAPGS_ENTRY_IF_NEEDED_R12	\
 	pushf				;\
@@ -212,7 +159,6 @@
 0:	swapgs				;\
 1:
 
-#endif
 
 /*
  * Fault recovery.
@@ -329,26 +275,12 @@ ENTRY(t_segnp)
 					/* indicate fault type */
 
 trap_check_kernel_exit:
-#ifdef USER32
-	testq	$(EFL_VM),32(%rsp)	/* is trap from V86 mode? */
-	jnz	EXT(alltraps)		/* isn`t kernel trap if so */
-#endif
 	/* Note: handling KERNEL_RING value by hand */
 	testq	$2,24(%rsp)		/* is trap from kernel mode? */
 	jnz	EXT(alltraps)		/* if so:  */
 					/* check for the kernel exit sequence */
 	cmpq	$_kret_iret,16(%rsp)	/* on IRET? */
 	je	fault_iret
-#ifdef USER32
-	cmpq	$_kret_popl_ds,16(%rsp)	/* popping DS? */
-	je	fault_popl_ds
-	cmpq	$_kret_popl_es,16(%rsp)	/* popping ES? */
-	je	fault_popl_es
-	cmpq	$_kret_popl_fs,16(%rsp)	/* popping FS? */
-	je	fault_popl_fs
-	cmpq	$_kret_popl_gs,16(%rsp)	/* popping GS? */
-	je	fault_popl_gs
-#endif
 take_fault:				/* if none of the above: */
 	jmp	EXT(alltraps)		/* treat as normal trap. */
 
@@ -377,44 +309,6 @@ fault_iret:
 	popq	%rax			/* restore eax */
 	jmp	EXT(alltraps)		/* take fault */
 
-#ifdef USER32
-/*
- * Fault restoring a segment register.  The user's registers are still
- * saved on the stack.  The offending segment register has not been
- * popped.
- */
-fault_popl_ds:
-	popq	%rax			/* get trap number  */
-	popq	%rdx			/* get error code */
-	addq	$24,%rsp		/* pop stack to user regs */
-	jmp	push_es			/* (DS on top of stack) */
-fault_popl_es:
-	popq	%rax			/* get trap number */
-	popq	%rdx			/* get error code */
-	addq	$24,%rsp		/* pop stack to user regs */
-	jmp	push_fs			/* (ES on top of stack) */
-fault_popl_fs:
-	popq	%rax			/* get trap number */
-	popq	%rdx			/* get error code */
-	addq	$24,%rsp		/* pop stack to user regs */
-	jmp	push_gs			/* (FS on top of stack) */
-fault_popl_gs:
-	popq	%rax			/* get trap number */
-	popq	%rdx			/* get error code */
-	addq	$24,%rsp		/* pop stack to user regs */
-	jmp	push_segregs		/* (GS on top of stack) */
-
-push_es:
-	movq	%es,%rcx
-	pushq	%rcx			/* restore es, */
-push_fs:
-	pushq	%fs			/* restore fs, */
-push_gs:
-	pushq	%gs			/* restore gs. */
-push_gsbase:
-	pushq	$0
-	pushq	$0
-#endif
 push_segregs:
 	movq	%rax,R_TRAPNO(%rsp)	/* set trap number */
 	movq	%rdx,R_ERR(%rsp)	/* set error code */
@@ -428,24 +322,11 @@ push_segregs:
  */
 ENTRY(t_debug)
 	INT_FIX
-#ifdef USER32
-	testq	$(EFL_VM),16(%rsp)	/* is trap from V86 mode? */
-	jnz	0f			/* isn`t kernel trap if so */
-#endif
 	/* Note: handling KERNEL_RING value by hand */
 	testq	$2,8(%rsp)		/* is trap from kernel mode? */
 	jnz	0f			/* if so: */
-#ifdef USER32
-	cmpq	$syscall_entry,(%rsp)	/* system call entry? */
-	jne	0f			/* if so: */
-					/* flags are sitting where syscall */
-					/* wants them */
-	addq	$32,%rsp		/* remove eip/cs */
-	jmp	syscall_entry_2		/* continue system call entry */
-#else
 	// TODO: implement the 64-bit case
 	ud2
-#endif
 0:	pushq	$0			/* otherwise: */
 	pushq	$(T_DEBUG)		/* handle as normal */
 	jmp	EXT(alltraps)		/* debug fault */
@@ -479,10 +360,6 @@ trap_push_segs:
 	SET_KERNEL_SEGMENTS(%rax)	/* switch to kernel data segment */
 trap_set_segs:
 	cld				/* clear direction flag */
-#ifdef USER32
-	testl	$(EFL_VM),R_EFLAGS(%rsp) /* in V86 mode? */
-	jnz	trap_from_user		/* user mode trap if so */
-#endif
 	/* Note: handling KERNEL_RING value by hand */
 	testb	$2,R_CS(%rsp)		/* user mode trap? */
 	jz	trap_from_kernel	/* kernel trap if not */
@@ -497,12 +374,6 @@ trap_from_user:
 _take_trap:
 	movq	%rbx,%rdi		/* pass register save area to trap */
 	call	EXT(user_trap)		/* call user trap routine */
-#ifdef USER32
-	orq     %rax,%rax               /* emulated syscall? */
-	jz      1f			/* no, just return */
-	movq    R_EAX(%rbx),%rax        /* yes, get syscall number */
-	jmp     syscall_entry_3         /* and emulate it */
-#endif
 1:
 	movq	(%rsp),%rsp		/* switch back to PCB stack */
 
@@ -533,18 +404,6 @@ _return_to_user:
 
 _return_from_kernel:
 	SWAPGS_EXIT_IF_NEEDED_R12
-#ifdef USER32
-_kret_popl_gs:
-	popq	%gs			/* restore segment registers */
-_kret_popl_fs:
-	popq	%fs
-_kret_popl_es:
-	popq	%rax
-	movq	%rax,%es
-_kret_popl_ds:
-	popq	%rax
-	movq	%rax,%ds
-#endif
 	popa				/* restore general registers */
 	addq	$16,%rsp		/* discard trap number and error code */
 _kret_iret:
@@ -735,10 +594,6 @@ LEXT(return_to_iret)			/* to find the return from calling interrupt) */
 
 	popq	%rsp			/* switch back to old stack */
 
-#ifdef USER32
-	testl	$(EFL_VM),I_EFL(%rsp)	/* if in V86 */
-	jnz	0f			/* or */
-#endif
 	/* Note: handling KERNEL_RING value by hand */
 	testb	$2,I_CS(%rsp)		/* user mode, */
 	jz	1f			/* check for ASTs */
@@ -803,225 +658,6 @@ ast_from_interrupt:
 
 
 
-#ifdef USER32
-/*
- * System call enters through a call gate.  Flags are not saved -
- * we must shuffle stack to look like trap save area.
- *
- * rsp->	old eip
- *		old cs
- *		old rsp
- *		old ss
- *
- * eax contains system call number.
- */
-ENTRY(syscall)
-syscall_entry:
-	pushf				/* save flags as soon as possible */
-syscall_entry_2:
-	cld				/* clear direction flag */
-
-	pushq	%rax			/* save system call number */
-	pushq	$0			/* clear trap number slot */
-
-	pusha				/* save the general registers */
-	PUSH_SEGMENTS(%rdx)		/* and the segment registers */
-	SWAPGS_ENTRY_IF_NEEDED_R12
-	SET_KERNEL_SEGMENTS(%rdx)	/* switch to kernel data segment */
-
-/*
- * Shuffle eflags,eip,cs into proper places
- */
-
-	movq	R_EIP(%rsp),%rbx	/* eflags are in EIP slot */
-	movq	R_CS(%rsp),%rcx		/* eip is in CS slot */
-	movq	R_EFLAGS(%rsp),%rdx	/* cs is in EFLAGS slot */
-	movq	%rcx,R_EIP(%rsp)	/* fix eip */
-	movq	%rdx,R_CS(%rsp)		/* fix cs */
-	movq	%rbx,R_EFLAGS(%rsp)	/* fix eflags */
-
-	CPU_NUMBER(%edx)
-	TIME_TRAP_SENTRY
-
-	movq	CX8(EXT(kernel_stack),%rdx),%rbx
-					/* get current kernel stack */
-	xchgq	%rbx,%rsp		/* switch stacks - %ebx points to */
-					/* user registers. */
-					/* user regs pointer already set */
-
-/*
- * Check for MACH or emulated system call
- */
-syscall_entry_3:
-	movq	MY(ACTIVE_THREAD),%rdx
-					/* point to current thread */
-	movq	TH_TASK(%rdx),%rdx	/* point to task */
-	movq	TASK_EMUL(%rdx),%rdx	/* get emulation vector */
-	orq	%rdx,%rdx		/* if none, */
-	je	syscall_native		/*    do native system call */
-	movq	%rax,%rcx		/* copy system call number */
-	subq	DISP_MIN(%rdx),%rcx	/* get displacement into syscall */
-					/* vector table */
-	jl	syscall_native		/* too low - native system call */
-	cmpq	DISP_COUNT(%rdx),%rcx	/* check range */
-	jnl	syscall_native		/* too high - native system call */
-	movq	DISP_VECTOR(%rdx,%rcx,4),%rdx
-					/* get the emulation vector */
-	orq	%rdx,%rdx		/* emulated system call if not zero */
-	jnz	syscall_emul
-
-/*
- * Native system call.
- */
-syscall_native:
-	negl	%eax			/* get system call number */
-	jl	mach_call_range		/* out of range if it was positive */
-	cmpl	EXT(mach_trap_count),%eax	/* check system call table bounds */
-	jg	mach_call_range		/* error if out of range */
-#if 0 /* debug hack to show the syscall number on the screen */
-	movb	%al,%dl
-	shrb	$4,%dl
-	orb	$0x30,%dl
-	movb	$0x0f,%dh
-	movw	%dx,0xb800a
-	movb	%al,%dl
-	andb	$0xf,%dl
-	orb	$0x30,%dl
-	movb	$0xf,%dh
-	movw	%dx,0xb800c
-#endif
-	shll	$5,%eax			/* manual indexing of mach_trap_t */
-	xorq	%r10,%r10
-	mov	EXT(mach_trap_table)(%rax),%r10
-					/* get number of arguments */
-	andq	%r10,%r10
-	jz	mach_call_call		/* skip argument copy if none */
-
-	movq	$USER_DS,%rdx		/* use user data segment for accesses */
-	mov	%dx,%fs
-	movq	%rsp,%r11		/* save kernel ESP for error recovery */
-
-	movq	R_UESP(%rbx),%rbp	/* get user stack pointer */
-	addq	$4,%rbp			/* Skip user return address */
-
-	movq	$VM_MAX_ADDRESS, %rcx
-	cmpq	%rcx,%rbp		/* Check segment limit by hand */
-	jae	mach_call_addr_push
-
-#define PARAM(reg,ereg) \
-	xorq	%reg,%reg		;\
-	RECOVER(mach_call_addr_push) \
-	movl	%fs:(%rbp),%ereg	/* 1st parameter */ ;\
-	addq	$4,%rbp			;\
-	dec	%r10			;\
-	jz	mach_call_call
-
-	PARAM(rdi,edi)			/* 1st parameter */
-	PARAM(rsi,esi)			/* 2nd parameter */
-	PARAM(rdx,edx)			/* 3rd parameter */
-	PARAM(rcx,ecx)			/* 4th parameter */
-	PARAM(r8,r8d)			/* 5th parameter */
-	PARAM(r9,r9d)			/* 6th parameter */
-
-	lea	(%rbp,%r10,4),%rbp	/* point past last argument */
-	xorq	%r12,%r12
-
-0:	subq	$4,%rbp
-	RECOVER(mach_call_addr_push)
-	movl	%fs:(%rbp),%r12d
-	pushq	%r12			/* push argument on stack */
-	dec	%r10
-	jnz	0b			/* loop for all arguments */
-
-mach_call_call:
-
-#ifdef DEBUG
-	testb	$0xff,EXT(syscall_trace)
-	jz	0f
-	movq	%rax,%rdi
-	call	EXT(syscall_trace_print)
-	/* will return with syscallofs still (or again) in eax */
-0:
-#endif /* DEBUG */
-	call	*EXT(mach_trap_table)+8(%rax)  /* call procedure */
-	movq	%rsp,%rcx		/* get kernel stack */
-	or	$(KERNEL_STACK_SIZE-1),%rcx
-	movq	-7-IKS_SIZE(%rcx),%rsp	/* switch back to PCB stack */
-	movq	%rax,R_EAX(%rsp)	/* save return value */
-	jmp	_return_from_trap	/* return to user */
-
-/*
- * Address out of range.  Change to page fault.
- * %rbp holds failing address.
- */
-mach_call_addr_push:
-	movq	%r11,%rsp		/* clean parameters from stack */
-mach_call_addr:
-	movq	%rbp,R_CR2(%rbx)	/* set fault address */
-	movq	$(T_PAGE_FAULT),R_TRAPNO(%rbx)
-					/* set page-fault trap */
-	movq	$(T_PF_USER),R_ERR(%rbx)
-					/* set error code - read user space */
-	movq	$RETURN_TO_USER, %r12
-	jmp	_take_trap		/* treat as a trap */
-
-/*
- * System call out of range.  Treat as invalid-instruction trap.
- * (? general protection?)
- */
-mach_call_range:
-	movq	$(T_INVALID_OPCODE),R_TRAPNO(%rbx)
-					/* set invalid-operation trap */
-	movq	$0,R_ERR(%rbx)		/* clear error code */
-	movq	$RETURN_TO_USER, %r12
-	jmp	_take_trap		/* treat as a trap */
-
-/*
- * User space emulation of system calls.
- * edx - user address to handle syscall
- *
- * User stack will become:
- * ursp->	eflags
- *		eip
- * eax still contains syscall number.
- */
-syscall_emul:
-	movq	$USER_DS,%rdi		/* use user data segment for accesses */
-	mov	%di,%fs
-
-/* XXX what about write-protected pages? */
-	movq	R_UESP(%rbx),%rdi	/* get user stack pointer */
-	subq	$16,%rdi		/* push space for new arguments */
-	movq	$VM_MAX_ADDRESS, %rax
-	cmpq	%rax,%rdi		/* Check segment limit by hand */
-	jae	syscall_addr
-	movq	R_EFLAGS(%rbx),%rax	/* move flags */
-	RECOVER(syscall_addr)
-	movl	%eax,%fs:0(%rdi)	/* to user stack */
-	movl	R_EIP(%rbx),%eax	/* move eip */
-	RECOVER(syscall_addr)
-	movl	%eax,%fs:4(%rdi)	/* to user stack */
-	movq	%rdi,R_UESP(%rbx)	/* set new user stack pointer */
-	movq	%rdx,R_EIP(%rbx)	/* change return address to trap */
-	movq	%rbx,%rsp		/* back to PCB stack */
-// TODO: test it before dropping ud2
-ud2
-	jmp	_return_from_trap	/* return to user */
-
-/*
- * Address error - address is in %edi.
- */
-syscall_addr:
-	movq	%rdi,R_CR2(%rbx)	/* set fault address */
-	movq	$(T_PAGE_FAULT),R_TRAPNO(%rbx)
-	        			/* set page-fault trap */
-	movq	$(T_PF_USER),R_ERR(%rbx)
-					/* set error code - read user space */
-	movq	$RETURN_TO_USER, %r12
-	jmp	_take_trap		/* treat as a trap */
-END(syscall)
-
-#else /* USER32 */
 
 /* Entry point for 64-bit syscalls.
  * On entry we're still on the user stack, so better not use it. Instead we
@@ -1199,7 +835,6 @@ _syscall64_range:
 	jmp	_take_trap		/* treat as a trap */
 
 END(syscall64)
-#endif /* USER32 */
 
 	.data
 DATA(cpu_features)

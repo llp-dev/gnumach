@@ -40,14 +40,8 @@ typedef uint16_t	Elf64_Half;
 
 
 /* Architecture identification parameters for x86.  */
-#if defined(__x86_64__) && ! defined(USER32)
 #define MY_ELF_CLASS	ELFCLASS64
 #define MY_EI_DATA	ELFDATA2LSB
 #define MY_E_MACHINE	EM_X86_64
-#else
-#define MY_ELF_CLASS	ELFCLASS32
-#define MY_EI_DATA	ELFDATA2LSB
-#define MY_E_MACHINE	EM_386
-#endif
 
 #endif /* _MACH_I386_EXEC_ELF_H_ */

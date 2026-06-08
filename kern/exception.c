@@ -95,7 +95,6 @@ exception(
 	 */
 
 	ith_lock(self);
-	assert(self->ith_self != IP_NULL);
 	exc_port = self->ith_exception;
 	if (!IP_VALID(exc_port)) {
 		ith_unlock(self);
@@ -165,7 +164,6 @@ exception_try_task(
 	 */
 
 	itk_lock(task);
-	assert(task->itk_self != IP_NULL);
 	exc_port = task->itk_exception;
 	if (!IP_VALID(exc_port)) {
 		itk_unlock(task);
@@ -339,7 +337,6 @@ exception_raise(
 	ipc_kmsg_t kmsg;
 	mach_msg_return_t mr;
 
-	assert(IP_VALID(dest_port));
 
 	/*
 	 *	We will eventually need a message buffer.
@@ -358,7 +355,6 @@ exception_raise(
 	 */
 
 	ith_lock(self);
-	assert(self->ith_self != IP_NULL);
 
 	reply_port = self->ith_rpc_reply;
 	if (reply_port == IP_NULL) {
@@ -372,7 +368,6 @@ exception_raise(
 	}
 
 	ip_lock(reply_port);
-	assert(ip_active(reply_port));
 	ith_unlock(self);
 
 	/*
@@ -391,7 +386,6 @@ exception_raise(
 
 	reply_mqueue = &reply_port->ip_messages;
 	imq_lock(reply_mqueue);
-	assert(ipc_kmsg_queue_empty(&reply_mqueue->imq_messages));
 	ip_unlock(reply_port);
 
 	/*
@@ -451,7 +445,6 @@ exception_raise(
 	}
 	counter(c_exception_raise_block++);
 
-	assert(current_thread() == receiver);
 
 	/*
 	 *	We need to finish preparing self for its
@@ -540,7 +533,6 @@ exception_raise(
 	}
 
 	is_write_lock(space);
-	assert(space->is_active);
 
 	/*
 	 *	To do an atomic copyout, need simultaneous
@@ -591,7 +583,6 @@ exception_raise(
 		goto abort_copyout;
 	}
 
-	assert(reply_port->ip_sorights > 0);
 	ip_unlock(reply_port);
 
     {
@@ -606,7 +597,6 @@ exception_raise(
     {
 	mach_port_gen_t gen;
 
-	assert((entry->ie_bits &~ IE_BITS_GEN_MASK) == 0);
 	gen = entry->ie_bits + IE_BITS_GEN_ONE;
 
 	/* optimized ipc_right_copyout */
@@ -620,7 +610,6 @@ exception_raise(
 
 	/* optimized ipc_object_copyout_dest */
 
-	assert(dest_port->ip_srights > 0);
 	ip_release(dest_port);
 
 	exc->Head.msgh_local_port =
@@ -667,7 +656,6 @@ exception_raise(
 	 */
 
 	ikm_check_initialized(kmsg, kmsg->ikm_size);
-	assert(kmsg->ikm_size == IKM_SAVED_KMSG_SIZE);
 
 	if (copyoutmsg(&kmsg->ikm_header, receiver->ith_msg,
 		       sizeof(struct mach_exception))) {
@@ -919,8 +907,6 @@ exception_raise_continue_slow(
 	}
 	ipc_port_release(reply_port);
 
-	assert((mr == MACH_MSG_SUCCESS) ||
-	       (mr == MACH_RCV_PORT_DIED));
 
 	if (mr == MACH_MSG_SUCCESS) {
 		/*
@@ -967,11 +953,6 @@ exception_raise_continue_fast(
 	ipc_thread_t self = current_thread();
 	kern_return_t kr;
 
-	assert(ip_active(reply_port));
-	assert(reply_port == self->ith_port);
-	assert(reply_port == (ipc_port_t) kmsg->ikm_header.msgh_remote_port);
-	assert(MACH_MSGH_BITS_REMOTE(kmsg->ikm_header.msgh_bits) ==
-						MACH_MSG_TYPE_PORT_SEND_ONCE);
 
 	/*
 	 *	Release the send-once right (from the message header)

@@ -83,7 +83,6 @@ mach_port_names_helper(
 		boolean_t died;
 
 		port = (ipc_port_t) entry->ie_object;
-		assert(port != IP_NULL);
 
 		/*
 		 *	The timestamp serializes mach_port_names
@@ -159,7 +158,6 @@ mach_port_names(
 	ipc_entry_num_t bound;
 
 	/* safe simplifying assumption */
-	assert_static(sizeof(mach_port_name_t) == sizeof(mach_port_type_t));
 
 	if (space == IS_NULL)
 		return KERN_INVALID_TASK;
@@ -212,11 +210,9 @@ mach_port_names(
 
 		kr = vm_map_pageable(ipc_kernel_map, addr1, addr1 + size,
 				     VM_PROT_READ|VM_PROT_WRITE, TRUE, TRUE);
-		assert(kr == KERN_SUCCESS);
 
 		kr = vm_map_pageable(ipc_kernel_map, addr2, addr2 + size,
 				     VM_PROT_READ|VM_PROT_WRITE, TRUE, TRUE);
-		assert(kr == KERN_SUCCESS);
 	}
 	/* space is read-locked and active */
 
@@ -236,7 +232,6 @@ mach_port_names(
 					       names, types, &actual);
 		}
 	}
-	assert(actual < bound);
 	is_read_unlock(space);
 
 	if (actual == 0) {
@@ -260,20 +255,16 @@ mach_port_names(
 		kr = vm_map_pageable(ipc_kernel_map,
 				     addr1, addr1 + size_used,
 				     VM_PROT_NONE, TRUE, TRUE);
-		assert(kr == KERN_SUCCESS);
 
 		kr = vm_map_pageable(ipc_kernel_map,
 				     addr2, addr2 + size_used,
 				     VM_PROT_NONE, TRUE, TRUE);
-		assert(kr == KERN_SUCCESS);
 
 		kr = vm_map_copyin(ipc_kernel_map, addr1, size_used,
 				   TRUE, &memory1);
-		assert(kr == KERN_SUCCESS);
 
 		kr = vm_map_copyin(ipc_kernel_map, addr2, size_used,
 				   TRUE, &memory2);
-		assert(kr == KERN_SUCCESS);
 
 		if (size_used != size) {
 			kmem_free(ipc_kernel_map,
@@ -650,7 +641,6 @@ mach_port_get_refs(
 	if (type & MACH_PORT_TYPE(right))
 		switch (right) {
 		    case MACH_PORT_RIGHT_SEND_ONCE:
-			assert(urefs == 1);
 			/* fall-through */
 
 		    case MACH_PORT_RIGHT_PORT_SET:
@@ -660,7 +650,6 @@ mach_port_get_refs(
 
 		    case MACH_PORT_RIGHT_DEAD_NAME:
 		    case MACH_PORT_RIGHT_SEND:
-			assert(urefs > 0);
 			*urefsp = urefs;
 			break;
 
@@ -863,13 +852,10 @@ mach_port_gst_helper(
 	ipc_pset_t ip_pset;
 	mach_port_name_t name;
 
-	assert(port != IP_NULL);
 
 	ip_lock(port);
-	assert(ip_active(port));
 
 	name = port->ip_receiver_name;
-	assert(name != MACH_PORT_NULL);
 	ip_pset = port->ip_pset;
 
 	ip_unlock(port);
@@ -935,7 +921,6 @@ mach_port_get_set_status(
 
 		kr = vm_map_pageable(ipc_kernel_map, addr, addr + size,
 				     VM_PROT_READ|VM_PROT_WRITE, TRUE, TRUE);
-		assert(kr == KERN_SUCCESS);
 
 		kr = ipc_right_lookup_read(space, name, &entry);
 		if (kr != KERN_SUCCESS) {
@@ -951,7 +936,6 @@ mach_port_get_set_status(
 		}
 
 		pset = (ipc_pset_t) entry->ie_object;
-		assert(pset != IPS_NULL);
 		/* the port set must be active */
 
 		names = (mach_port_name_t *) addr;
@@ -1000,11 +984,9 @@ mach_port_get_set_status(
 		kr = vm_map_pageable(ipc_kernel_map,
 				     addr, addr + size_used,
 				     VM_PROT_NONE, TRUE, TRUE);
-		assert(kr == KERN_SUCCESS);
 
 		kr = vm_map_copyin(ipc_kernel_map, addr, size_used,
 				   TRUE, &memory);
-		assert(kr == KERN_SUCCESS);
 
 		if (size_used != size)
 			kmem_free(ipc_kernel_map,
@@ -1062,7 +1044,6 @@ mach_port_move_member(
 	}
 
 	port = (ipc_port_t) entry->ie_object;
-	assert(port != IP_NULL);
 
 	if (after == MACH_PORT_NULL)
 		nset = IPS_NULL;
@@ -1079,7 +1060,6 @@ mach_port_move_member(
 		}
 
 		nset = (ipc_pset_t) entry->ie_object;
-		assert(nset != IPS_NULL);
 	}
 
 	kr = ipc_pset_move(space, port, nset);
@@ -1320,7 +1300,6 @@ mach_port_get_receive_status(
 			statusp->mps_seqno = port->ip_seqno;
 			imq_unlock(&pset->ips_messages);
 			ips_unlock(pset);
-			assert(MACH_PORT_NAME_VALID(statusp->mps_pset));
 		}
 	} else {
 	    no_port_set:

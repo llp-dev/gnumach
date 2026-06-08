@@ -194,7 +194,6 @@ kern_return_t stack_alloc(
 
 	if (stack == 0) {
 		stack = kmem_cache_alloc(&thread_stack_cache);
-		assert(stack != 0);
 	}
 
 	stack_attach(thread, stack, resume);

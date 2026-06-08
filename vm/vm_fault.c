@@ -124,7 +124,6 @@ vm_fault_cleanup(
 	vm_object_t	object,
 	vm_page_t	top_page)
 {
-	assert(vm_object_lock_taken(object));
 
 	vm_object_paging_end(object);
 	vm_object_unlock(object);
@@ -402,7 +401,6 @@ vm_fault_return_t vm_fault_page(
 				if (next_object == VM_OBJECT_NULL) {
 					vm_page_t real_m;
 
-					assert(!must_be_resident);
 
 					/*
 					 * Absent page at bottom of shadow
@@ -430,7 +428,6 @@ vm_fault_return_t vm_fault_page(
 					}
 
 					VM_PAGE_FREE(m);
-					assert(real_m->busy);
 					vm_page_lock_queues();
 					vm_page_insert(real_m, object, offset);
 					vm_page_unlock_queues();
@@ -541,9 +538,7 @@ vm_fault_return_t vm_fault_page(
 				vm_page_unlock_queues();
 			}
 
-			assert(!m->busy);
 			m->busy = TRUE;
-			assert(!m->absent);
 			break;
 		}
 
@@ -681,7 +676,6 @@ vm_fault_return_t vm_fault_page(
 			first_m = m;
 		else
 		{
-			assert(m == VM_PAGE_NULL);
 		}
 
 		/*
@@ -693,7 +687,6 @@ vm_fault_return_t vm_fault_page(
 		offset += object->shadow_offset;
 		next_object = object->shadow;
 		if (next_object == VM_OBJECT_NULL) {
-			assert(!must_be_resident);
 
 			/*
 			 *	If there's no object left, fill the page
@@ -711,7 +704,6 @@ vm_fault_return_t vm_fault_page(
 			}
 
 			m = first_m;
-			assert(m->object == object);
 			first_m = VM_PAGE_NULL;
 
 			if (m->fictitious && !vm_page_convert(&m)) {
@@ -757,10 +749,6 @@ vm_fault_return_t vm_fault_page(
 	 *	objects.
 	 */
 
-	assert(m->busy && !m->absent);
-	assert((first_m == VM_PAGE_NULL) ||
-		(first_m->busy && !first_m->absent &&
-		 !first_m->active && !first_m->inactive));
 
 	/*
 	 *	If the page is being written, but isn't
@@ -778,7 +766,6 @@ vm_fault_return_t vm_fault_page(
 	    	if (fault_type & VM_PROT_WRITE) {
 			vm_page_t copy_m;
 
-			assert(!must_be_resident);
 
 			/*
 			 *	If we try to collapse first_object at this
@@ -845,7 +832,6 @@ vm_fault_return_t vm_fault_page(
 			vm_object_lock(object);
 			VM_PAGE_FREE(first_m);
 			first_m = VM_PAGE_NULL;
-			assert(copy_m->busy);
 			vm_page_lock_queues();
 			vm_page_insert(copy_m, object, offset);
 			vm_page_unlock_queues();
@@ -914,7 +900,6 @@ vm_fault_return_t vm_fault_page(
 		 *	to keep it from disappearing during the
 		 *	copy.
 		 */
-		assert(copy_object->ref_count > 0);
 		copy_object->ref_count++;
 
 		/*
@@ -931,7 +916,6 @@ vm_fault_return_t vm_fault_page(
 				PAGE_ASSERT_WAIT(copy_m, interruptible);
 				RELEASE_PAGE(m);
 				copy_object->ref_count--;
-				assert(copy_object->ref_count > 0);
 				vm_object_unlock(copy_object);
 				goto block_and_backoff;
 			}
@@ -944,7 +928,6 @@ vm_fault_return_t vm_fault_page(
 			if (copy_m == VM_PAGE_NULL) {
 				RELEASE_PAGE(m);
 				copy_object->ref_count--;
-				assert(copy_object->ref_count > 0);
 				vm_object_unlock(copy_object);
 				vm_fault_cleanup(object, first_m);
 				return(VM_FAULT_MEMORY_SHORTAGE);
@@ -1047,7 +1030,6 @@ vm_fault_return_t vm_fault_page(
 		 *	copy_object).
 		 */
 		copy_object->ref_count--;
-		assert(copy_object->ref_count > 0);
 		vm_object_unlock(copy_object);
 
 		break;
@@ -1224,7 +1206,6 @@ kern_return_t vm_fault(
 	 *	shadows (and copies), they will stay around as well.
 	 */
 
-	assert(object->ref_count > 0);
 	object->ref_count++;
 	vm_object_paging_begin(object);
 
@@ -1312,9 +1293,6 @@ kern_return_t vm_fault(
 
 	m = result_page;
 
-	assert((change_wiring && !wired) ?
-	       (top_page == VM_PAGE_NULL) :
-	       ((top_page == VM_PAGE_NULL) == (m->object == object)));
 
 	/*
 	 *	How to clean up the result of vm_fault_page.  This
@@ -1677,7 +1655,6 @@ MACRO_END
 	 */
 
 	vm_object_lock(object);
-	assert(object->ref_count > 0);
 	object->ref_count++;
 	object->paging_in_progress++;
 
@@ -1717,9 +1694,7 @@ MACRO_END
 	/*
 	 *	Mark page busy for other threads.
 	 */
-	assert(!m->busy);
 	m->busy = TRUE;
-	assert(!m->absent);
 
 	/*
 	 *	Give up if the page is being written and there's a copy object
@@ -1871,10 +1846,7 @@ kern_return_t	vm_fault_copy(
 
 			src_page = result_page;
 
-			assert((src_top_page == VM_PAGE_NULL) ==
-					(src_page->object == src_object));
 
-			assert ((prot & VM_PROT_READ) != VM_PROT_NONE);
 
 			vm_object_unlock(src_page->object);
 		}
@@ -1912,7 +1884,6 @@ kern_return_t	vm_fault_copy(
 							      src_top_page);
 				return(KERN_MEMORY_ERROR);
 		}
-		assert ((prot & VM_PROT_WRITE) != VM_PROT_NONE);
 
 		dst_page = result_page;
 

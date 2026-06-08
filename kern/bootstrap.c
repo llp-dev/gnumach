@@ -98,7 +98,6 @@ task_insert_send_right(
 			    port, MACH_MSG_TYPE_PORT_SEND);
 		if (kr == KERN_SUCCESS)
 			break;
-		assert(kr == KERN_NAME_EXISTS);
 	}
 
 	return name;
@@ -112,7 +111,6 @@ free_bootstrap_pages(phys_addr_t start, phys_addr_t end)
   while (start < end)
     {
       page = vm_page_lookup_pa(start);
-      assert(page != NULL);
       vm_page_manage(page);
       start += PAGE_SIZE;
     }
@@ -481,7 +479,6 @@ read_exec(void *handle, vm_offset_t file_ofs, vm_size_t file_size,
 	vm_map_t user_map = current_task()->map;
 	vm_offset_t start_page, end_page;
 	vm_prot_t mem_prot = sec_type & EXEC_SECTYPE_PROT_MASK;
-	int err;
 
 	if (mod->mod_start + file_ofs + file_size > mod->mod_end)
 	  return -1;
@@ -489,8 +486,6 @@ read_exec(void *handle, vm_offset_t file_ofs, vm_size_t file_size,
 	if (!(sec_type & EXEC_SECTYPE_ALLOC))
 		return 0;
 
-	assert(mem_size > 0);
-	assert(mem_size >= file_size);
 
 	start_page = trunc_page(mem_addr);
 	end_page = round_page(mem_addr + mem_size);
@@ -500,21 +495,17 @@ read_exec(void *handle, vm_offset_t file_ofs, vm_size_t file_size,
 		mem_addr, mem_addr+file_size, mem_addr+mem_size, mem_prot, start_page, end_page);
 #endif
 
-	err = vm_allocate(user_map, &start_page, end_page - start_page, FALSE);
-	assert(err == 0);
-	assert(start_page == trunc_page(mem_addr));
+	(void) vm_allocate(user_map, &start_page, end_page - start_page, FALSE);
 
 	if (file_size > 0)
 	{
-		err = copyout((char *)phystokv (mod->mod_start) + file_ofs,
+		(void) copyout((char *)phystokv (mod->mod_start) + file_ofs,
 			      (void *)mem_addr, file_size);
-		assert(err == 0);
 	}
 
 	if (mem_prot != VM_PROT_ALL)
 	{
-		err = vm_protect(user_map, start_page, end_page - start_page, FALSE, mem_prot);
-		assert(err == 0);
+		(void) vm_protect(user_map, start_page, end_page - start_page, FALSE, mem_prot);
 	}
 
 	return 0;
@@ -726,21 +717,17 @@ boot_script_exec_cmd (void *hook, task_t task, char *path, int argc,
 {
   struct multiboot_module *mod = hook;
 
-  int err;
-
   if (task != MACH_PORT_NULL)
     {
       thread_t thread;
       struct user_bootstrap_info info = { mod, argv, 0, };
       simple_lock_init (&info.lock);
 
-      err = thread_create ((task_t)task, &thread);
-      assert(err == 0);
+      (void) thread_create ((task_t)task, &thread);
       simple_lock (&info.lock);
       thread->saved.other = &info;
       thread_start (thread, user_bootstrap);
-      err = thread_resume (thread);
-      assert(err == 0);
+      (void) thread_resume (thread);
 
       /* We need to synchronize with the new thread and block this
 	 main thread until it has finished referring to our local state.  */
@@ -783,7 +770,6 @@ static void user_bootstrap(void)
   /* Tell the bootstrap thread running boot_script_exec_cmd
      that we are done looking at INFO.  */
   simple_lock (&info->lock);
-  assert (!info->done);
   info->done = 1;
   simple_unlock (&info->lock);
   thread_wakeup ((event_t) info);

@@ -91,7 +91,6 @@ extern struct ipc_space *ipc_space_reply;
 #define	ipc_space_reference_macro(is)					\
 MACRO_BEGIN								\
 	simple_lock(&(is)->is_ref_lock_data);				\
-	assert((is)->is_references > 0);				\
 	(is)->is_references++;						\
 	simple_unlock(&(is)->is_ref_lock_data);				\
 MACRO_END
@@ -101,7 +100,6 @@ MACRO_BEGIN								\
 	ipc_space_refs_t _refs;						\
 									\
 	simple_lock(&(is)->is_ref_lock_data);				\
-	assert((is)->is_references > 0);				\
 	_refs = --(is)->is_references;					\
 	simple_unlock(&(is)->is_ref_lock_data);				\
 									\
@@ -148,12 +146,10 @@ ipc_entry_lookup(
 {
 	ipc_entry_t entry;
 
-	assert(space->is_active);
 	entry = rdxtree_lookup(&space->is_map, (rdxtree_key_t) name);
 	if (entry != IE_NULL
 	    && IE_BITS_TYPE(entry->ie_bits) == MACH_PORT_TYPE_NONE)
 		entry = NULL;
-	assert((entry == IE_NULL) || IE_BITS_TYPE(entry->ie_bits));
 	return entry;
 }
 
@@ -194,7 +190,6 @@ ipc_entry_get(
 	mach_port_name_t new_name;
 	ipc_entry_t free_entry;
 
-	assert(space->is_active);
 
 	/* Get entry from the free list.  */
 	free_entry = space->is_free_list;
@@ -212,7 +207,6 @@ ipc_entry_get(
     {
 	mach_port_gen_t gen;
 
-	assert((free_entry->ie_bits &~ IE_BITS_GEN_MASK) == 0);
 	gen = free_entry->ie_bits + IE_BITS_GEN_ONE;
 	free_entry->ie_bits = gen;
 	free_entry->ie_request = 0;
@@ -226,8 +220,6 @@ ipc_entry_get(
 	 *	(See comment in ipc/ipc_table.h.)
 	 */
 
-	assert(MACH_PORT_NAME_VALID(new_name));
-	assert(free_entry->ie_object == IO_NULL);
 
 	space->is_size += 1;
 	*namep = new_name;
@@ -250,9 +242,6 @@ ipc_entry_dealloc(
 	mach_port_name_t	name,
 	ipc_entry_t	entry)
 {
-	assert(space->is_active);
-	assert(entry->ie_object == IO_NULL);
-	assert(entry->ie_request == 0);
 
 	if (space->is_free_list_size < IS_FREE_LIST_SIZE_LIMIT) {
 		space->is_free_list_size += 1;
@@ -271,7 +260,6 @@ ipc_entry_dealloc(
 /* Cast a pointer to a suitable key.  */
 #define KEY(X)								\
 	({								\
-		assert((((unsigned long) (X)) & 0x07) == 0);		\
 		((unsigned long long)					\
 		 (((unsigned long) (X) - VM_MIN_KERNEL_ADDRESS) >> 3));	\
 	})
@@ -283,8 +271,6 @@ ipc_reverse_insert(ipc_space_t space,
 		   ipc_object_t obj,
 		   ipc_entry_t entry)
 {
-	assert(space != IS_NULL);
-	assert(obj != IO_NULL);
 	return (kern_return_t) rdxtree_insert(&space->is_reverse_map,
 					      KEY(obj), entry);
 }
@@ -295,8 +281,6 @@ static inline ipc_entry_t
 ipc_reverse_remove(ipc_space_t space,
 		   ipc_object_t obj)
 {
-	assert(space != IS_NULL);
-	assert(obj != IO_NULL);
 	return rdxtree_remove(&space->is_reverse_map, KEY(obj));
 }
 
@@ -305,10 +289,7 @@ ipc_reverse_remove(ipc_space_t space,
 static inline void
 ipc_reverse_remove_all(ipc_space_t space)
 {
-	assert(space != IS_NULL);
 	rdxtree_remove_all(&space->is_reverse_map);
-	assert(space->is_reverse_map.height == 0);
-	assert(space->is_reverse_map.root == NULL);
 }
 
 /* Return ENTRY related to OBJ, or NULL if no such entry is found in
@@ -318,8 +299,6 @@ static inline ipc_entry_t
 ipc_reverse_lookup(ipc_space_t space,
 		   ipc_object_t obj)
 {
-	assert(space != IS_NULL);
-	assert(obj != IO_NULL);
 	return rdxtree_lookup(&space->is_reverse_map, KEY(obj));
 }
 

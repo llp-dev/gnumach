@@ -350,10 +350,7 @@ void vm_object_init(void)
 static void vm_object_cache_add(
 	vm_object_t	object)
 {
-	assert(vm_object_lock_taken(object));
-	assert(vm_object_cache_locked());
 
-	assert(!object->cached);
 	queue_enter(&vm_object_cached_list, object, vm_object_t, cached_list);
 	object->cached = TRUE;
 }
@@ -361,10 +358,7 @@ static void vm_object_cache_add(
 static void vm_object_cache_remove(
 	vm_object_t	object)
 {
-	assert(vm_object_lock_taken(object));
-	assert(vm_object_cache_locked());
 
-	assert(object->cached);
 	queue_remove(&vm_object_cached_list, object, vm_object_t, cached_list);
 	object->cached = FALSE;
 }
@@ -408,7 +402,6 @@ void vm_object_reference(
 		return;
 
 	vm_object_lock(object);
-	assert(object->ref_count > 0);
 	object->ref_count++;
 	vm_object_unlock(object);
 }
@@ -526,14 +519,11 @@ void vm_object_terminate(
 	vm_page_t	p;
 	vm_object_t	shadow_object;
 
-	assert(vm_object_lock_taken(object));
-	assert(vm_object_cache_locked());
 
 	/*
 	 *	Make sure the object isn't already being terminated
 	 */
 
-	assert(object->alive);
 	object->alive = FALSE;
 
 	/*
@@ -549,8 +539,6 @@ void vm_object_terminate(
 	 */
 	if ((shadow_object = object->shadow) != VM_OBJECT_NULL) {
 		vm_object_lock(shadow_object);
-		assert((shadow_object->copy == object) ||
-		       (shadow_object->copy == VM_OBJECT_NULL));
 		shadow_object->copy = VM_OBJECT_NULL;
 		vm_object_unlock(shadow_object);
 	}
@@ -612,12 +600,8 @@ void vm_object_terminate(
 		}
 	}
 
-	assert(object->ref_count == 0);
-	assert(object->paging_in_progress == 0);
-	assert(!object->cached);
 
 	if (!object->internal) {
-		assert(object->resident_page_count == 0);
 
 		vm_page_lock_queues();
 		vm_object_external_count--;
@@ -673,7 +657,6 @@ vm_object_pager_wakeup(
 	 *	to be queued, wake them up now.
 	 */
 	vm_object_cache_lock();
-	assert(ip_kotype(pager) == IKOT_PAGER_TERMINATING);
 	someone_waiting = (pager->ip_kobject != IKO_NULL);
 	if (ip_active(pager))
 		ipc_kobject_set(pager, IKO_NULL, IKOT_NONE);
@@ -732,7 +715,6 @@ static void vm_object_abort_activity(
 	vm_page_t	p;
 	vm_page_t	next;
 
-	assert(vm_object_lock_taken(object));
 
 	/*
 	 *	Abort all activity that would be waiting
@@ -894,7 +876,6 @@ void vm_object_pmap_protect(
 
 	vm_object_lock(object);
 
-	assert(object->temporary && object->internal);
 
 	while (TRUE) {
 	    if (object->resident_page_count > atop(size) / 2 &&
@@ -1049,7 +1030,6 @@ kern_return_t vm_object_copy_slowly(
 	vm_object_t	new_object;
 	vm_offset_t	new_offset;
 
-	assert(vm_object_lock_taken(src_object));
 
 	if (size == 0) {
 		vm_object_unlock(src_object);
@@ -1061,7 +1041,6 @@ kern_return_t vm_object_copy_slowly(
 	 *	Prevent destruction of the source object while we copy.
 	 */
 
-	assert(src_object->ref_count > 0);
 	src_object->ref_count++;
 	vm_object_unlock(src_object);
 
@@ -1077,7 +1056,6 @@ kern_return_t vm_object_copy_slowly(
 	new_object = vm_object_allocate(size);
 	new_offset = 0;
 
-	assert(size == trunc_page(size));	/* Will the loop terminate? */
 
 	for ( ;
 	    size != 0 ;
@@ -1264,7 +1242,6 @@ boolean_t vm_object_copy_temporary(
 		 *	Leave object/offset unchanged.
 		 */
 
-		assert(object->ref_count > 0);
 		object->ref_count++;
 		object->shadowed = TRUE;
 		vm_object_unlock(object);
@@ -1324,7 +1301,6 @@ static kern_return_t vm_object_copy_call(
 	vm_object_t	new_object;
 	vm_page_t	p;
 
-	assert(vm_object_lock_taken(src_object));
 
 	/*
 	 *	Create a memory object port to be associated
@@ -1347,7 +1323,6 @@ static kern_return_t vm_object_copy_call(
 	 *	temporary object.
 	 */
 
-	assert(src_object->ref_count > 0);
 	src_object->ref_count++;
 	vm_object_paging_begin(src_object);
 	vm_object_unlock(src_object);
@@ -1395,7 +1370,6 @@ static kern_return_t vm_object_copy_call(
 	 */
 
 	new_object = vm_object_enter(new_memory_object, size, FALSE);
-	assert(new_object);
 	new_object->shadow = src_object;
 	new_object->shadow_offset = src_offset;
 
@@ -1517,7 +1491,6 @@ vm_object_t vm_object_copy_delayed(
 			 *	Return another reference to
 			 *	the existing copy-object.
 			 */
-			assert(old_copy->ref_count > 0);
 			old_copy->ref_count++;
 			vm_object_unlock(old_copy);
 			vm_object_unlock(src_object);
@@ -1534,8 +1507,6 @@ vm_object_t vm_object_copy_delayed(
 		 *	the original object at different points.
 		 */
 
-		assert((old_copy->shadow == src_object) &&
-		    (old_copy->shadow_offset == (vm_offset_t) 0));
 
 		/*
 		 *	Make the old copy-object shadow the new one.
@@ -1544,9 +1515,7 @@ vm_object_t vm_object_copy_delayed(
 		 */
 
 		src_object->ref_count--;	/* remove ref. from old_copy */
-		assert(src_object->ref_count > 0);
 		old_copy->shadow = new_copy;
-		assert(new_copy->ref_count > 0);
 		new_copy->ref_count++;
 		vm_object_unlock(old_copy);	/* done with old_copy */
 	}
@@ -1558,7 +1527,6 @@ vm_object_t vm_object_copy_delayed(
 	new_copy->shadow = src_object;
 	new_copy->shadow_offset = 0;
 	new_copy->shadowed = TRUE;	/* caller must set needs_copy */
-	assert(src_object->ref_count > 0);
 	src_object->ref_count++;
 	src_object->copy = new_copy;
 
@@ -1599,7 +1567,6 @@ kern_return_t	vm_object_copy_strategically(
 	kern_return_t	result = KERN_SUCCESS;	/* to quiet gcc warnings */
 	boolean_t	interruptible = TRUE; /* XXX */
 
-	assert(src_object != VM_OBJECT_NULL);
 
 	vm_object_lock(src_object);
 
@@ -1833,7 +1800,6 @@ vm_object_t vm_object_lookup(
 			object = (vm_object_t) port->ip_kobject;
 			vm_object_lock(object);
 
-			assert(object->alive);
 
 			if (object->ref_count == 0)
 				vm_object_cache_remove(object);
@@ -1861,7 +1827,6 @@ vm_object_t vm_object_lookup_name(
 			object = (vm_object_t) port->ip_kobject;
 			vm_object_lock(object);
 
-			assert(object->alive);
 
 			if (object->ref_count == 0)
 				vm_object_cache_remove(object);
@@ -1902,7 +1867,6 @@ void vm_object_destroy(
 
 	object->can_persist = FALSE;
 
-	assert(object->pager == pager);
 
 	/*
 	 *	Remove the port associations.
@@ -2052,8 +2016,6 @@ restart:
 
 		vm_stat.hits++;
 	}
-	assert((object == VM_OBJECT_NULL) || (object->ref_count > 0) ||
-		((object->paging_in_progress != 0) && internal));
 
 	vm_stat.lookups++;
 
@@ -2104,7 +2066,6 @@ restart:
 
 			/* mark the object internal */
 			object->internal = TRUE;
-			assert(object->temporary);
 
 			/* default-pager objects are ready immediately */
 			object->pager_ready = TRUE;
@@ -2121,7 +2082,6 @@ restart:
 			object->internal = FALSE;
 			object->temporary = FALSE;
 
-			assert(object->resident_page_count == 0);
 			vm_object_external_count++;
 
 			/* user pager objects are not ready until marked so */
@@ -2179,7 +2139,6 @@ void vm_object_pager_create(
 {
 	ipc_port_t	pager;
 
-	assert(vm_object_lock_taken(object));
 
 	if (object->pager_created) {
 		/*
@@ -2215,8 +2174,6 @@ void vm_object_pager_create(
 	object->existence_info = vm_external_create(
 					object->size +
 					object->paging_offset);
-	assert((object->size + object->paging_offset) >=
-		object->size);
 #endif	/* MACH_PAGEMAP */
 
 	/*
@@ -2275,7 +2232,6 @@ void vm_object_remove(
 {
 	ipc_port_t port;
 
-	assert(vm_object_cache_locked());
 
 	if ((port = object->pager) != IP_NULL) {
 		if (ip_kotype(port) == IKOT_PAGER)
@@ -2332,7 +2288,6 @@ void vm_object_collapse(
 	vm_page_t	p, pp;
 	ipc_port_t 	old_name_port;
 
-	assert(vm_object_lock_taken(object));
 
 	if (!vm_object_collapse_allowed)
 		return;
@@ -2433,7 +2388,6 @@ void vm_object_collapse(
 
 				new_offset = (p->offset - backing_offset);
 
-				assert(!p->busy || p->absent);
 
 				/*
 				 *	If the parent has a page here, or if
@@ -2457,8 +2411,6 @@ void vm_object_collapse(
 					VM_PAGE_FREE(p);
 				    }
 				    else {
-					assert(pp == VM_PAGE_NULL || !
-					       "vm_object_collapse: bad case");
 
 					/*
 					 *	Parent now has no page.
@@ -2530,7 +2482,6 @@ void vm_object_collapse(
 						backing_offset;
 
 #if	MACH_PAGEMAP
-			assert(object->existence_info == VM_EXTERNAL_NULL);
 			object->existence_info = backing_object->existence_info;
 #endif	/* MACH_PAGEMAP */
 
@@ -2554,14 +2505,7 @@ void vm_object_collapse(
 			 *	all that is necessary is to dispose of it.
 			 */
 
-			assert(
-				(backing_object->ref_count == 1) &&
-				(backing_object->resident_page_count == 0) &&
-				(backing_object->paging_in_progress == 0)
-			);
 
-			assert(backing_object->alive);
-			assert(!backing_object->cached);
 			backing_object->alive = FALSE;
 			vm_object_unlock(backing_object);
 
@@ -2652,7 +2596,6 @@ void vm_object_collapse(
 			 *	vm_object_deallocate.
 			 */
 			backing_object->ref_count--;
-			assert(backing_object->ref_count > 0);
 			vm_object_unlock(backing_object);
 
 			object_bypasses ++;
@@ -2684,7 +2627,6 @@ void vm_object_page_remove(
 {
 	vm_page_t	p, next;
 
-	assert(vm_object_lock_taken(object));
 
 	/*
 	 *	One and two page removals are most popular.

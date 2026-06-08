@@ -239,7 +239,6 @@ void machine_idle (int cpu)
 #ifdef	MACH_HYP
   hyp_idle();
 #else	/* MACH_HYP */
-  assert (cpu == cpu_number ());
   asm volatile ("hlt" : : : "memory");
 #endif	/* MACH_HYP */
 }

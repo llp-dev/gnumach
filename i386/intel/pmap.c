@@ -1047,13 +1047,11 @@ pmap_mapwindow_t *pmap_get_mapwindow(pt_entry_t entry)
 	pmap_mapwindow_t *map;
 	int cpu = cpu_number();
 
-	assert(entry != 0);
 
 	/* Find an empty one.  */
 	for (map = &mapwindows[cpu * PMAP_NMAPWINDOWS]; map < &mapwindows[(cpu+1) * PMAP_NMAPWINDOWS]; map++)
 		if (!(*map->entry))
 			break;
-	assert(map < &mapwindows[(cpu+1) * PMAP_NMAPWINDOWS]);
 
 #ifdef MACH_PV_PAGETABLES
 	if (!hyp_mmu_update_pte(kv_to_ma(map->entry), pa_to_ma(entry)))
@@ -1218,7 +1216,6 @@ pmap_page_table_page_alloc(void)
 	 *	can be found later.
 	 */
 	pa = m->phys_addr;
-	assert(pa == (vm_offset_t) pa);
 	vm_object_lock(pmap_object);
 	vm_page_insert(m, pmap_object, pa);
 	vm_page_lock_queues();
@@ -1609,7 +1606,6 @@ void pmap_remove_range(
 	    if (*cpte == 0)
 		continue;
 
-	    assert(*cpte & INTEL_PTE_VALID);
 
 	    pa = pte_to_pa(*cpte);
 
@@ -1793,7 +1789,6 @@ void pmap_page_protect(
 	int			spl;
 	boolean_t		remove;
 
-	assert(phys != vm_page_fictitious_addr);
 	if (!valid_page(phys)) {
 	    /*
 	     *	Not a managed page.
@@ -1849,8 +1844,6 @@ void pmap_page_protect(
 		/*
 		 * Consistency checks.
 		 */
-		assert(*pte & INTEL_PTE_VALID);
-		assert(pte_to_pa(*pte) == phys);
 
 		/*
 		 * Remove the mapping if new protection is NONE
@@ -2183,7 +2176,6 @@ void pmap_enter(
 	int			spl;
 	phys_addr_t		old_pa;
 
-	assert(pa != vm_page_fictitious_addr);
 	if (pmap_debug) printf("pmap(%zx, %llx)\n", v, (unsigned long long) pa);
 	if (pmap == PMAP_NULL)
 		return;
@@ -2672,7 +2664,6 @@ pmap_zero_page(vm_offset_t phys)
 {
 	int	i;
 
-	assert(phys != vm_page_fictitious_addr);
 	i = PAGE_SIZE / INTEL_PGBYTES;
 	phys = intel_pfn(phys);
 
@@ -2690,8 +2681,6 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
 {
 	int	i;
 
-	assert(src != vm_page_fictitious_addr);
-	assert(dst != vm_page_fictitious_addr);
 	i = PAGE_SIZE / INTEL_PGBYTES;
 
 	while (i--) {
@@ -2740,7 +2729,6 @@ phys_attribute_clear(
 	pmap_t			pmap;
 	int			spl;
 
-	assert(phys != vm_page_fictitious_addr);
 	if (!valid_page(phys)) {
 	    /*
 	     *	Not a managed page.
@@ -2782,8 +2770,6 @@ phys_attribute_clear(
 		/*
 		 * Consistency checks.
 		 */
-		assert(*pte & INTEL_PTE_VALID);
-		assert(pte_to_pa(*pte) == phys);
 
 		/*
 		 * Clear modify or reference bits.
@@ -2824,7 +2810,6 @@ phys_attribute_test(
 	pmap_t			pmap;
 	int			spl;
 
-	assert(phys != vm_page_fictitious_addr);
 	if (!valid_page(phys)) {
 	    /*
 	     *	Not a managed page.
@@ -2873,8 +2858,6 @@ phys_attribute_test(
 		    /*
 		     * Consistency checks.
 		     */
-		    assert(*pte & INTEL_PTE_VALID);
-		    assert(pte_to_pa(*pte) == phys);
 		}
 
 		/*
@@ -3156,7 +3139,6 @@ pmap_unmap_page_zero (void)
   pte = (int *) pmap_pte (kernel_pmap, 0);
   if (!pte)
     return;
-  assert (pte);
 #ifdef	MACH_PV_PAGETABLES
   if (!hyp_mmu_update_pte(kv_to_ma(pte), 0))
     printf("couldn't unmap page 0\n");

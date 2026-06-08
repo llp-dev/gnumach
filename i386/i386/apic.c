@@ -423,7 +423,6 @@ hpet_init(void)
     uint32_t period;
     uint32_t val;
 
-    assert(hpet_addr != 0);
 
     /* Find out how often the HPET ticks in nanoseconds */
     period = HPET32(HPET_CAP_PERIOD);

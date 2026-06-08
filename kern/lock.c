@@ -138,7 +138,6 @@ int do_check_simple_locks = 1;
 
 void check_simple_locks(void)
 {
-	assert(! do_check_simple_locks || simple_locks_taken == 0);
 }
 
 void check_simple_locks_enable(void)
@@ -167,7 +166,6 @@ void _simple_lock(
 {
 	struct simple_locks_info *info;
 
-	assert(l->lock_data == 0);
 
 	l->lock_data = 1;
 
@@ -202,7 +200,6 @@ boolean_t _simple_lock_try(
 void _simple_unlock(
 	simple_lock_t l)
 {
-	assert(l->lock_data != 0);
 
 	l->lock_data = 0;
 

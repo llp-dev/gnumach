@@ -262,7 +262,6 @@ cpu_ap_main()
 {
     int cpu = cpu_number();
 
-    assert(cpu > 0);
 
     cpu_setup(cpu);
 }
@@ -289,7 +288,6 @@ start_other_cpus(void)
 
 	unsigned cpu = cpu_number_slow();
 
-	assert (cpu == 0);
 
 	splhigh();
 

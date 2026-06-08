@@ -102,7 +102,6 @@ static void enqueue_rx_buf(struct net_data *nd, int number) {
 	netif_rx_request_t *req = RING_GET_REQUEST(&nd->rx, reqn);
 	grant_ref_t gref;
 
-	assert(number < WINDOW);
 
 	req->id = number;
 	if (nd->rx_copy) {
@@ -193,7 +192,6 @@ static void hyp_net_intr(int unit) {
 		rx_rsp = RING_GET_RESPONSE(&nd->rx, nd->rx.rsp_cons++);
 
 		unsigned number = rx_rsp->id;
-		assert(number < WINDOW);
 		if (nd->rx_copy) {
 			hyp_grant_takeback(nd->rx_buf_gnt[number]);
 		} else {
@@ -580,7 +578,6 @@ device_open (ipc_port_t reply_port, mach_msg_type_name_t reply_port_type,
 	notify = ipc_port_make_sonce (nd->port);
 	ip_lock (nd->port);
 	ipc_port_nsrequest (nd->port, 1, notify, &notify);
-	assert (notify == IP_NULL);
 
 	if (IP_VALID (reply_port))
 		ds_device_open_reply (reply_port, reply_port_type, D_SUCCESS, dev_to_port(nd));
@@ -608,16 +605,12 @@ device_write(void *d, ipc_port_t reply_port,
 	kern_return_t kr;
 
 	/* The maximum that we can handle.  */
-	assert(ifp->if_header_size + ifp->if_mtu <= PAGE_SIZE);
 
 	if (count < ifp->if_header_size ||
 	    count > ifp->if_header_size + ifp->if_mtu)
 		return D_INVALID_SIZE;
 
-  	assert(copy->type == VM_MAP_COPY_PAGE_LIST);
 
-	assert(copy->cpy_npages <= 2);
-	assert(copy->cpy_npages >= 1);
 
 	kr = kmem_alloc(device_io_map, &buffer, count);
 

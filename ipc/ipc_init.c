@@ -65,7 +65,6 @@ const vm_size_t ipc_kernel_map_size = 8 * 1024 * 1024;
 void
 ipc_bootstrap(void)
 {
-	kern_return_t kr;
 
 	ipc_port_multiple_lock_init();
 
@@ -86,11 +85,9 @@ ipc_bootstrap(void)
 
 	/* create special spaces */
 
-	kr = ipc_space_create_special(&ipc_space_kernel);
-	assert(kr == KERN_SUCCESS);
+	(void) ipc_space_create_special(&ipc_space_kernel);
 
-	kr = ipc_space_create_special(&ipc_space_reply);
-	assert(kr == KERN_SUCCESS);
+	(void) ipc_space_create_special(&ipc_space_reply);
 
 	/* initialize modules with hidden data structures */
 

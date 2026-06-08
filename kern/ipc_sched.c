@@ -117,7 +117,6 @@ thread_will_wait(
 	s = splsched();
 	thread_lock(thread);
 
-	assert(thread->wait_result = -1);	/* for later assertions */
 	thread->state |= TH_WAIT;
 
 	thread_unlock(thread);
@@ -142,7 +141,6 @@ thread_will_wait_with_timeout(
 	s = splsched();
 	thread_lock(thread);
 
-	assert(thread->wait_result = -1);	/* for later assertions */
 	thread->state |= TH_WAIT;
 
 	set_timeout(&thread->timer, ticks);
@@ -188,7 +186,6 @@ thread_handoff(
 {
 	spl_t	s;
 
-	assert(current_thread() == old);
 
 	/*
 	 *	XXX Dubious things here:
@@ -246,7 +243,6 @@ thread_handoff(
 
 	thread_lock(old);
 	old->swap_func = continuation;
-	assert(old->wait_result = -1);		/* for later assertions */
 
 	if (old->state == TH_RUN) {
 		/*

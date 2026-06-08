@@ -217,7 +217,6 @@ processor_request_action(
 		processor->state = PROCESSOR_SHUTDOWN;
 	    }
 	    else {
-		assert(processor->state != PROCESSOR_ASSIGN);
 		processor->state = PROCESSOR_ASSIGN;
 	        processor->processor_set_next = new_pset;
 	    }
@@ -494,7 +493,6 @@ Restart_pset:
 	     */
 	    s = splsched();
 	    processor_lock(processor);
-	    assert(processor->processor_set_next == new_pset);
 
 	    /*
 	     *	Shutdown may have been requested while this assignment

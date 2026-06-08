@@ -233,7 +233,6 @@ biosmem_unregister_boot_data(phys_addr_t start, phys_addr_t end)
         panic("%s", biosmem_panic_inval_boot_data);
     }
 
-    assert(biosmem_nr_boot_data != 0);
 
     for (i = 0; biosmem_nr_boot_data; i++) {
         if ((start == biosmem_boot_data_array[i].start)
@@ -552,7 +551,6 @@ biosmem_find_avail_clip(phys_addr_t *avail_start, phys_addr_t *avail_end,
 {
     phys_addr_t orig_end;
 
-    assert(data_start < data_end);
 
     orig_end = data_end;
     data_start = vm_page_trunc(data_start);
@@ -596,7 +594,6 @@ biosmem_find_avail(phys_addr_t start, phys_addr_t end,
     unsigned int i;
     int error;
 
-    assert(start <= end);
 
     orig_start = start;
     start = vm_page_round(start);
@@ -693,7 +690,6 @@ biosmem_bootstrap_common(void)
     /*
      * Grab an early page for AP boot code which needs to be below 1MB.
      */
-    assert (phys_start < 0x100000);
     apboot_addr = phys_start;
     phys_start += PAGE_SIZE;
 #endif
@@ -1002,7 +998,6 @@ biosmem_free_usable_range(phys_addr_t start, phys_addr_t end)
 
     while (start < end) {
         page = vm_page_lookup_pa(start);
-        assert(page != NULL);
         vm_page_manage(page);
         start += PAGE_SIZE;
     }

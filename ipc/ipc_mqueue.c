@@ -107,7 +107,6 @@ ipc_mqueue_move(
 		/* before adding kmsg to newq, check for a blocked receiver */
 
 		while ((th = ipc_thread_dequeue(blockedq)) != ITH_NULL) {
-			assert(ipc_kmsg_queue_empty(newq));
 
 			thread_go(th);
 
@@ -180,7 +179,6 @@ ipc_mqueue_send(
 	ipc_port_t port;
 
 	port = (ipc_port_t) kmsg->ikm_header.msgh_remote_port;
-	assert(IP_VALID(port));
 
 	ip_lock(port);
 
@@ -194,7 +192,6 @@ ipc_mqueue_send(
 		 *	before destroying a kernel port.
 		 */
 
-		assert(ip_active(port));
 		ip_unlock(port);
 
 		reply = ipc_kobject_server(kmsg);
@@ -267,7 +264,6 @@ ipc_mqueue_send(
 
 		if (self->ith_state == MACH_MSG_SUCCESS)
 			continue;
-		assert(self->ith_state == MACH_SEND_IN_PROGRESS);
 
 		/* take ourselves off blocked queue */
 
@@ -288,7 +284,6 @@ ipc_mqueue_send(
 		    case THREAD_TIMED_OUT:
 			/* timeout expired */
 
-			assert(option & MACH_SEND_TIMEOUT);
 			time_out = 0;
 			break;
 
@@ -314,7 +309,6 @@ ipc_mqueue_send(
 	ipc_thread_queue_t receivers;
 
 	port->ip_msgcount++;
-	assert(port->ip_msgcount > 0);
 
 	pset = port->ip_pset;
 	if (pset == IPS_NULL)
@@ -351,7 +345,6 @@ ipc_mqueue_send(
 		}
 
 		ipc_thread_rmqueue_first_macro(receivers, receiver);
-		assert(ipc_kmsg_queue_empty(&mqueue->imq_messages));
 
 		if (kmsg->ikm_header.msgh_size <= receiver->ith_msize) {
 			/* got a successful receiver */
@@ -425,12 +418,8 @@ ipc_mqueue_copyin(
 		ipc_pset_t pset;
 
 		port = (ipc_port_t) object;
-		assert(port != IP_NULL);
 
 		ip_lock(port);
-		assert(ip_active(port));
-		assert(port->ip_receiver_name == name);
-		assert(port->ip_receiver == space);
 		is_read_unlock(space);
 
 		pset = port->ip_pset;
@@ -444,7 +433,6 @@ ipc_mqueue_copyin(
 
 			ipc_pset_remove(pset, port);
 			ips_check_unlock(pset);
-			assert(port->ip_pset == IPS_NULL);
 		}
 
 		mqueue = &port->ip_messages;
@@ -452,11 +440,8 @@ ipc_mqueue_copyin(
 		ipc_pset_t pset;
 
 		pset = (ipc_pset_t) object;
-		assert(pset != IPS_NULL);
 
 		ips_lock(pset);
-		assert(ips_active(pset));
-		assert(pset->ips_local_name == name);
 		is_read_unlock(space);
 
 		mqueue = &pset->ips_messages;
@@ -621,7 +606,6 @@ ipc_mqueue_receive(
 			    case THREAD_TIMED_OUT:
 				/* timeout expired */
 
-				assert(option & MACH_RCV_TIMEOUT);
 				time_out = 0;
 				break;
 
@@ -639,7 +623,6 @@ ipc_mqueue_receive(
 	/* we have a kmsg; unlock the msg queue */
 
 	imq_unlock(mqueue);
-	assert(msg_usize(&kmsg->ikm_header) <= max_size);
     }
 
     {
@@ -650,16 +633,13 @@ ipc_mqueue_receive(
 		ipc_marequest_destroy(marequest);
 		kmsg->ikm_marequest = IMAR_NULL;
 	}
-	assert((kmsg->ikm_header.msgh_bits & MACH_MSGH_BITS_CIRCULAR) == 0);
 
-	assert(port == (ipc_port_t) kmsg->ikm_header.msgh_remote_port);
 	ip_lock(port);
 
 	if (ip_active(port)) {
 		ipc_thread_queue_t senders;
 		ipc_thread_t sender;
 
-		assert(port->ip_msgcount > 0);
 		port->ip_msgcount--;
 
 		senders = &port->ip_blocked;

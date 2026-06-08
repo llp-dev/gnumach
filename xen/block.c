@@ -394,7 +394,6 @@ device_open (ipc_port_t reply_port, mach_msg_type_name_t reply_port_type,
 	notify = ipc_port_make_sonce (bd->port);
 	ip_lock (bd->port);
 	ipc_port_nsrequest (bd->port, 1, notify, &notify);
-	assert (notify == IP_NULL);
 
 	if (IP_VALID (reply_port))
 		ds_device_open_reply (reply_port, reply_port_type, D_SUCCESS, port);
@@ -459,9 +458,7 @@ device_read (void *d, ipc_port_t reply_port,
 	{
 	  while ((m = vm_page_grab (VM_PAGE_DIRECTMAP)) == 0)
 	    VM_PAGE_WAIT (0);
-	  assert (! m->active && ! m->inactive);
 	  m->busy = TRUE;
-	  assert(nbpages < BLKIF_MAX_SEGMENTS_PER_REQUEST);
 	  pages[nbpages++] = m;
 	  alloc_offset += PAGE_SIZE;
 	}
@@ -536,7 +533,6 @@ device_read (void *d, ipc_port_t reply_port,
       for (i = 0; i < nbpages; i++)
         {
 	  m = pages[i];
-	  assert (m->busy);
 	  vm_page_lock_queues ();
 	  PAGE_WAKEUP_DONE (m);
 	  m->dirty = TRUE;

@@ -40,9 +40,6 @@
 #include <i386/ipl.h>
 #endif
 
-#ifdef LINUX_DEV
-#include <linux/dev/glue/glue.h>
-#endif
 
 extern char	return_to_iret[];
 
@@ -60,11 +57,7 @@ hardclock(int iunit, /* 'unit' number */
 	    clock_interrupt(tick,			/* usec per tick */
 			    (regs->efl & EFL_VM) ||	/* user mode */
 			    ((regs->cs & 0x03) != 0),	/* user mode */
-#if defined(LINUX_DEV)
-			    FALSE,			/* ignore SPL0 */
-#else	/* LINUX_DEV */
 			    old_ipl == SPL0,		/* base priority */
-#endif	/* LINUX_DEV */
 			    regs->eip);			/* interrupted eip */
 	else
 	    /*
@@ -75,7 +68,4 @@ hardclock(int iunit, /* 'unit' number */
 			    FALSE,			/* not SPL0 */
 			    0);				/* interrupted eip */
 
-#ifdef LINUX_DEV
-	linux_timer_intr();
-#endif /* LINUX_DEV */
 }

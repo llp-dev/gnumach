@@ -1367,19 +1367,6 @@ pmap_t pmap_create(vm_size_t size)
 		       INTEL_PGBYTES);
 	}
 
-#ifdef LINUX_DEV
-#if VM_MIN_KERNEL_ADDRESS != 0
-	/* Do not map BIOS in user tasks */
-	page_dir
-#if PAE
-		[lin2pdpnum(LINEAR_MIN_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS)]
-#else
-		[0]
-#endif
-		[lin2pdenum(LINEAR_MIN_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS)]
-		= 0;
-#endif
-#endif /* LINUX_DEV */
 
 #ifdef	MACH_PV_PAGETABLES
 	{
@@ -3168,13 +3155,6 @@ pmap_make_temporary_mapping(void)
 			kernel_page_dir[lin2pdenum_cont(LINEAR_MIN_KERNEL_ADDRESS) + i];
 #endif
 
-#ifdef LINUX_DEV
-	/* We need BIOS memory mapped at 0xc0000 & co for BIOS accesses */
-#if VM_MIN_KERNEL_ADDRESS != 0
-	kernel_page_dir[lin2pdenum_cont(LINEAR_MIN_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS)] =
-		kernel_page_dir[lin2pdenum_cont(LINEAR_MIN_KERNEL_ADDRESS)];
-#endif
-#endif /* LINUX_DEV */
 
 #ifdef	MACH_PV_PAGETABLES
 #ifndef __x86_64__
@@ -3233,13 +3213,6 @@ pmap_remove_temporary_mapping(void)
 	}
 #endif
 
-#ifdef LINUX_DEV
-	/* Keep BIOS memory mapped */
-#if VM_MIN_KERNEL_ADDRESS != 0
-	kernel_page_dir[lin2pdenum_cont(LINEAR_MIN_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS)] =
-		kernel_page_dir[lin2pdenum_cont(LINEAR_MIN_KERNEL_ADDRESS)];
-#endif
-#endif /* LINUX_DEV */
 
 	/* Not used after boot, better give it back.  */
 #ifdef	MACH_XEN

@@ -31,7 +31,6 @@ jobs:
           mkdir build32
           cd build32
           ../configure --prefix= --host=i686-gnu LD=i686-linux-gnu-ld CC=i686-linux-gnu-gcc \
-                  --disable-linux-groups \
                   ${{ matrix.platform }} \
                   ${{ matrix.kdb }}
           make DESTDIR=../gnu32 install-data
@@ -49,7 +48,6 @@ jobs:
           CCASFLAGS="-fdebug-prefix-map=$PWD=." CFLAGS="-ffile-prefix-map=$PWD=." \
           ../configure --prefix= --host=i686-gnu \
                   MIG=i686-gnu-mig LD=i686-linux-gnu-ld CC=i686-linux-gnu-gcc \
-                  --disable-linux-groups \
                   ${{ matrix.platform }} \
                   ${{ matrix.kdb }}
           make gnumach.gz
@@ -83,7 +81,6 @@ jobs:
           mkdir build64
           cd build64
           ../configure --prefix= --host=x86_64-gnu LD=x86_64-linux-gnu-ld CC=x86_64-linux-gnu-gcc \
-                  --disable-linux-groups \
                   ${{ matrix.platform }} \
                   ${{ matrix.user32 }} \
                   ${{ matrix.kdb }}
@@ -112,7 +109,6 @@ jobs:
           ../configure --prefix= --host=x86_64-gnu \
                   MIG=x86_64-gnu-mig LD=x86_64-linux-gnu-ld CC=x86_64-linux-gnu-gcc \
                   USER_MIG=${USER_H}-gnu-mig USER_CC=${USER_H}-linux-gnu-gcc USER_CPP="${USER_H}-linux-gnu-gcc -E" \
-                  --disable-linux-groups \
                   ${{ matrix.platform }} \
                   ${{ matrix.user32 }} \
                   ${{ matrix.kdb }}

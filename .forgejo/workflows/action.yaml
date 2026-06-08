@@ -16,7 +16,6 @@ jobs:
           "--enable-platform=xen --enable-ncpus=1"
           #"--enable-platform=xen --enable-ncpus=8"
         ]
-        kdb: ["--enable-kdb", "--disable-kdb"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -28,8 +27,7 @@ jobs:
           mkdir build32
           cd build32
           ../configure --prefix= --host=i686-gnu LD=i686-linux-gnu-ld CC=i686-linux-gnu-gcc \
-                  ${{ matrix.platform }} \
-                  ${{ matrix.kdb }}
+                  ${{ matrix.platform }}
           make DESTDIR=../gnu32 install-data
           cd ..
           cd mig32
@@ -45,8 +43,7 @@ jobs:
           CCASFLAGS="-fdebug-prefix-map=$PWD=." CFLAGS="-ffile-prefix-map=$PWD=." \
           ../configure --prefix= --host=i686-gnu \
                   MIG=i686-gnu-mig LD=i686-linux-gnu-ld CC=i686-linux-gnu-gcc \
-                  ${{ matrix.platform }} \
-                  ${{ matrix.kdb }}
+                  ${{ matrix.platform }}
           make gnumach.gz
           make VERBOSE=true check
   x86_64:
@@ -61,7 +58,6 @@ jobs:
           #"--enable-platform=xen --enable-ncpus=8"
         ]
         user32: ["--enable-user32", "--disable-user32"]
-        kdb: ["--enable-kdb", "--disable-kdb"]
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
@@ -79,8 +75,7 @@ jobs:
           cd build64
           ../configure --prefix= --host=x86_64-gnu LD=x86_64-linux-gnu-ld CC=x86_64-linux-gnu-gcc \
                   ${{ matrix.platform }} \
-                  ${{ matrix.user32 }} \
-                  ${{ matrix.kdb }}
+                  ${{ matrix.user32 }}
           make DESTDIR=../gnu64 install-data
           cd ..
           cd mig
@@ -107,7 +102,6 @@ jobs:
                   MIG=x86_64-gnu-mig LD=x86_64-linux-gnu-ld CC=x86_64-linux-gnu-gcc \
                   USER_MIG=${USER_H}-gnu-mig USER_CC=${USER_H}-linux-gnu-gcc USER_CPP="${USER_H}-linux-gnu-gcc -E" \
                   ${{ matrix.platform }} \
-                  ${{ matrix.user32 }} \
-                  ${{ matrix.kdb }}
+                  ${{ matrix.user32 }}
           make gnumach.gz
           make VERBOSE=true check

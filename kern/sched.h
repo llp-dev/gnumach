@@ -40,9 +40,7 @@
 #include <kern/kern_types.h>
 #include <kern/macros.h>
 
-#if	MACH_FIXPRI
 #include <mach/policy.h>
-#endif	/* MACH_FIXPRI */
 
 
 /*
@@ -69,7 +67,6 @@ typedef struct run_queue	*run_queue_t;
 #define runq_lock(rq)		simple_lock_nocheck(&(rq)->lock)
 #define runq_unlock(rq)	simple_unlock_nocheck(&(rq)->lock)
 
-#if	MACH_FIXPRI
 /*
  *	NOTE: For fixed priority threads, first_quantum indicates
  *	whether context switch at same priority is ok.  For timeshareing
@@ -91,14 +88,6 @@ typedef struct run_queue	*run_queue_t;
 		 ((processor)->processor_set->runq.low <		\
 			(thread)->sched_pri))))
 
-#else	/* MACH_FIXPRI */
-#define csw_needed(thread, processor) ((thread)->state & TH_SUSP ||	\
-		((processor)->runq.count > 0) ||			\
-		((processor)->first_quantum == FALSE &&			\
-		 ((processor)->processor_set->runq.count > 0 &&		\
-		  (processor)->processor_set->runq.low <=		\
-			((thread)->sched_pri))))
-#endif	/* MACH_FIXPRI */
 
 /*
  *	Scheduler routines.

@@ -56,9 +56,7 @@
 #include <vm/vm_kern.h>
 #include <vm/vm_map.h>
 
-#if	MACH_FIXPRI
 #include <mach/policy.h>
-#endif	/* MACH_FIXPRI */
 
 int		min_quantum;	/* defines max context switch rate */
 
@@ -561,7 +559,6 @@ static thread_t thread_select(
 				thread = (thread_t) dequeue_head(q);
 				thread->runq = RUN_QUEUE_NULL;
 				pset->runq.count--;
-#if	MACH_FIXPRI
 				/*
 				 *	Cannot lazy evaluate pset->runq.low for
 				 *	fixed priority policy
@@ -573,16 +570,12 @@ static thread_t thread_select(
 						q++;
 					    }
 				}
-#endif	/* MACH_FIXPRI */
 				simple_unlock(&pset->runq.lock);
 			}
 		}
 
-#if	MACH_FIXPRI
 		if (thread->policy == POLICY_TIMESHARE) {
-#endif	/* MACH_FIXPRI */
 			myprocessor->quantum = pset->set_quantum;
-#if	MACH_FIXPRI
 		}
 		else {
 			/*
@@ -590,7 +583,6 @@ static thread_t thread_select(
 			 */
 			myprocessor->quantum = thread->sched_data;
 		}
-#endif	/* MACH_FIXPRI */
 	}
 
 	return thread;
@@ -1027,20 +1019,16 @@ void compute_priority(
 {
 	int	pri;
 
-#if	MACH_FIXPRI
 	if (thread->policy == POLICY_TIMESHARE) {
-#endif	/* MACH_FIXPRI */
 	    do_priority_computation(thread, pri);
 	    if (thread->depress_priority < 0)
 		set_pri(thread, pri, resched);
 	    else
 		thread->depress_priority = pri;
-#if	MACH_FIXPRI
 	}
 	else {
 	    set_pri(thread, thread->priority, resched);
 	}
-#endif	/* MACH_FIXPRI */
 }
 
 /*
@@ -1136,9 +1124,7 @@ void update_priority(
 	 *	Recompute priority if appropriate.
 	 */
 	if (
-#if	MACH_FIXPRI
 	    (thread->policy == POLICY_TIMESHARE) &&
-#endif	/* MACH_FIXPRI */
 	    (thread->depress_priority < 0)) {
 		do_priority_computation(thread, temp_pri);
 		thread->sched_pri = temp_pri;
@@ -1470,7 +1456,6 @@ thread_t choose_pset_thread(
 		     *	For POLICY_FIXEDPRI, runq->low must be
 		     *	accurate!
 		     */
-#if	MACH_FIXPRI
 		    if ((runq->count > 0) &&
 			(pset->policies & POLICY_FIXEDPRI)) {
 			    while (queue_empty(q)) {
@@ -1478,7 +1463,6 @@ thread_t choose_pset_thread(
 				i++;
 			    }
 		    }
-#endif	/* MACH_FIXPRI */
 		    runq->low = i;
 		    simple_unlock(&runq->lock);
 		    return th;
@@ -1604,9 +1588,7 @@ retry:
 			/*
 			 *	set up quantum for new thread.
 			 */
-#if	MACH_FIXPRI
 			if (new_thread->policy == POLICY_TIMESHARE) {
-#endif	/* MACH_FIXPRI */
 				/*
 				 *  Just use set quantum.  No point in
 				 *  checking for shorter local runq quantum;
@@ -1620,7 +1602,6 @@ retry:
 					default_pset.set_quantum;
 #endif	/* MACH_HOST */
 
-#if	MACH_FIXPRI
 			}
 			else {
 				/*
@@ -1628,7 +1609,6 @@ retry:
 				 */
 				myprocessor->quantum = new_thread->sched_data;
 			}
-#endif	/* MACH_FIXPRI */
 			myprocessor->first_quantum = TRUE;
 			thread_run(idle_thread_continue, new_thread);
 		}

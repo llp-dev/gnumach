@@ -41,9 +41,6 @@ AM_CONDITIONAL([enable_pae], [true])
 # Used in `kern/bootstrap.c'.
 AC_DEFINE([BOOTSTRAP_SYMBOLS], [0], [BOOTSTRAP_SYMBOLS])
 
-# Cache footprint support.
-AC_DEFINE([HW_FOOTPRINT], [0], [HW_FOOTPRINT])
-
 # Counters.
 
 # Fixed priority threads.

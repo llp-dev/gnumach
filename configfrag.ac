@@ -85,9 +85,6 @@ AC_ARG_ENABLE([kernsample],
 # Mach-dep power conservation.
 AC_DEFINE([POWER_SAVE], [1], [POWER_SAVE])
 
-# Slab allocator debugging facilities.
-AC_DEFINE([SLAB_VERIFY], [0], [SLAB_VERIFY])
-
 # Enable the CPU pool layer in the slab allocator.
 AC_DEFINE([SLAB_USE_CPU_POOLS], [0], [SLAB_USE_CPU_POOLS])
 

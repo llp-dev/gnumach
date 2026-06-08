@@ -18,7 +18,6 @@ dnl USE OF THIS SOFTWARE.
 #
 
 ncom=0
-nlpr=0
 
 # Multiprocessor support is still broken.
 AH_TEMPLATE([MULTIPROCESSOR], [set things up for a uniprocessor])

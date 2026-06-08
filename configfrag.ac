@@ -28,9 +28,6 @@ AC_DEFINE([KERNEL], [1], [KERNEL])
 # i386/bogus/com.h
 AC_DEFINE_UNQUOTED([NCOM], [$ncom], [NCOM])
 
-# i386/bogus/lpr.h
-AC_DEFINE_UNQUOTED([NLPR], [$nlpr], [NLPR])
-
 # PAE is always enabled: i386 requires a PAE-capable CPU and x86_64
 # uses the same multi-level page tables.
 AC_DEFINE([PAE], [1], [PAE support])

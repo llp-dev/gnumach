@@ -1004,10 +1004,6 @@ ENTRY(copyout)
 	movl	$USER_DS,%eax		/* use user data segment for accesses */
 	mov	%ax,%es
 
-#if !defined(MACH_HYP) && !PAE
-	cmpl	$3,machine_slot+SUB_TYPE_CPU_TYPE
-	jbe	copyout_retry		/* Use slow version on i386 */
-#endif /* !defined(MACH_HYP) && !PAE */
 
 	/*cld*/				/* count up: always this way in GCC code */
 	movl	%edx,%ecx		/* move by longwords first */
@@ -1051,11 +1047,6 @@ ENTRY(copyoutmsg)
 	movl	$USER_DS,%eax		/* use user data segment for accesses */
 	mov	%ax,%es
 
-#if !defined(MACH_HYP) && !PAE
-	movl	8+S_ARG2,%edx		/* copyout_retry expects count here */
-	cmpl	$3,machine_slot+SUB_TYPE_CPU_TYPE
-	jbe	copyout_retry		/* Use slow version on i386 */
-#endif /* !defined(MACH_HYP) && !PAE */
 
 	shrl	$2,%ecx			/* move by longwords */
 	RECOVER(copyoutmsg_fail)
@@ -1075,68 +1066,6 @@ copyoutmsg_fail:
 	movl	$1,%eax			/* return 1 for failure */
 	jmp	copyoutmsg_ret		/* pop frame and return */
 
-#if !defined(MACH_HYP) && !PAE
-/*
- * Check whether user address space is writable
- * before writing to it - i386 hardware is broken.
- */
-copyout_retry:
-	movl	%cr3,%ecx		/* point to page directory */
-	movl	%edi,%eax		/* get page directory bits */
-	shrl	$(PDESHIFT),%eax	/* from user address */
-	movl	KERNELBASE(%ecx,%eax,PTE_SIZE),%ecx
-					/* get page directory pointer */
-	testl	$(PTE_V),%ecx		/* present? */
-	jz	0f			/* if not, fault is OK */
-	andl	$(PTE_PFN),%ecx		/* isolate page frame address */
-	movl	%edi,%eax		/* get page table bits */
-	shrl	$(PTESHIFT),%eax
-	andl	$(PTEMASK),%eax		/* from user address */
-	leal	KERNELBASE(%ecx,%eax,PTE_SIZE),%ecx
-					/* point to page table entry */
-	movl	(%ecx),%eax		/* get it */
-	testl	$(PTE_V),%eax		/* present? */
-	jz	0f			/* if not, fault is OK */
-	testl	$(PTE_W),%eax		/* writable? */
-	jnz	0f			/* OK if so */
-/*
- * Not writable - must fake a fault.  Turn off access to the page.
- */
-	andl	$(PTE_INVALID),(%ecx)	/* turn off valid bit */
-	movl	%cr3,%eax		/* invalidate TLB */
-	movl	%eax,%cr3
-0:
-
-/*
- * Copy only what fits on the current destination page.
- * Check for write-fault again on the next page.
- */
-	leal	NBPG(%edi),%eax		/* point to */
-	andl	$(-NBPG),%eax		/* start of next page */
-	subl	%edi,%eax		/* get number of bytes to that point */
-	cmpl	%edx,%eax		/* bigger than count? */
-	jle	1f			/* if so, */
-	movl	%edx,%eax		/* use count */
-1:
-
-	/*cld*/				/* count up: always this way in GCC code */
-	movl	%eax,%ecx		/* move by longwords first */
-	shrl	$2,%ecx
-	RECOVER(copyout_fail)
-	RETRY(copyout_retry)
-	rep
-	movsl
-	movl	%eax,%ecx		/* now move remaining bytes */
-	andl	$3,%ecx
-	RECOVER(copyout_fail)
-	RETRY(copyout_retry)
-	rep
-	movsb				/* move */
-	subl	%eax,%edx		/* decrement count */
-	jg	copyout_retry		/* restart on next page if not done */
-	xorl	%eax,%eax		/* return 0 for success */
-	jmp	copyout_ret
-#endif /* !defined(MACH_HYP) && !PAE */
 
 /*
  * int inst_fetch(int eip, int cs);

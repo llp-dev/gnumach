@@ -29,9 +29,7 @@ dnl USE OF THIS SOFTWARE.
     fi]
 
     [# Does the architecture provide machine-specific interfaces?
-    mach_machine_routines=1
-
-    enable_pae=yes;;
+    mach_machine_routines=1;;
   *)]
     AM_CONDITIONAL([HOST_x86_64], [false])[;;
 esac

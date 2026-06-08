@@ -141,9 +141,7 @@ expr	KERNEL_STACK_SIZE
 expr    PFN_LIST					pfn_list
 #endif
 
-#if PAE
 expr	PDPSHIFT
-#endif	/* PAE */
 expr	PDESHIFT
 expr	PDEMASK
 expr	PTESHIFT

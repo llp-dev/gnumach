@@ -32,12 +32,10 @@ AC_DEFINE_UNQUOTED([NCOM], [$ncom], [NCOM])
 # i386/bogus/lpr.h
 AC_DEFINE_UNQUOTED([NLPR], [$nlpr], [NLPR])
 
-[if [ x"$enable_pae" = xyes ]; then]
-  AC_DEFINE([PAE], [1], [PAE support])
-  AM_CONDITIONAL([enable_pae], [true])
-[else]
-  AM_CONDITIONAL([enable_pae], [false])
-[fi]
+# PAE is always enabled: i386 requires a PAE-capable CPU and x86_64
+# uses the same multi-level page tables.
+AC_DEFINE([PAE], [1], [PAE support])
+AM_CONDITIONAL([enable_pae], [true])
 
 # When set, the bootstrap task symbols are preserved by the kernel debugger.
 # Used in `kern/bootstrap.c'.

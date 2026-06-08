@@ -85,11 +85,7 @@ typedef	vm_offset_t *	vm_offset_array_t;
  * A type for physical addresses.
  */
 #ifdef MACH_KERNEL
-#ifdef PAE
 typedef unsigned long long phys_addr_t;
-#else /* PAE */
-typedef unsigned long phys_addr_t;
-#endif /* PAE */
 #else
 typedef unsigned long long phys_addr_t;
 #endif

@@ -413,12 +413,10 @@ pmap_t		kernel_pmap;
 struct kmem_cache pmap_cache;  /* cache of pmap structures */
 struct kmem_cache pt_cache;    /* cache of page tables */
 struct kmem_cache pd_cache;    /* cache of page directories */
-#if PAE
 struct kmem_cache pdpt_cache;  /* cache of page directory pointer tables */
 #ifdef __x86_64__
 struct kmem_cache l4_cache;    /* cache of L4 tables */
 #endif /* __x86_64__ */
-#endif /* PAE */
 
 boolean_t		pmap_debug = FALSE;	/* flag for debugging prints */
 
@@ -452,7 +450,6 @@ pmap_l4base(const pmap_t pmap, vm_offset_t lin_addr)
 }
 #endif
 
-#ifdef PAE
 static inline pt_entry_t *
 pmap_ptp(const pmap_t pmap, vm_offset_t lin_addr)
 {
@@ -471,7 +468,6 @@ pmap_ptp(const pmap_t pmap, vm_offset_t lin_addr)
 #endif /* __x86_64__ */
 	return &pdp_table[lin2pdpnum(lin_addr)];
 }
-#endif
 
 static inline pt_entry_t *
 pmap_pde(const pmap_t pmap, vm_offset_t addr)
@@ -479,7 +475,6 @@ pmap_pde(const pmap_t pmap, vm_offset_t addr)
 	pt_entry_t *page_dir;
 	if (pmap == kernel_pmap)
 		addr = kvtolin(addr);
-#if PAE
 	pt_entry_t *pdp_table;
 	pdp_table = pmap_ptp(pmap, addr);
         if (pdp_table == PT_ENTRY_NULL)
@@ -488,9 +483,6 @@ pmap_pde(const pmap_t pmap, vm_offset_t addr)
 	if ((pde & INTEL_PTE_VALID) == 0)
 		return PT_ENTRY_NULL;
 	page_dir = (pt_entry_t *) ptetokv(pde);
-#else /* PAE */
-	page_dir = pmap->dirbase;
-#endif /* PAE */
 	return &page_dir[lin2pdenum(addr)];
 }
 
@@ -510,11 +502,8 @@ pmap_pte(const pmap_t pmap, vm_offset_t addr)
 #ifdef __x86_64__
 	if (pmap->l4base == 0)
 		return(PT_ENTRY_NULL);
-#elif PAE
-	if (pmap->pdpbase == 0)
-		return(PT_ENTRY_NULL);
 #else
-	if (pmap->dirbase == 0)
+	if (pmap->pdpbase == 0)
 		return(PT_ENTRY_NULL);
 #endif
 	ptp = pmap_pde(pmap, addr);
@@ -619,7 +608,6 @@ vm_offset_t pmap_map_bd(
 	return(virt);
 }
 
-#ifdef PAE
 static void pmap_bootstrap_pae(void)
 {
 	vm_offset_t addr;
@@ -668,14 +656,9 @@ static void pmap_bootstrap_pae(void)
         kernel_pmap->pdpbase = pdp_kernel;
 #endif	/* x86_64 */
 }
-#endif /* PAE */
 
 #ifdef	MACH_PV_PAGETABLES
-#ifdef PAE
 #define NSUP_L1 4
-#else
-#define NSUP_L1 1
-#endif
 static void pmap_bootstrap_xen(pt_entry_t *l1_map[NSUP_L1])
 {
 	/* We don't actually deal with the CR3 register content at all */
@@ -691,14 +674,10 @@ static void pmap_bootstrap_xen(pt_entry_t *l1_map[NSUP_L1])
 	int n_l1map;
 	for (n_l1map = 0, la = VM_MIN_KERNEL_ADDRESS; la >= VM_MIN_KERNEL_ADDRESS; la += NPTES * PAGE_SIZE) {
 		pt_entry_t *base = (pt_entry_t*) boot_info.pt_base;
-#ifdef	PAE
 #ifdef __x86_64__
 		base = (pt_entry_t*) ptetokv(base[0]);
 #endif /* x86_64 */
 		pt_entry_t *l2_map = (pt_entry_t*) ptetokv(base[lin2pdpnum(la)]);
-#else	/* PAE */
-		pt_entry_t *l2_map = base;
-#endif	/* PAE */
 		/* Like lin2pdenum, but works with non-contiguous boot L3 */
 		l2_map += (la >> PDESHIFT) & PDEMASK;
 		if (!(*l2_map & INTEL_PTE_VALID)) {
@@ -783,16 +762,7 @@ void pmap_bootstrap(void)
 	 */
 	/* Note: initial Xen mapping holds at least 512kB free mapped page.
 	 * We use that for directly building our linear mapping. */
-#if PAE
 	pmap_bootstrap_pae();
-#else	/* PAE */
-	kernel_pmap->dirbase = kernel_page_dir = (pt_entry_t*)phystokv(pmap_grab_page());
-	{
-		unsigned i;
-		for (i = 0; i < NPDES; i++)
-			kernel_page_dir[i] = 0;
-	}
-#endif	/* PAE */
 
 #ifdef	MACH_PV_PAGETABLES
 	pt_entry_t *l1_map[NSUP_L1];
@@ -940,16 +910,12 @@ void pmap_set_page_readonly(void *_vaddr) {
  * still points to the bootstrap dirbase, to also fix the bootstrap table.  */
 void pmap_set_page_readonly_init(void *_vaddr) {
 	vm_offset_t vaddr = (vm_offset_t) _vaddr;
-#if PAE
 	pt_entry_t *pdpbase = (void*) boot_info.pt_base;
 #ifdef __x86_64__
 	pdpbase = (pt_entry_t *) ptetokv(pdpbase[lin2l4num(vaddr)]);
 #endif
 	/* The bootstrap table does not necessarily use contiguous pages for the pde tables */
 	pt_entry_t *dirbase = (void*) ptetokv(pdpbase[lin2pdpnum(vaddr)]);
-#else
-	pt_entry_t *dirbase = (void*) boot_info.pt_base;
-#endif
 	pt_entry_t *pte = &dirbase[lin2pdenum(vaddr) & PTEMASK];
 	/* Modify our future kernel map (can't use update_va_mapping for this)... */
 	if (*pmap_pde(kernel_pmap, vaddr) & INTEL_PTE_VALID) {
@@ -972,9 +938,7 @@ void pmap_clear_bootstrap_pagetable(pt_entry_t *base) {
 #ifdef __x86_64__
 	int l4i, l3i;
 #else
-#if PAE
 	unsigned j;
-#endif	/* PAE */
 #endif
 	if (!hyp_mmuext_op_mfn (MMUEXT_UNPIN_TABLE, kv_to_mfn(base)))
 		panic("pmap_clear_bootstrap_pagetable: couldn't unpin page %p(%lx)\n", base,
@@ -998,7 +962,6 @@ void pmap_clear_bootstrap_pagetable(pt_entry_t *base) {
 			}
 			dir = (pt_entry_t *) ptetokv(l3e);
 #else
-#if PAE
 	/* 3-level page table */
 	for (j = 0; j < PDPNUM && va < HYP_VIRT_START; j++)
 	{
@@ -1008,10 +971,6 @@ void pmap_clear_bootstrap_pagetable(pt_entry_t *base) {
 				continue;
 			}
 			dir = (pt_entry_t *) ptetokv(pdpe);
-#else	/* PAE */
-			/* 2-level page table */
-			dir = base;
-#endif	/* PAE */
 #endif
 			for (i = 0; i < NPTES && va < HYP_VIRT_START; i++) {
 				pt_entry_t pde = dir[i];
@@ -1022,10 +981,8 @@ void pmap_clear_bootstrap_pagetable(pt_entry_t *base) {
 				va += NPTES * INTEL_PGBYTES;
 			}
 #ifndef __x86_64__
-#if PAE
 			hyp_free_page(atop(_kvtophys(dir)), dir);
 	}
-#endif	/* PAE */
 #else
 			hyp_free_page(atop(_kvtophys(dir)), dir);
 		}
@@ -1137,7 +1094,6 @@ void pmap_init(void)
 	kmem_cache_init(&pd_cache, "pmap_L2",
 			INTEL_PGBYTES, INTEL_PGBYTES, NULL,
 			KMEM_CACHE_PHYSMEM);
-#if PAE
 	kmem_cache_init(&pdpt_cache, "pmap_L3",
 			INTEL_PGBYTES, INTEL_PGBYTES, NULL,
 			KMEM_CACHE_PHYSMEM);
@@ -1146,7 +1102,6 @@ void pmap_init(void)
 			INTEL_PGBYTES, INTEL_PGBYTES, NULL,
 			KMEM_CACHE_PHYSMEM);
 #endif /* __x86_64__ */
-#endif /* PAE */
 	s = (vm_size_t) sizeof(struct pv_entry);
 	kmem_cache_init(&pv_list_cache, "pv_entry", s, 0, NULL, 0);
 
@@ -1375,7 +1330,6 @@ pmap_t pmap_create(vm_size_t size)
 	}
 #endif	/* MACH_PV_PAGETABLES */
 
-#if PAE
 	pt_entry_t *pdp_kernel = (pt_entry_t *) kmem_cache_alloc(&pdpt_cache);
 	if (pdp_kernel == NULL) {
 		for (i = 0; i < PDPNUM; i++)
@@ -1439,9 +1393,6 @@ pmap_t pmap_create(vm_size_t size)
 	pmap_set_page_readonly(p->pdpbase);
 #endif
 #endif	/* MACH_PV_PAGETABLES */
-#else	/* PAE */
-	p->dirbase = page_dir[0];
-#endif	/* PAE */
 
 	p->ref_count = 1;
 
@@ -1485,7 +1436,6 @@ void pmap_destroy(pmap_t p)
         /*
          * Free the page table tree.
          */
-#if PAE
 #ifdef __x86_64__
 	for (int l4i = 0; l4i < NPTES; l4i++) {
 		pt_entry_t pdp = (pt_entry_t) p->l4base[l4i];
@@ -1509,10 +1459,6 @@ void pmap_destroy(pmap_t p)
 #endif /* __x86_64__ */
 			    )
 			for (int l2i = 0; l2i < NPTES; l2i++)
-#else /* PAE */
-			pt_entry_t *pdebase = p->dirbase;
-			for (int l2i = 0; l2i < lin2pdenum(VM_MAX_USER_ADDRESS); l2i++)
-#endif /* PAE */
 			{
 				pt_entry_t pte = (pt_entry_t) pdebase[l2i];
 				if (!(pte & INTEL_PTE_VALID))
@@ -1520,14 +1466,12 @@ void pmap_destroy(pmap_t p)
 				kmem_cache_free(&pt_cache, (vm_offset_t)ptetokv(pte));
 			}
 			kmem_cache_free(&pd_cache, (vm_offset_t)pdebase);
-#if PAE
 		}
 		kmem_cache_free(&pdpt_cache, (vm_offset_t)pdpbase);
 #ifdef __x86_64__
 	}
 	kmem_cache_free(&l4_cache, (vm_offset_t) p->l4base);
 #endif /* __x86_64__ */
-#endif /* PAE */
 
         /* Finally, free the pmap itself */
 	kmem_cache_free(&pmap_cache, (vm_offset_t) p);
@@ -2126,12 +2070,10 @@ static inline pt_entry_t* pmap_expand_level(pmap_t pmap, vm_offset_t v, int spl,
  */
 static inline pt_entry_t* pmap_expand(pmap_t pmap, vm_offset_t v, int spl)
 {
-#ifdef PAE
 #ifdef __x86_64__
 	pmap_expand_level(pmap, v, spl, pmap_ptp, pmap_l4base, 1, &pdpt_cache);
 #endif /* __x86_64__ */
 	pmap_expand_level(pmap, v, spl, pmap_pde, pmap_ptp, 1, &pd_cache);
-#endif /* PAE */
 	return pmap_expand_level(pmap, v, spl, pmap_pte, pmap_pde, ptes_per_vm_page, &pt_cache);
 }
 
@@ -2498,7 +2440,6 @@ void pmap_collect(pmap_t p)
 	 * Free the page table tree.
 	 */
 	PMAP_READ_LOCK(p, spl);
-#if PAE
 #ifdef __x86_64__
 	for (int l4i = 0; l4i < lin2l4num(VM_MAX_USER_ADDRESS); l4i++) {
 		pt_entry_t pdp = (pt_entry_t) p->l4base[l4i];
@@ -2516,10 +2457,6 @@ void pmap_collect(pmap_t p)
 				continue;
 			pt_entry_t *pdebase = (pt_entry_t*) ptetokv(pde);
 			for (int l2i = 0; l2i < NPTES; l2i++)
-#else /* PAE */
-			pt_entry_t *pdebase = p->dirbase;
-			for (int l2i = 0; l2i < lin2pdenum(VM_MAX_USER_ADDRESS); l2i++)
-#endif /* PAE */
 			{
 				pt_entry_t pte = (pt_entry_t) pdebase[l2i];
 				if (!(pte & INTEL_PTE_VALID))
@@ -2587,14 +2524,12 @@ void pmap_collect(pmap_t p)
 
 				}
 			}
-#if PAE
 			// TODO check l2
 		}
 #ifdef __x86_64__
 			// TODO check l3
 	}
 #endif /* __x86_64__ */
-#endif /* PAE */
 
 	PMAP_UPDATE_TLBS(p, VM_MIN_USER_ADDRESS, VM_MAX_USER_ADDRESS);
 
@@ -3162,18 +3097,15 @@ pmap_make_temporary_mapping(void)
 #endif
 	for (i = 0; i < PDPNUM_KERNEL; i++)
 		pmap_set_page_readonly_init((void*) kernel_page_dir + i * INTEL_PGBYTES);
-#if PAE
 #ifndef __x86_64__
 	pmap_set_page_readonly_init(kernel_pmap->pdpbase);
 #endif
-#endif	/* PAE */
 #endif	/* MACH_PV_PAGETABLES */
 }
 
 void
 pmap_set_page_dir(void)
 {
-#if PAE
 #ifdef __x86_64__
 	set_cr3((unsigned long)_kvtophys(kernel_pmap->l4base));
 #else
@@ -3184,9 +3116,6 @@ pmap_set_page_dir(void)
 		panic("CPU doesn't have support for PAE.");
 	set_cr4(get_cr4() | CR4_PAE);
 #endif	/* MACH_HYP */
-#else
-	set_cr3((unsigned long)_kvtophys(kernel_page_dir));
-#endif	/* PAE */
 }
 
 void

@@ -115,19 +115,6 @@ esac]
   AM_CONDITIONAL([enable_apic], [true])
 [fi]
 
-[case $host_platform:$host_cpu in
-  xen:i?86)
-    enable_pae=${enable_pae-yes};;
-  *:i?86)
-    :;;
-  *:x86_64)
-    enable_pae=${enable_pae-yes};;
-  *)
-    if [ x"$enable_pae" = xyes ]; then]
-      AC_MSG_ERROR([can only enable the `PAE' feature on ix86.])
-    [fi;;
-esac]
-
 AC_ARG_WITH([_START_MAP],
   AS_HELP_STRING([--with-_START_MAP=0x1000000], [specify kernel mapping start address]),
   [_START_MAP="$withval"], [_START_MAP=0x1000000])

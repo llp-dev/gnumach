@@ -25,11 +25,7 @@
 	.ascii  ",VIRT_BASE=0xC0000000"
 	.ascii  ",ELF_PADDR_OFFSET=0xC0000000"
 	.ascii	",HYPERCALL_PAGE=0x2"
-#if PAE
 	.ascii  ",PAE=yes[extended-cr3]"
-#else
-	.ascii  ",PAE=no"
-#endif
 	.ascii	",LOADER=generic"
 #ifdef	MACH_PSEUDO_PHYS
 	.ascii	",FEATURES=pae_pgdir_above_4gb"
@@ -67,11 +63,7 @@
 	ELFNOTE(Xen, XEN_ELFNOTE_PADDR_OFFSET,		.long,  _START)
 	ELFNOTE(Xen, XEN_ELFNOTE_ENTRY,			.long,  start)
 	ELFNOTE(Xen, XEN_ELFNOTE_HYPERCALL_PAGE,	.long,  hypcalls)
-#if PAE
 	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,		.asciz, "yes[extended-cr3]")
-#else
-	ELFNOTE(Xen, XEN_ELFNOTE_PAE_MODE,		.asciz, "no")
-#endif
 	ELFNOTE(Xen, XEN_ELFNOTE_LOADER,		.asciz, "generic")
 	ELFNOTE(Xen, XEN_ELFNOTE_FEATURES,              .asciz, ""
 #ifdef MACH_PSEUDO_PHYS

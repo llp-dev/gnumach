@@ -197,11 +197,7 @@ _hypcall3(long, set_callbacks,  void *, ea, void *, fsa, void *, sc);
 #endif
 _hypcall1(long, fpu_taskswitch, int, set);
 
-#ifdef PAE
 #define hyp_high(pte) ((pte) >> 32)
-#else
-#define hyp_high(pte) 0
-#endif
 #ifdef __i386__
 _hypcall4(long, update_descriptor, unsigned long, ma_lo, unsigned long, ma_hi, unsigned long, desc_lo, unsigned long, desc_hi);
 #define hyp_do_update_descriptor(ma, desc) ({ \

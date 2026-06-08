@@ -53,9 +53,6 @@ AC_DEFINE([MACH_FIXPRI], [1], [MACH_FIXPRI])
   AC_DEFINE([MACH_HOST], [0], [MACH_HOST])
 [fi]
 
-# Testing code/printfs.
-AC_DEFINE([MACH_IPC_TEST], [0], [MACH_IPC_TEST])
-
 # Does the architecture provide machine-specific interfaces?
 mach_machine_routines=${mach_machine_routines-0}
 AC_DEFINE_UNQUOTED([MACH_MACHINE_ROUTINES], [$mach_machine_routines],

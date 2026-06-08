@@ -402,12 +402,7 @@ struct kmem_cache l4_cache;    /* cache of L4 tables */
 
 boolean_t		pmap_debug = FALSE;	/* flag for debugging prints */
 
-#if 0
-int		ptes_per_vm_page;	/* number of hardware ptes needed
-					   to map one VM page. */
-#else
 #define		ptes_per_vm_page	1
-#endif
 
 unsigned int	inuse_ptepages_count = 0;	/* debugging */
 
@@ -603,9 +598,6 @@ void pmap_bootstrap(void)
 	/*
 	 *	Set ptes_per_vm_page for general use.
 	 */
-#if 0
-	ptes_per_vm_page = PAGE_SIZE / INTEL_PGBYTES;
-#endif
 
 	/*
 	 *	The kernel's pmap is statically allocated so we don't
@@ -1800,16 +1792,6 @@ phys_addr_t pmap_extract(
  *
  *	This routine is only advisory and need not do anything.
  */
-#if	0
-void pmap_copy(
-	pmap_t		dst_pmap,
-	pmap_t		src_pmap,
-	vm_offset_t	dst_addr,
-	vm_size_t	len,
-	vm_offset_t	src_addr)
-{
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	pmap_collect
@@ -1925,12 +1907,6 @@ void pmap_collect(pmap_t p)
  *		Binds the given physical map to the given
  *		processor, and returns a hardware map description.
  */
-#if	0
-void pmap_activate(pmap_t my_pmap, thread_t th, int my_cpu)
-{
-	PMAP_ACTIVATE(my_pmap, th, my_cpu);
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	pmap_deactivate
@@ -1939,60 +1915,22 @@ void pmap_activate(pmap_t my_pmap, thread_t th, int my_cpu)
  *		in use on the specified processor.  (This is a macro
  *		in pmap.h)
  */
-#if	0
-void pmap_deactivate(pmap_t pmap, thread_t th, int which_cpu)
-{
-	PMAP_DEACTIVATE(pmap, th, which_cpu);
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	pmap_kernel
  *	Function:
  *		Returns the physical map handle for the kernel.
  */
-#if	0
-pmap_t pmap_kernel()
-{
-    	return (kernel_pmap);
-}
-#endif	/* 0 */
 
 /*
  *	pmap_zero_page zeros the specified (machine independent) page.
  *	See machine/phys.c or machine/phys.s for implementation.
  */
-#if	0
-pmap_zero_page(vm_offset_t phys)
-{
-	int	i;
-
-	i = PAGE_SIZE / INTEL_PGBYTES;
-	phys = intel_pfn(phys);
-
-	while (i--)
-		zero_phys(phys++);
-}
-#endif	/* 0 */
 
 /*
  *	pmap_copy_page copies the specified (machine independent) page.
  *	See machine/phys.c or machine/phys.s for implementation.
  */
-#if	0
-pmap_copy_page(vm_offset_t src, vm_offset_t dst)
-{
-	int	i;
-
-	i = PAGE_SIZE / INTEL_PGBYTES;
-
-	while (i--) {
-		copy_phys(intel_pfn(src), intel_pfn(dst));
-		src += INTEL_PGBYTES;
-		dst += INTEL_PGBYTES;
-	}
-}
-#endif	/* 0 */
 
 /*
  *	Routine:	pmap_pageable

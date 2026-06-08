@@ -227,10 +227,6 @@ exception_no_server(void)
 		thread_halt_self(thread_exception_return);
 
 
-#if 0
-	if (thread_suspend (self) == KERN_SUCCESS)
-	  thread_exception_return ();
-#endif
 
 	/*
 	 *	All else failed; terminate task.

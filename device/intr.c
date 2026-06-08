@@ -336,12 +336,6 @@ intr_thread (void)
 	      irqtab.tot_num_intr -= e->interrupts;
 	      e->interrupts = 0;
 
-#if 0
-	      // TODO: remove from the action list
-	      simple_unlock_irq(s, &intr_lock);
-	      kfree ((vm_offset_t) e, sizeof (*e));
-	      s = simple_lock_irq(&intr_lock);
-#endif
 	    }
 	}
       while (del || irqtab.tot_num_intr);

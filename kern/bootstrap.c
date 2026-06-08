@@ -426,10 +426,6 @@ read_exec(void *handle, vm_offset_t file_ofs, vm_size_t file_size,
 	start_page = trunc_page(mem_addr);
 	end_page = round_page(mem_addr + mem_size);
 
-#if 0
-	printf("reading bootstrap section %08x-%08x-%08x prot %d pages %08x-%08x\n",
-		mem_addr, mem_addr+file_size, mem_addr+mem_size, mem_prot, start_page, end_page);
-#endif
 
 	(void) vm_allocate(user_map, &start_page, end_page - start_page, FALSE);
 

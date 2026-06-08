@@ -56,18 +56,7 @@
 #include <i386/trap.h>
 #include "cpu_number.h"
 
-#if 0
-#include <i386/ipl.h>
-#define ASSERT_IPL(L) \
-MACRO_BEGIN \
-      if (curr_ipl[cpu_number()] != L) { \
-	      printf("IPL is %d, expected %d\n", curr_ipl[cpu_number()], L); \
-	      panic("fpu: wrong ipl"); \
-      } \
-MACRO_END
-#else
 #define ASSERT_IPL(L)
-#endif
 
 _Static_assert(sizeof(struct i386_xfp_xstate_header) == 8*8,
 	       "struct i386_xfp_xstate_header size");

@@ -605,9 +605,6 @@ void
 comstart(struct tty *tp)
 {
 	int nch;
-#if 0
-	int i;
-#endif
 
 	if (tp->t_state & (TS_TIMEOUT|TS_TTSTOP|TS_BUSY)) {
 comst_1++;
@@ -623,22 +620,6 @@ comst_3++;
 		return;
 	}
 
-#if 0
-	i = (comfifo[minor(tp->t_dev)]) ? /*14*/comst_5 : 1;
-
-	tp->t_state |= TS_BUSY;
-	while (i-- > 0) {
-		nch = getc(&tp->t_outq);
-		if (nch == -1) break;
-		if ((nch & 0200) && ((tp->t_flags & LITOUT) == 0)) {
-		    timeout(ttrstrt, (char *)tp, (nch & 0x7f) + 6);
-		    tp->t_state |= TS_TIMEOUT;
-comst_4++;
-		    return(0);
-		}
-		outb(TXRX((uintptr_t)tp->t_addr), nch);
-	}
-#else
 	nch = getc(&tp->t_outq);
 	if (nch == -1)
 		return;
@@ -650,7 +631,6 @@ comst_4++;
 	}
 	outb(TXRX((uintptr_t)tp->t_addr), nch);
 	tp->t_state |= TS_BUSY;
-#endif
 }
 
 /* Check for stuck xmitters */
@@ -726,10 +706,6 @@ commodem_intr(
 	if (changed & TM_CTS)
 		tty_cts( &com_tty[unit], stat & TM_CTS );
 
-#if 0
-	if (changed & TM_CAR)
-		ttymodem( &com_tty[unit], stat & TM_CAR );
-#endif
 
 }
 
@@ -778,18 +754,6 @@ commctl(
 		}
 	}
 
-#if 0
-	/* do I need to do something on this ? */
-	if (bits & TM_LE) {	/* line enable */
-	}
-#endif
-#if 0
-	/* Unsupported */
-	if (bits & TM_ST) {	/* secondary transmit */
-	}
-	if (bits & TM_SR) {	/* secondary receive */
-	}
-#endif
 	if (bits & (TM_DTR|TM_RTS)) {	/* data terminal ready, request to send */
 		how = iOUT2;
 		if (b & TM_DTR) how |= iDTR;

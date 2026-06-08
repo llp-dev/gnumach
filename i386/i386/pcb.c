@@ -510,23 +510,6 @@ kern_return_t thread_setstatus(
 		if (count < i386_ISA_PORT_MAP_STATE_COUNT)
 			return(KERN_INVALID_ARGUMENT);
 
-#if 0
-		/*
-		 *	If the thread has no ktss yet,
-		 *	we must allocate one.
-		 */
-
-		state = (struct i386_isa_port_map_state *) tstate;
-		tss = thread->pcb->ims.io_tss;
-		if (tss == 0) {
-			tss = iopb_create();
-			thread->pcb->ims.io_tss = tss;
-		}
-
-		memcpy(tss->bitmap,
-		       state->pm,
-		       sizeof state->pm);
-#endif
 		break;
 	    }
 	    case i386_DEBUG_STATE:

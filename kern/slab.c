@@ -62,13 +62,6 @@
  * structure, whereas a hash table requires periodic maintenance and complete
  * resizing, which is expensive. The only drawback is that releasing a buffer
  * to the slab layer takes logarithmic time instead of constant time.
- *
- * This implementation uses per-cpu pools of objects, which service most
- * allocation requests. These pools act as caches (but are named differently
- * to avoid confusion with CPU caches) that reduce contention on multiprocessor
- * systems. When a pool is empty and cannot provide an object, it is filled by
- * transferring multiple objects from the slab layer. The symmetric case is
- * handled likewise.
  */
 
 #include <string.h>
@@ -103,12 +96,6 @@
  * Time (in ticks) between two garbage collection operations.
  */
 #define KMEM_GC_INTERVAL (5 * hz)
-
-/*
- * The transfer size of a CPU pool is computed by dividing the pool size by
- * this value.
- */
-#define KMEM_CPU_POOL_TRANSFER_RATIO 2
 
 /*
  * Redzone guard word.
@@ -209,27 +196,6 @@
 #define KMEM_ERR_MODIFIED   3   /* Buffer modified while free */
 #define KMEM_ERR_REDZONE    4   /* Redzone violation */
 
-#if SLAB_USE_CPU_POOLS
-/*
- * Available CPU pool types.
- *
- * For each entry, the CPU pool size applies from the entry buf_size
- * (excluded) up to (and including) the buf_size of the preceding entry.
- *
- * See struct kmem_cpu_pool_type for a description of the values.
- */
-static struct kmem_cpu_pool_type kmem_cpu_pool_types[] = {
-    {  32768,   1, 0,           NULL },
-    {   4096,   8, CPU_L1_SIZE, NULL },
-    {    256,  64, CPU_L1_SIZE, NULL },
-    {      0, 128, CPU_L1_SIZE, NULL }
-};
-
-/*
- * Caches where CPU pool arrays are allocated from.
- */
-static struct kmem_cache kmem_cpu_array_caches[ARRAY_SIZE(kmem_cpu_pool_types)];
-#endif /* SLAB_USE_CPU_POOLS */
 
 /*
  * Cache for off slab data.
@@ -574,99 +540,6 @@ static inline int kmem_slab_cmp_insert(const struct rbtree_node *a,
     return kmem_slab_cmp_lookup(slab->addr, b);
 }
 
-#if SLAB_USE_CPU_POOLS
-static void kmem_cpu_pool_init(struct kmem_cpu_pool *cpu_pool,
-                               struct kmem_cache *cache)
-{
-    simple_lock_init(&cpu_pool->lock);
-    cpu_pool->flags = cache->flags;
-    cpu_pool->size = 0;
-    cpu_pool->transfer_size = 0;
-    cpu_pool->nr_objs = 0;
-    cpu_pool->array = NULL;
-}
-
-/*
- * Return a CPU pool.
- *
- * This function will generally return the pool matching the CPU running the
- * calling thread. Because of context switches and thread migration, the
- * caller might be running on another processor after this function returns.
- * Although not optimal, this should rarely happen, and it doesn't affect the
- * allocator operations in any other way, as CPU pools are always valid, and
- * their access is serialized by a lock.
- */
-static inline struct kmem_cpu_pool * kmem_cpu_pool_get(struct kmem_cache *cache)
-{
-    return &cache->cpu_pools[cpu_number()];
-}
-
-static inline void kmem_cpu_pool_build(struct kmem_cpu_pool *cpu_pool,
-                                       struct kmem_cache *cache, void **array)
-{
-    cpu_pool->size = cache->cpu_pool_type->array_size;
-    cpu_pool->transfer_size = (cpu_pool->size
-                               + KMEM_CPU_POOL_TRANSFER_RATIO - 1)
-                              / KMEM_CPU_POOL_TRANSFER_RATIO;
-    cpu_pool->array = array;
-}
-
-static inline void * kmem_cpu_pool_pop(struct kmem_cpu_pool *cpu_pool)
-{
-    cpu_pool->nr_objs--;
-    return cpu_pool->array[cpu_pool->nr_objs];
-}
-
-static inline void kmem_cpu_pool_push(struct kmem_cpu_pool *cpu_pool, void *obj)
-{
-    cpu_pool->array[cpu_pool->nr_objs] = obj;
-    cpu_pool->nr_objs++;
-}
-
-static int kmem_cpu_pool_fill(struct kmem_cpu_pool *cpu_pool,
-                              struct kmem_cache *cache)
-{
-    kmem_cache_ctor_t ctor;
-    void *buf;
-    int i;
-
-    ctor = (cpu_pool->flags & KMEM_CF_VERIFY) ? NULL : cache->ctor;
-
-    simple_lock(&cache->lock);
-
-    for (i = 0; i < cpu_pool->transfer_size; i++) {
-        buf = kmem_cache_alloc_from_slab(cache);
-
-        if (buf == NULL)
-            break;
-
-        if (ctor != NULL)
-            ctor(buf);
-
-        kmem_cpu_pool_push(cpu_pool, buf);
-    }
-
-    simple_unlock(&cache->lock);
-
-    return i;
-}
-
-static void kmem_cpu_pool_drain(struct kmem_cpu_pool *cpu_pool,
-                                struct kmem_cache *cache)
-{
-    void *obj;
-    int i;
-
-    simple_lock(&cache->lock);
-
-    for (i = cpu_pool->transfer_size; i > 0; i--) {
-        obj = kmem_cpu_pool_pop(cpu_pool);
-        kmem_cache_free_to_slab(cache, obj);
-    }
-
-    simple_unlock(&cache->lock);
-}
-#endif /* SLAB_USE_CPU_POOLS */
 
 static void kmem_cache_error(struct kmem_cache *cache, void *buf, int error,
                              void *arg)
@@ -781,10 +654,6 @@ void kmem_cache_init(struct kmem_cache *cache, const char *name,
                      size_t obj_size, size_t align,
                      kmem_cache_ctor_t ctor, int flags)
 {
-#if SLAB_USE_CPU_POOLS
-    struct kmem_cpu_pool_type *cpu_pool_type;
-    size_t i;
-#endif /* SLAB_USE_CPU_POOLS */
     size_t buf_size;
 
     cache->flags = 0;
@@ -829,16 +698,6 @@ void kmem_cache_init(struct kmem_cache *cache, const char *name,
 
     kmem_cache_compute_properties(cache, flags);
 
-#if SLAB_USE_CPU_POOLS
-    for (cpu_pool_type = kmem_cpu_pool_types;
-         buf_size <= cpu_pool_type->buf_size;
-         cpu_pool_type++);
-
-    cache->cpu_pool_type = cpu_pool_type;
-
-    for (i = 0; i < ARRAY_SIZE(cache->cpu_pools); i++)
-        kmem_cpu_pool_init(&cache->cpu_pools[i], cache);
-#endif /* SLAB_USE_CPU_POOLS */
 
     simple_lock(&kmem_cache_list_lock);
     list_insert_tail(&kmem_cache_list, &cache->node);
@@ -1038,46 +897,6 @@ vm_offset_t kmem_cache_alloc(struct kmem_cache *cache)
     int filled;
     void *buf;
 
-#if SLAB_USE_CPU_POOLS
-    struct kmem_cpu_pool *cpu_pool;
-
-    cpu_pool = kmem_cpu_pool_get(cache);
-
-    if (cpu_pool->flags & KMEM_CF_NO_CPU_POOL)
-        goto slab_alloc;
-
-    simple_lock(&cpu_pool->lock);
-
-fast_alloc:
-    if (likely(cpu_pool->nr_objs > 0)) {
-        buf = kmem_cpu_pool_pop(cpu_pool);
-        simple_unlock(&cpu_pool->lock);
-
-        if (cpu_pool->flags & KMEM_CF_VERIFY)
-            kmem_cache_alloc_verify(cache, buf, KMEM_AV_CONSTRUCT);
-
-        return (vm_offset_t)buf;
-    }
-
-    if (cpu_pool->array != NULL) {
-        filled = kmem_cpu_pool_fill(cpu_pool, cache);
-
-        if (!filled) {
-            simple_unlock(&cpu_pool->lock);
-
-            filled = kmem_cache_grow(cache);
-
-            if (!filled)
-                return 0;
-
-            simple_lock(&cpu_pool->lock);
-        }
-
-        goto fast_alloc;
-    }
-
-    simple_unlock(&cpu_pool->lock);
-#endif /* SLAB_USE_CPU_POOLS */
 
 slab_alloc:
     simple_lock(&cache->lock);
@@ -1167,62 +986,10 @@ static void kmem_cache_free_verify(struct kmem_cache *cache, void *buf)
 
 void kmem_cache_free(struct kmem_cache *cache, vm_offset_t obj)
 {
-#if SLAB_USE_CPU_POOLS
-    struct kmem_cpu_pool *cpu_pool;
-    void **array;
-
-    cpu_pool = kmem_cpu_pool_get(cache);
-
-    if (cpu_pool->flags & KMEM_CF_VERIFY) {
-#else /* SLAB_USE_CPU_POOLS */
     if (cache->flags & KMEM_CF_VERIFY) {
-#endif /* SLAB_USE_CPU_POOLS */
         kmem_cache_free_verify(cache, (void *)obj);
     }
 
-#if SLAB_USE_CPU_POOLS
-    if (cpu_pool->flags & KMEM_CF_NO_CPU_POOL)
-        goto slab_free;
-
-    simple_lock(&cpu_pool->lock);
-
-fast_free:
-    if (likely(cpu_pool->nr_objs < cpu_pool->size)) {
-        kmem_cpu_pool_push(cpu_pool, (void *)obj);
-        simple_unlock(&cpu_pool->lock);
-        return;
-    }
-
-    if (cpu_pool->array != NULL) {
-        kmem_cpu_pool_drain(cpu_pool, cache);
-        goto fast_free;
-    }
-
-    simple_unlock(&cpu_pool->lock);
-
-    array = (void *)kmem_cache_alloc(cache->cpu_pool_type->array_cache);
-
-    if (array != NULL) {
-        simple_lock(&cpu_pool->lock);
-
-        /*
-         * Another thread may have built the CPU pool while the lock was
-         * dropped.
-         */
-        if (cpu_pool->array != NULL) {
-            simple_unlock(&cpu_pool->lock);
-            kmem_cache_free(cache->cpu_pool_type->array_cache,
-                            (vm_offset_t)array);
-            simple_lock(&cpu_pool->lock);
-            goto fast_free;
-        }
-
-        kmem_cpu_pool_build(cpu_pool, cache, array);
-        goto fast_free;
-    }
-
-slab_free:
-#endif /* SLAB_USE_CPU_POOLS */
 
     simple_lock(&cache->lock);
     kmem_cache_free_to_slab(cache, (void *)obj);
@@ -1266,22 +1033,7 @@ void slab_bootstrap(void)
 
 void slab_init(void)
 {
-#if SLAB_USE_CPU_POOLS
-    struct kmem_cpu_pool_type *cpu_pool_type;
-    char name[KMEM_CACHE_NAME_SIZE];
-    size_t i, size;
-#endif /* SLAB_USE_CPU_POOLS */
 
-#if SLAB_USE_CPU_POOLS
-    for (i = 0; i < ARRAY_SIZE(kmem_cpu_pool_types); i++) {
-        cpu_pool_type = &kmem_cpu_pool_types[i];
-        cpu_pool_type->array_cache = &kmem_cpu_array_caches[i];
-        sprintf(name, "kmem_cpu_array_%d", cpu_pool_type->array_size);
-        size = sizeof(void *) * cpu_pool_type->array_size;
-        kmem_cache_init(cpu_pool_type->array_cache, name, size,
-                        cpu_pool_type->array_align, NULL, 0);
-    }
-#endif /* SLAB_USE_CPU_POOLS */
 
     /*
      * Prevent off slab data for the slab cache to avoid infinite recursion.

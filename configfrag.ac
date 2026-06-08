@@ -95,9 +95,6 @@ AC_ARG_ENABLE([kernsample],
 # Mach-dep power conservation.
 AC_DEFINE([POWER_SAVE], [1], [POWER_SAVE])
 
-# Use statistical timing.
-AC_DEFINE([STAT_TIME], [1], [STAT_TIME])
-
 # Slab allocator debugging facilities.
 AC_DEFINE([SLAB_VERIFY], [0], [SLAB_VERIFY])
 

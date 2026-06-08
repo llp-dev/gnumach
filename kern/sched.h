@@ -44,7 +44,6 @@
 #include <mach/policy.h>
 #endif	/* MACH_FIXPRI */
 
-#if	STAT_TIME
 
 /*
  *	Statistical timing uses microseconds as timer units.  17 bit shift
@@ -52,14 +51,6 @@
  */
 #define PRI_SHIFT	17
 
-#else	/* STAT_TIME */
-
-/*
- *	Otherwise machine provides shift(s) based on time units it uses.
- */
-#include <machine/sched_param.h>
-
-#endif	/* STAT_TIME */
 #define NRQS	65			/* 65 run queues per cpu */
 
 struct run_queue {

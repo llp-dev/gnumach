@@ -520,9 +520,6 @@ static thread_t thread_select(
 		pset = &default_pset;
 #endif	/* MACH_HOST */
 		simple_lock(&pset->runq.lock);
-#if	DEBUG
-		checkrq(&pset->runq, "thread_select");
-#endif	/* DEBUG */
 		if (pset->runq.count == 0) {
 			/*
 			 *	Nothing else runnable.  Return if this
@@ -577,9 +574,6 @@ static thread_t thread_select(
 					    }
 				}
 #endif	/* MACH_FIXPRI */
-#if	DEBUG
-				checkrq(&pset->runq, "thread_select: after");
-#endif	/* DEBUG */
 				simple_unlock(&pset->runq.lock);
 			}
 		}
@@ -1154,31 +1148,6 @@ void update_priority(
 /*
  *	run_queue_enqueue macro for thread_setrun().
  */
-#if	DEBUG
-#define run_queue_enqueue(rq, th)					\
-	MACRO_BEGIN							\
-	    unsigned int	whichq;					\
-									\
-	    whichq = (th)->sched_pri;					\
-	    if (whichq >= NRQS) {					\
-	printf("thread_setrun: pri too high (%d)\n", (th)->sched_pri);  \
-		whichq = NRQS - 1;					\
-	    }								\
-									\
-	    runq_lock(rq);	/* lock the run queue */	\
-	    checkrq((rq), "thread_setrun: before adding thread");	\
-	    enqueue_tail(&(rq)->runq[whichq], &((th)->links));		\
-									\
-	    if (whichq < (rq)->low || (rq)->count == 0) 		\
-		 (rq)->low = whichq;	/* minimize */			\
-									\
-	    (rq)->count++;						\
-	    (th)->runq = (rq);						\
-	    thread_check((th), (rq));					\
-	    checkrq((rq), "thread_setrun: after adding thread");	\
-	    runq_unlock(rq);						\
-	MACRO_END
-#else	/* DEBUG */
 #define run_queue_enqueue(rq, th)					\
 	MACRO_BEGIN							\
 	    unsigned int	whichq;					\
@@ -1199,7 +1168,6 @@ void update_priority(
 	    (th)->runq = (rq);						\
 	    runq_unlock(rq);						\
 	MACRO_END
-#endif	/* DEBUG */
 /*
  *	thread_setrun:
  *
@@ -1391,23 +1359,13 @@ struct run_queue *rem_runq(
 	 */
 	if (rq != RUN_QUEUE_NULL) {
 		runq_lock(rq);
-#if	DEBUG
-		checkrq(rq, "rem_runq: at entry");
-#endif	/* DEBUG */
 		if (rq == th->runq) {
 			/*
 			 *	Thread is in a runq and we have a lock on
 			 *	that runq.
 			 */
-#if	DEBUG
-			checkrq(rq, "rem_runq: before removing thread");
-			thread_check(th, rq);
-#endif	/* DEBUG */
 			remqueue(&rq->runq[0], (queue_entry_t) th);
 			rq->count--;
-#if	DEBUG
-			checkrq(rq, "rem_runq: after removing thread");
-#endif	/* DEBUG */
 			th->runq = RUN_QUEUE_NULL;
 			runq_unlock(rq);
 		}
@@ -1522,9 +1480,6 @@ thread_t choose_pset_thread(
 		    }
 #endif	/* MACH_FIXPRI */
 		    runq->low = i;
-#if	DEBUG
-		    checkrq(runq, "choose_pset_thread");
-#endif	/* DEBUG */
 		    simple_unlock(&runq->lock);
 		    return th;
 		}
@@ -1943,57 +1898,3 @@ void do_thread_scan(void)
 	} while (restart_needed);
 }
 
-#if	DEBUG
-void checkrq(
-	run_queue_t	rq,
-	const char	*msg)
-{
-	queue_t		q1;
-	int		i, j;
-	queue_entry_t	e;
-	int		low;
-
-	low = -1;
-	j = 0;
-	q1 = rq->runq;
-	for (i = 0; i < NRQS; i++) {
-	    if (q1->next == q1) {
-		if (q1->prev != q1)
-		    panic("checkrq: empty at %s", msg);
-	    }
-	    else {
-		if (low == -1)
-		    low = i;
-
-		for (e = q1->next; e != q1; e = e->next) {
-		    j++;
-		    if (e->next->prev != e)
-			panic("checkrq-2 at %s", msg);
-		    if (e->prev->next != e)
-			panic("checkrq-3 at %s", msg);
-		}
-	    }
-	    q1++;
-	}
-	if (j != rq->count)
-	    panic("checkrq: count wrong at %s", msg);
-	if (rq->count != 0 && low < rq->low)
-	    panic("checkrq: low wrong at %s", msg);
-}
-
-void thread_check(
-	thread_t	th,
-	run_queue_t	rq)
-{
-	unsigned int 	whichq;
-
-	whichq = th->sched_pri;
-	if (whichq >= NRQS) {
-		printf("thread_check: priority too high\n");
-		whichq = NRQS-1;
-	}
-	if ((th->links.next == &rq->runq[whichq]) &&
-		(rq->runq[whichq].prev != (queue_entry_t)th))
-			panic("thread_check");
-}
-#endif	/* DEBUG */

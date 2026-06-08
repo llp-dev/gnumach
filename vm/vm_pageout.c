@@ -54,7 +54,6 @@
 #include <vm/vm_pageout.h>
 #include <machine/locore.h>
 
-#define DEBUG 0
 
 /*
  * Maximum delay, in milliseconds, between two pageout scans.
@@ -470,15 +469,6 @@ void vm_pageout(void)
 			simple_unlock(&vm_page_queue_free_lock);
 			thread_block(NULL);
 
-#if DEBUG
-			if (current_thread()->wait_result != THREAD_AWAKENED) {
-				printf("vm_pageout: timeout,"
-				       " vm_page_laundry_count:%d"
-				       " vm_page_external_laundry_count:%d\n",
-				       vm_page_laundry_count,
-				       vm_page_external_laundry_count);
-			}
-#endif
 		} else {
 			simple_unlock(&vm_page_queue_free_lock);
 		}

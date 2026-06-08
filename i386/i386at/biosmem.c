@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include <vm/vm_page.h>
 
-#define DEBUG 0
 
 #define __boot
 #define __bootdata
@@ -242,11 +241,6 @@ biosmem_unregister_boot_data(phys_addr_t start, phys_addr_t end)
         return;
     }
 
-#if DEBUG
-    printf("biosmem: unregister boot data: %llx:%llx\n",
-           (unsigned long long)biosmem_boot_data_array[i].start,
-           (unsigned long long)biosmem_boot_data_array[i].end);
-#endif /* DEBUG */
 
     biosmem_nr_boot_data--;
 
@@ -831,11 +825,6 @@ biosmem_map_show(void)
                entry->base_addr + entry->length,
                biosmem_type_desc(entry->type));
 
-#if DEBUG
-    printf("biosmem: heap: %llx:%llx\n",
-           (unsigned long long)biosmem_heap_start,
-           (unsigned long long)biosmem_heap_end);
-#endif
 }
 
 static void __init
@@ -936,11 +925,6 @@ biosmem_free_usable_range(phys_addr_t start, phys_addr_t end)
 {
     struct vm_page *page;
 
-#if DEBUG
-    printf("biosmem: release to vm_page: %llx:%llx (%lluk)\n",
-           (unsigned long long)start, (unsigned long long)end,
-           (unsigned long long)((end - start) >> 10));
-#endif
 
     while (start < end) {
         page = vm_page_lookup_pa(start);

@@ -175,12 +175,6 @@ void set_pri(thread_t th, int pri, boolean_t resched);
 void do_thread_scan(void);
 thread_t choose_pset_thread(processor_t myprocessor, processor_set_t pset);
 
-#if DEBUG
-#include <kern/sched.h>	/* for run_queue_t */
-
-void checkrq(run_queue_t rq, const char *msg);
-void thread_check(thread_t th, run_queue_t rq);
-#endif /* DEBUG */
 
 extern void idle_thread(void) __attribute__((noreturn));
 extern void sched_thread(void);

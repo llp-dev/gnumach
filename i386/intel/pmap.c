@@ -1649,17 +1649,6 @@ Retry:
 		    pv_h->next = PV_ENTRY_NULL;
 		}
 		else {
-#if	DEBUG
-		    {
-			/* check that this mapping is not already there */
-			pv_entry_t	e = pv_h;
-			while (e != PV_ENTRY_NULL) {
-			    if (e->pmap == pmap && e->va == v)
-				panic("pmap_enter: already in pv_list");
-			    e = e->next;
-			}
-		    }
-#endif	/* DEBUG */
 
 		    /*
 		     *	Add new pv_entry after header.

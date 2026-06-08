@@ -52,7 +52,6 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 
-#define DEBUG 0
 
 #define __init
 #define __initdata
@@ -1400,11 +1399,6 @@ vm_page_load(unsigned int seg_index, phys_addr_t start, phys_addr_t end)
     seg->end = end;
     seg->heap_present = FALSE;
 
-#if DEBUG
-    printf("vm_page: load: %s: %llx:%llx\n",
-           vm_page_seg_name(seg_index),
-           (unsigned long long)start, (unsigned long long)end);
-#endif
 
     vm_page_segs_size++;
 }
@@ -1422,11 +1416,6 @@ vm_page_load_heap(unsigned int seg_index, phys_addr_t start, phys_addr_t end)
     seg->avail_end = end;
     seg->heap_present = TRUE;
 
-#if DEBUG
-    printf("vm_page: heap: %s: %llx:%llx\n",
-           vm_page_seg_name(seg_index),
-           (unsigned long long)start, (unsigned long long)end);
-#endif
 }
 
 int

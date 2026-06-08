@@ -41,39 +41,7 @@
 /* if c_cf == c_cl, buffer is empty */
 /* if c_cl == c_cf - 1, buffer is full */
 
-#if	DEBUG
-#include <mach/boolean.h>
-
-boolean_t cb_check_enable = FALSE;
-#define	CB_CHECK(cb) if (cb_check_enable) cb_check(cb)
-
-void
-cb_check(struct cirbuf *cb)
-{
-	if (!(cb->c_cf >= cb->c_start && cb->c_cf < cb->c_end))
-	    panic("cf %p out of range [%p..%p)",
-		cb->c_cf, cb->c_start, cb->c_end);
-	if (!(cb->c_cl >= cb->c_start && cb->c_cl < cb->c_end))
-	    panic("cl %p out of range [%p..%p)",
-		cb->c_cl, cb->c_start, cb->c_end);
-	if (cb->c_cf <= cb->c_cl) {
-	    if (!(cb->c_cc == cb->c_cl - cb->c_cf))
-		panic("cc %x should be %x",
-			cb->c_cc,
-			cb->c_cl - cb->c_cf);
-	}
-	else {
-	    if (!(cb->c_cc == cb->c_end - cb->c_cf
-			    + cb->c_cl - cb->c_start))
-		panic("cc %x should be %x",
-			cb->c_cc,
-			cb->c_end - cb->c_cf +
-			cb->c_cl - cb->c_start);
-	}
-}
-#else	/* DEBUG */
 #define	CB_CHECK(cb)
-#endif	/* DEBUG */
 
 /*
  * Put one character in circular buffer.
